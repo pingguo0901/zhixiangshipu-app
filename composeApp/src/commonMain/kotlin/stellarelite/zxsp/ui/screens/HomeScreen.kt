@@ -21,6 +21,12 @@ fun HomeScreen() {
     var todayRevenue by remember { mutableStateOf(2856.50) }
     var orderCount by remember { mutableStateOf(47) }
     var tableCount by remember { mutableStateOf(12) }
+    var showOrdering by remember { mutableStateOf(false) }
+
+    if (showOrdering) {
+        OrderScreen(onBack = { showOrdering = false })
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -75,7 +81,7 @@ fun HomeScreen() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("🛒", "开台点餐", Modifier.weight(1f))
+            QuickActionCard("🛒", "开台点餐", Modifier.weight(1f), onClick = { showOrdering = true })
             QuickActionCard("📊", "营业报表", Modifier.weight(1f))
         }
         Row(
@@ -114,10 +120,10 @@ private fun StatItem(emoji: String, value: String, label: String) {
 }
 
 @Composable
-private fun QuickActionCard(emoji: String, label: String, modifier: Modifier = Modifier) {
+private fun QuickActionCard(emoji: String, label: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Card(
         modifier = modifier
-            .clickable { /* 导航 */ }
+            .clickable { onClick() }
             .padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
