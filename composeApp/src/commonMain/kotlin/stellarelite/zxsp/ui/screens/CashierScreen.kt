@@ -3,8 +3,6 @@ package stellarelite.zxsp.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -69,6 +67,10 @@ private val initialTables = listOf(
     TableBill(10, emptyList()),
     TableBill(11, emptyList()),
     TableBill(12, emptyList()),
+    TableBill(13, emptyList()),
+    TableBill(14, emptyList()),
+    TableBill(15, emptyList()),
+    TableBill(16, emptyList()),
 )
 
 @Composable
@@ -104,23 +106,33 @@ fun CashierScreen() {
             )
         }
 
-        // 桌台选择
+        // 桌台选择 - 4x4 可视化网格（1~16 从左到右、从上到下）
         Text(
             "选择桌台",
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = DiningColors.TextPrimary
         )
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(horizontal = 2.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            items(tables) { table ->
-                TableChip(
-                    table = table,
-                    selected = table.tableNo == selectedTableNo,
-                    onClick = { selectedTableNo = table.tableNo }
-                )
+            for (row in 0 until 4) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    for (col in 0 until 4) {
+                        val tableNo = row * 4 + col + 1
+                        val table = tables[tableNo - 1]
+                        TableCell(
+                            table = table,
+                            selected = tableNo == selectedTableNo,
+                            onClick = { selectedTableNo = tableNo },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
             }
         }
 
@@ -331,15 +343,17 @@ fun CashierScreen() {
 }
 
 @Composable
-private fun TableChip(table: TableBill, selected: Boolean, onClick: () -> Unit) {
+private fun TableCell(table: TableBill, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val hasOrder = table.total > 0
     Column(
-        modifier = Modifier
+        modifier = modifier
+            .aspectRatio(1f)
             .clip(RoundedCornerShape(12.dp))
             .background(if (selected) DiningColors.Primary else DiningColors.Surface)
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             "桌 ${table.tableNo}",
@@ -351,13 +365,13 @@ private fun TableChip(table: TableBill, selected: Boolean, onClick: () -> Unit) 
         if (hasOrder) {
             Text(
                 "RM%.2f".format(table.total),
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 color = if (selected) DiningColors.Surface.copy(alpha = 0.9f) else DiningColors.Primary
             )
         } else {
             Text(
                 "空桌",
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 color = if (selected) DiningColors.Surface.copy(alpha = 0.7f) else DiningColors.TextMuted
             )
         }
