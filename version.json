@@ -1,7 +1,7 @@
 {
-  "versionCode": 12,
-  "versionName": "1.0.11",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.11/zhixiangshipu-app.apk",
-  "changelog": "- 首页新增「开台点餐」页面\n- 选择桌台 / 菜单加减数量 / 取消 / 确认下单",
+  "versionCode": 13,
+  "versionName": "1.0.12",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.12/zhixiangshipu-app.apk",
+  "changelog": "- 设置页版本号连点 7 次进入管理员登录\n- 弹窗输入管理员 ID 和密码登录",
   "buildDate": "2026-08-26"
 }

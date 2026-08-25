@@ -5,17 +5,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import stellarelite.zxsp.ui.theme.DiningColors
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    onAdminLogin: (id: String, password: String) -> Unit = { _, _ -> }
+) {
+    var adminTapCount by remember { mutableStateOf(0) }
+    var showAdminLogin by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,7 +62,24 @@ fun SettingsScreen() {
 
         // 系统
         SettingsGroup("系统") {
-            SettingsRow("版本号", "v1.0.0")
+            // 版本号：连点 7 次进入管理员登录
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        adminTapCount++
+                        if (adminTapCount >= 7) {
+                            adminTapCount = 0
+                            showAdminLogin = true
+                        }
+                    }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("版本号", fontSize = 15.sp, color = DiningColors.TextPrimary)
+                Text("v1.0.11", fontSize = 14.sp, color = DiningColors.TextSecondary)
+            }
             SettingsRow("检查更新", "已是最新")
         }
 
@@ -70,6 +95,76 @@ fun SettingsScreen() {
             Text("退出登录", fontSize = 16.sp, color = DiningColors.Error)
         }
     }
+
+    // 管理员登录弹窗
+    if (showAdminLogin) {
+        AdminLoginDialog(
+            onDismiss = { showAdminLogin = false },
+            onLogin = { id, password ->
+                showAdminLogin = false
+                onAdminLogin(id, password)
+            }
+        )
+    }
+}
+
+@Composable
+private fun AdminLoginDialog(
+    onDismiss: () -> Unit,
+    onLogin: (String, String) -> Unit
+) {
+    var id by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Text(
+                "👤 管理员登录",
+                color = DiningColors.TextPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = id,
+                    onValueChange = { id = it },
+                    label = { Text("管理员 ID") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("密码") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onLogin(id.trim(), password) },
+                enabled = id.isNotBlank() && password.isNotBlank(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DiningColors.Primary,
+                    disabledContainerColor = DiningColors.TextMuted.copy(alpha = 0.3f)
+                )
+            ) {
+                Text("登录", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+        }
+    )
 }
 
 @Composable
