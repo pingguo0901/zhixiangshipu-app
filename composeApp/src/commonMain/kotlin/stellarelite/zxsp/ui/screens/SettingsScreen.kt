@@ -40,7 +40,7 @@ fun SettingsScreen(
 
         // 餐厅信息
         SettingsGroup("餐厅信息") {
-            SettingsRow("餐厅名称", "炙巷食谱")
+            SettingsRow("餐厅名称", "炙巷食铺")
             SettingsRow("联系电话", "010-88886666")
             SettingsRow("营业时间", "10:00 - 22:00")
         }

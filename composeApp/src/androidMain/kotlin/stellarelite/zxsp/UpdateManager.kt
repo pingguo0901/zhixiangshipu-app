@@ -61,7 +61,7 @@ object UpdateManager {
         if (destFile.exists()) destFile.delete()
 
         val request = DownloadManager.Request(Uri.parse(apkUrl)).apply {
-            setTitle("炙巷食谱更新下载中...")
+            setTitle("炙巷食铺更新下载中...")
             setDescription("正在下载最新版本")
             setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             setDestinationUri(Uri.fromFile(destFile))
@@ -130,7 +130,7 @@ object UpdateManager {
         try {
             context.startActivity(intent)
         } catch (e: Exception) {
-            val chooser = Intent.createChooser(intent, "安装炙巷食谱更新")
+            val chooser = Intent.createChooser(intent, "安装炙巷食铺更新")
             chooser.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(chooser)
         }

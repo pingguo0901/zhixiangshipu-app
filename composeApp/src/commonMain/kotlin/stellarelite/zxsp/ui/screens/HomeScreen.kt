@@ -36,7 +36,7 @@ fun HomeScreen() {
     ) {
         // 顶部标题
         Text(
-            "🍽️ 炙巷食谱",
+            "🍽️ 炙巷食铺",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = DiningColors.TextPrimary
