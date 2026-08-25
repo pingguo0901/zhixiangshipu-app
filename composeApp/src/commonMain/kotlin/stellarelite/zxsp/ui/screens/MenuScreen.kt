@@ -23,8 +23,13 @@ data class MenuItem(
 
 @Composable
 fun MenuScreen() {
-    val categories = listOf("招牌菜", "热菜", "凉菜", "汤品", "主食", "饮品")
+    val categories = listOf("招牌菜", "烧烤", "热菜", "凉菜", "汤品", "主食", "饮品")
     val menuItems = listOf(
+        MenuItem("羊肉串", 3.00, "烧烤", "🐑"),
+        MenuItem("牛肉串", 3.00, "烧烤", "🐮"),
+        MenuItem("猪肉串", 3.00, "烧烤", "🐷"),
+        MenuItem("鸡肉串", 3.00, "烧烤", "🐔"),
+        MenuItem("五花肉串", 3.00, "烧烤", "🥓"),
         MenuItem("红烧排骨", 38.00, "热菜", "🍖"),
         MenuItem("清蒸鲈鱼", 58.00, "热菜", "🐟"),
         MenuItem("宫保鸡丁", 32.00, "热菜", "🍗"),
@@ -116,7 +121,7 @@ private fun MenuItemCard(item: MenuItem) {
                 }
             }
             Text(
-                "¥%.2f".format(item.price),
+                "RM%.2f".format(item.price),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = DiningColors.Primary
