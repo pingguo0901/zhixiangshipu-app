@@ -1,7 +1,7 @@
 {
-  "versionCode": 3,
-  "versionName": "1.0.2",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.2/zhixiangshipu-app.apk",
-  "changelog": "- 更新 App 图标为最新版本",
+  "versionCode": 4,
+  "versionName": "1.0.3",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.3/zhixiangshipu-app.apk",
+  "changelog": "- 主页「菜品管理」改为「收银台」",
   "buildDate": "2026-08-26"
 }

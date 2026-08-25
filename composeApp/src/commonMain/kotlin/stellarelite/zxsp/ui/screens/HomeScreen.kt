@@ -82,7 +82,7 @@ fun HomeScreen() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            QuickActionCard("📋", "菜品管理", Modifier.weight(1f))
+            QuickActionCard("💰", "收银台", Modifier.weight(1f))
             QuickActionCard("👥", "员工排班", Modifier.weight(1f))
         }
 
