@@ -1,7 +1,7 @@
 {
-  "versionCode": 7,
-  "versionName": "1.0.6",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.6/zhixiangshipu-app.apk",
-  "changelog": "- 菜单新增「烧烤」种类\n- 羊肉串/牛肉串/猪肉串/鸡肉串/五花肉串 RM3/串\n- 价格单位统一为 RM",
+  "versionCode": 8,
+  "versionName": "1.0.7",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.7/zhixiangshipu-app.apk",
+  "changelog": "- 菜单管理：编辑按钮，可添加/删除/修改菜品\n- 添加/修改支持上传菜品照片、名称、单价\n- 删除菜品带返回按钮",
   "buildDate": "2026-08-26"
 }
