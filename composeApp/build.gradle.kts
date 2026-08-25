@@ -53,12 +53,16 @@ android {
         applicationId = "stellarelite.zxsp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.0.7"
+        versionCode = 9
+        versionName = "1.0.8"
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+
+compose.resources {
+    packageOfResClass = "stellarelite.zxsp.generated.resources"
 }

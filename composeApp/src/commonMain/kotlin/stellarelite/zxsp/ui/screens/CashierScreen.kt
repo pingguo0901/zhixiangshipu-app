@@ -1,19 +1,30 @@
 package stellarelite.zxsp.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+import stellarelite.zxsp.generated.resources.Res
+import stellarelite.zxsp.generated.resources.qr_alipay
+import stellarelite.zxsp.generated.resources.qr_duitnow
+import stellarelite.zxsp.generated.resources.qr_tng
+import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.ui.theme.DiningColors
 
 data class OrderItem(
@@ -78,6 +89,8 @@ fun CashierScreen() {
     var tables by remember { mutableStateOf(initialTables) }
     var selectedTableNo by remember { mutableStateOf(1) }
     var showPaymentDialog by remember { mutableStateOf(false) }
+    var qrMethod by remember { mutableStateOf<PaymentMethod?>(null) }
+    var showCashDialog by remember { mutableStateOf(false) }
     var completedMethod by remember { mutableStateOf<PaymentMethod?>(null) }
 
     val selectedTable = tables.firstOrNull { it.tableNo == selectedTableNo } ?: tables.first()
@@ -271,7 +284,11 @@ fun CashierScreen() {
                                 .clip(RoundedCornerShape(10.dp))
                                 .clickable {
                                     showPaymentDialog = false
-                                    completedMethod = method
+                                    if (method == PaymentMethod.Cash) {
+                                        showCashDialog = true
+                                    } else {
+                                        qrMethod = method
+                                    }
                                 }
                                 .padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -293,6 +310,37 @@ fun CashierScreen() {
                 TextButton(onClick = { showPaymentDialog = false }) {
                     Text("取消", color = DiningColors.TextMuted)
                 }
+            }
+        )
+    }
+
+    // 扫码支付弹窗（TNG / DuitNow / 支付宝）
+    qrMethod?.let { method ->
+        QrPaymentDialog(
+            method = method,
+            amount = total,
+            onDismiss = { qrMethod = null },
+            onComplete = {
+                qrMethod = null
+                tables = tables.map {
+                    if (it.tableNo == selectedTableNo) it.copy(items = emptyList()) else it
+                }
+                completedMethod = method
+            }
+        )
+    }
+
+    // 现金支付弹窗
+    if (showCashDialog) {
+        CashPaymentDialog(
+            amount = total,
+            onDismiss = { showCashDialog = false },
+            onComplete = {
+                showCashDialog = false
+                tables = tables.map {
+                    if (it.tableNo == selectedTableNo) it.copy(items = emptyList()) else it
+                }
+                completedMethod = PaymentMethod.Cash
             }
         )
     }
@@ -340,6 +388,192 @@ fun CashierScreen() {
             }
         )
     }
+}
+
+@Composable
+private fun QrPaymentDialog(
+    method: PaymentMethod,
+    amount: Double,
+    onDismiss: () -> Unit,
+    onComplete: () -> Unit
+) {
+    var receipt by remember { mutableStateOf<ImageBitmap?>(null) }
+    val takePhoto = rememberCamera { receipt = it }
+
+    val qrPainter = when (method) {
+        PaymentMethod.TNG -> painterResource(Res.drawable.qr_tng)
+        PaymentMethod.DUITNOW -> painterResource(Res.drawable.qr_duitnow)
+        PaymentMethod.Alipay -> painterResource(Res.drawable.qr_alipay)
+        else -> null
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Column {
+                Text(
+                    "${method.emoji} ${method.label}",
+                    color = DiningColors.TextPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "请顾客扫码支付 RM %.2f".format(amount),
+                    fontSize = 14.sp,
+                    color = DiningColors.TextSecondary
+                )
+            }
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 付款二维码
+                Box(
+                    modifier = Modifier
+                        .size(200.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(DiningColors.SurfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (qrPainter != null) {
+                        Image(
+                            painter = qrPainter,
+                            contentDescription = "付款二维码",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Text(
+                            "付款二维码",
+                            fontSize = 14.sp,
+                            color = DiningColors.TextSecondary
+                        )
+                    }
+                }
+
+                // 收据拍照
+                if (receipt != null) {
+                    Image(
+                        bitmap = receipt!!,
+                        contentDescription = "收据",
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                Button(
+                    onClick = takePhoto,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DiningColors.SurfaceVariant)
+                ) {
+                    Text(
+                        "📷 ${if (receipt == null) "拍照收据" else "重新拍照"}",
+                        color = DiningColors.TextPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onComplete,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
+            ) {
+                Text("完成", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+        }
+    )
+}
+
+@Composable
+private fun CashPaymentDialog(
+    amount: Double,
+    onDismiss: () -> Unit,
+    onComplete: () -> Unit
+) {
+    var cashText by remember { mutableStateOf("") }
+    val cashGiven = cashText.toDoubleOrNull() ?: 0.0
+    val change = cashGiven - amount
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Text(
+                "💵 现金收款",
+                color = DiningColors.TextPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                // 消费金额
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("消费金额", fontSize = 15.sp, color = DiningColors.TextSecondary)
+                    Text(
+                        "RM %.2f".format(amount),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DiningColors.TextPrimary
+                    )
+                }
+
+                // 顾客给多少现金
+                OutlinedTextField(
+                    value = cashText,
+                    onValueChange = { cashText = it },
+                    label = { Text("顾客给多少现金 (RM)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // 找零
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("找零", fontSize = 15.sp, color = DiningColors.TextSecondary)
+                    Text(
+                        if (change >= 0) "RM %.2f".format(change) else "现金不足",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (change >= 0) DiningColors.Success else DiningColors.Error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onComplete,
+                enabled = cashGiven >= amount && amount > 0,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
+            ) {
+                Text("完成", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+        }
+    )
 }
 
 @Composable

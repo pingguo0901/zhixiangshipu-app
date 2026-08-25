@@ -1,7 +1,7 @@
 {
-  "versionCode": 8,
-  "versionName": "1.0.7",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.7/zhixiangshipu-app.apk",
-  "changelog": "- 菜单管理：编辑按钮，可添加/删除/修改菜品\n- 添加/修改支持上传菜品照片、名称、单价\n- 删除菜品带返回按钮",
+  "versionCode": 9,
+  "versionName": "1.0.8",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.8/zhixiangshipu-app.apk",
+  "changelog": "- 扫码支付弹窗：显示付款二维码（TNG/DuitNow/支付宝）\n- 底部拍照按钮：启动相机拍收据\n- 现金支付：输入顾客现金，自动算找零\n- 三张收款二维码已接入",
   "buildDate": "2026-08-26"
 }
