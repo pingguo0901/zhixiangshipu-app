@@ -1,0 +1,5 @@
+{
+  "buildCommand": "echo 'Static deploy only'",
+  "outputDirectory": ".",
+  "installCommand": "echo 'No install needed'"
+}

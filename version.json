@@ -1,0 +1,6 @@
+{
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "apkUrl": "/zhixiangshipu-app.apk",
+  "changelog": "- 🎉 炙巷食谱 首次发布\n- 📋 菜单 / 💰 收银台 / 🍽️ 主页 / 📦 仓库 / ⚙️ 设置\n- 🔄 内置自动更新系统\n- KMP Compose Multiplatform 构建\n- Android/iOS 双端支持"
+}
