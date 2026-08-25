@@ -18,7 +18,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object UpdateManager {
-    private const val VERSION_URL = "https://zhixiangshipu-app.vercel.app/version.json"
+    private const val VERSION_URL = "https://raw.githubusercontent.com/pingguo0901/zhixiangshipu-app/main/version.json"
     private const val APK_FILENAME = "zhixiangshipu-app.apk"
     private var currentVersionCode = 0
     private var apkDownloadId = 0L
