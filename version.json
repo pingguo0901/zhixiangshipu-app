@@ -1,7 +1,7 @@
 {
-  "versionCode": 9,
-  "versionName": "1.0.8",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.8/zhixiangshipu-app.apk",
-  "changelog": "- 扫码支付弹窗：显示付款二维码（TNG/DuitNow/支付宝）\n- 底部拍照按钮：启动相机拍收据\n- 现金支付：输入顾客现金，自动算找零\n- 三张收款二维码已接入",
+  "versionCode": 10,
+  "versionName": "1.0.9",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.9/zhixiangshipu-app.apk",
+  "changelog": "- 收款二维码文件重命名（Alipay_QR / TNG_QR / Duitnow_MYBQR）",
   "buildDate": "2026-08-26"
 }

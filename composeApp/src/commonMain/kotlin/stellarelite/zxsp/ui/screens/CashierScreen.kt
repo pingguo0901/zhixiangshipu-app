@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.painterResource
 import stellarelite.zxsp.generated.resources.Res
-import stellarelite.zxsp.generated.resources.qr_alipay
-import stellarelite.zxsp.generated.resources.qr_duitnow
-import stellarelite.zxsp.generated.resources.qr_tng
+import stellarelite.zxsp.generated.resources.alipay_qr
+import stellarelite.zxsp.generated.resources.duitnow_mybqr
+import stellarelite.zxsp.generated.resources.tng_qr
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.ui.theme.DiningColors
 
@@ -401,9 +401,9 @@ private fun QrPaymentDialog(
     val takePhoto = rememberCamera { receipt = it }
 
     val qrPainter = when (method) {
-        PaymentMethod.TNG -> painterResource(Res.drawable.qr_tng)
-        PaymentMethod.DUITNOW -> painterResource(Res.drawable.qr_duitnow)
-        PaymentMethod.Alipay -> painterResource(Res.drawable.qr_alipay)
+        PaymentMethod.TNG -> painterResource(Res.drawable.tng_qr)
+        PaymentMethod.DUITNOW -> painterResource(Res.drawable.duitnow_mybqr)
+        PaymentMethod.Alipay -> painterResource(Res.drawable.alipay_qr)
         else -> null
     }
 
