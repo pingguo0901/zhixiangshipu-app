@@ -42,7 +42,7 @@ fun NewOrderScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) {
         runCatching {
             val m = SupabaseClient.fetchMenuItems().filter { it.is_active }
-            val t = SupabaseClient.fetchTables().filter { it.table_status == "free" }
+            val t = SupabaseClient.fetchTables().filter { it.table_status == "free" && !it.table_no.startsWith("外卖") }
             menuItems = m
             tables = t
         }

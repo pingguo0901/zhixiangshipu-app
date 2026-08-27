@@ -42,8 +42,10 @@ fun DashboardScreen(onNewOrder: () -> Unit = {}) {
 
     LaunchedEffect(Unit) { load() }
 
-    val occupiedCount = tables.count { it.table_status == "occupied" }
-    val freeCount = tables.count { it.table_status == "free" }
+    val dineInTables = tables.filter { !it.table_no.startsWith("外卖") }
+    val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
+    val occupiedCount = dineInTables.count { it.table_status == "occupied" }
+    val freeCount = dineInTables.count { it.table_status == "free" }
 
     Column(
         modifier = Modifier
@@ -83,13 +85,12 @@ fun DashboardScreen(onNewOrder: () -> Unit = {}) {
             ) {
                 StatItem("🪑", "$freeCount", "空闲桌")
                 StatItem("🍽️", "$occupiedCount", "占用中")
-                StatItem("🧾", "${tables.size}", "总桌台")
+                StatItem("🧾", "${dineInTables.size}", "总桌台")
+                StatItem("🛵", "${takeawayTables.size}", "外卖号")
             }
         }
 
         // 桌台看板
-        Text("桌台看板", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-
         when {
             loading -> Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = DiningColors.Primary)
@@ -101,18 +102,47 @@ fun DashboardScreen(onNewOrder: () -> Unit = {}) {
                     Button(onClick = { load() }) { Text("重试") }
                 }
             }
-            tables.isEmpty() -> Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text("暂无桌台，请老板先添加", color = DiningColors.TextMuted, fontSize = 14.sp)
-            }
-            else -> LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                userScrollEnabled = false
-            ) {
-                items(tables, key = { it.id }) { table ->
-                    TableBadge(table)
+            else -> {
+                Text("🪑 堂食桌台（${dineInTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (dineInTables.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Text("暂无桌台，请老板先添加", color = DiningColors.TextMuted, fontSize = 14.sp)
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(4),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        userScrollEnabled = false
+                    ) {
+                        items(dineInTables, key = { it.id }) { table ->
+                            TableBadge(table)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("🛵 外卖（${takeawayTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                Spacer(modifier = Modifier.height(8.dp))
+                if (takeawayTables.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        Text("暂无外卖号", color = DiningColors.TextMuted, fontSize = 14.sp)
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(4),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        userScrollEnabled = false
+                    ) {
+                        items(takeawayTables, key = { it.id }) { table ->
+                            TableBadge(table)
+                        }
+                    }
                 }
             }
         }
