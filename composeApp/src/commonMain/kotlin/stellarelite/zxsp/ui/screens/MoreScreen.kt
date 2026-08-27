@@ -26,6 +26,7 @@ import stellarelite.zxsp.ui.theme.DiningColors
 
 private sealed class MoreNav {
     object Menu : MoreNav()
+    object MenuManage : MoreNav()
     object Tables : MoreNav()
     object Suppliers : MoreNav()
     object Staffs : MoreNav()
@@ -36,10 +37,12 @@ fun MoreScreen() {
     var nav by remember { mutableStateOf<MoreNav>(MoreNav.Menu) }
     when (val n = nav) {
         is MoreNav.Menu -> MoreMenuView(
+            onMenu = { nav = MoreNav.MenuManage },
             onTables = { nav = MoreNav.Tables },
             onSuppliers = { nav = MoreNav.Suppliers },
             onStaffs = { nav = MoreNav.Staffs }
         )
+        is MoreNav.MenuManage -> MenuManageScreen(onBack = { nav = MoreNav.Menu })
         is MoreNav.Tables -> TableManageScreen(onBack = { nav = MoreNav.Menu })
         is MoreNav.Suppliers -> SupplierManageScreen(onBack = { nav = MoreNav.Menu })
         is MoreNav.Staffs -> StaffManageScreen(onBack = { nav = MoreNav.Menu })
@@ -47,14 +50,14 @@ fun MoreScreen() {
 }
 
 @Composable
-private fun MoreMenuView(onTables: () -> Unit, onSuppliers: () -> Unit, onStaffs: () -> Unit) {
+private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: () -> Unit, onStaffs: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("⚙️ 更多", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
         Text("你好，${SessionManager.staffName}（${if (SessionManager.isAdmin) "老板" else "员工"}）", fontSize = 14.sp, color = DiningColors.TextSecondary)
         Spacer(modifier = Modifier.height(4.dp))
 
         // 菜单管理（老板维护菜品价格上下架）
-        MenuEntry("📋", "菜品管理", "维护菜品、价格、上下架") { /* nav to menu */ }
+        MenuEntry("📋", "菜品管理", "维护菜品、价格、上下架") { onMenu() }
         MenuEntry("🪑", "桌台管理", "新增/编辑桌台、修改状态") { onTables() }
         MenuEntry("📦", "供应商管理", "批发商档案、BRN、TIN") { onSuppliers() }
         MenuEntry("👷", "员工管理", "新增/停用员工账号") { onStaffs() }
@@ -93,6 +96,146 @@ private fun MenuEntry(emoji: String, title: String, desc: String, onClick: () ->
             Text("›", fontSize = 20.sp, color = DiningColors.TextMuted)
         }
     }
+}
+
+// ============ 菜品管理（仅老板） ============
+@Composable
+private fun MenuManageScreen(onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var showAdd by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<MenuItem?>(null) }
+
+    fun load() {
+        scope.launch {
+            loading = true
+            runCatching { SupabaseClient.fetchMenuItems() }.onSuccess { menuItems = it }
+            loading = false
+        }
+    }
+    LaunchedEffect(Unit) { load() }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
+            Spacer(modifier = Modifier.weight(1f))
+            Text("📋 菜品管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
+                Text("＋ 新增", color = DiningColors.Surface)
+            }
+        }
+
+        if (loading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = DiningColors.Primary) }
+        } else if (menuItems.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("暂无菜品，点右上角新增", color = DiningColors.TextMuted, fontSize = 14.sp) }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(menuItems, key = { it.id }) { m ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable { editing = m },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(m.item_name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                                Text("${m.category} · ${m.unit}", fontSize = 12.sp, color = DiningColors.TextMuted)
+                                Text("RM%.2f".format(m.sell_price_myr), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.Primary)
+                            }
+                            FilterChip(
+                                selected = m.is_active,
+                                onClick = {
+                                    scope.launch {
+                                        SupabaseClient.updateMenuItem(m.id, m.copy(is_active = !m.is_active))
+                                        load()
+                                    }
+                                },
+                                label = { Text(if (m.is_active) "上架" else "下架", fontSize = 11.sp) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showAdd) {
+        MenuItemDialog(item = null, onDismiss = { showAdd = false }, onDone = { showAdd = false; load() })
+    }
+    editing?.let { item ->
+        MenuItemDialog(item = item, onDismiss = { editing = null }, onDone = { editing = null; load() })
+    }
+}
+
+@Composable
+private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var name by remember { mutableStateOf(item?.item_name ?: "") }
+    var category by remember { mutableStateOf(item?.category ?: "") }
+    var unit by remember { mutableStateOf(item?.unit ?: "") }
+    var price by remember { mutableStateOf(if (item != null && item.sell_price_myr > 0) item.sell_price_myr.toString() else "") }
+    var notes by remember { mutableStateOf(item?.notes ?: "") }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    val isEdit = item != null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text(if (isEdit) "编辑菜品" else "新增菜品", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("菜品名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("分类（如：烧烤、主食）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("单位（如：串、份、瓶）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = price, onValueChange = { price = it }, label = { Text("售价 (RM)") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（辣度、规格）") }, modifier = Modifier.fillMaxWidth())
+                if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = name.isNotBlank() && !saving, onClick = {
+                scope.launch {
+                    saving = true; error = null
+                    val p = price.trim().toDoubleOrNull()
+                    if (p == null) {
+                        saving = false; error = "售价格式不对"
+                        return@launch
+                    }
+                    val ok = if (isEdit) {
+                        SupabaseClient.updateMenuItem(item!!.id, item.copy(
+                            item_name = name.trim(), category = category.trim(), unit = unit.trim(),
+                            sell_price_myr = p, notes = notes.trim().ifBlank { null }
+                        ))
+                    } else {
+                        SupabaseClient.insertMenuItem(MenuItem(
+                            item_name = name.trim(), category = category.trim(), unit = unit.trim(),
+                            sell_price_myr = p, notes = notes.trim().ifBlank { null }, is_active = true
+                        )) != null
+                    }
+                    saving = false
+                    if (ok) onDone() else error = "保存失败"
+                }
+            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
 }
 
 // ============ 桌台管理（仅老板） ============

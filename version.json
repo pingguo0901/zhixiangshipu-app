@@ -1,7 +1,7 @@
 {
-  "versionCode": 17,
-  "versionName": "1.1.1",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.1/zhixiangshipu-app.apk",
-  "changelog": "- 修复：登录提示「该账号未关联员工档案」（登录后先写入 token 再查员工档案，修复 RLS 下查不到自己档案的问题）\n- 全新内部员工版：Supabase Auth 登录、工作台桌台看板、新建订单、订单&收款管理、仓库库存、进货入库、冰箱、肉品加工、开销记账、报表（老板）、桌台/供应商/员工管理（老板）\n- 后端：12 张业务表 + RLS 权限 + 审计日志触发器 + 库存/订单状态自动化",
+  "versionCode": 18,
+  "versionName": "1.1.2",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.2/zhixiangshipu-app.apk",
+  "changelog": "- 新增：更多页「菜品管理」页面（老板可新增/编辑/上下架菜品，维护名称、分类、单位、售价、备注）\n- 修复：登录提示「该账号未关联员工档案」（登录后先写入 token 再查员工档案）\n- 全新内部员工版：Supabase Auth 登录、工作台桌台看板、新建订单、订单&收款管理、仓库库存、进货入库、冰箱、肉品加工、开销记账、报表（老板）、桌台/供应商/员工管理（老板）\n- 后端：12 张业务表 + RLS 权限 + 审计日志触发器 + 库存/订单状态自动化",
   "buildDate": "2026-08-28"
 }
