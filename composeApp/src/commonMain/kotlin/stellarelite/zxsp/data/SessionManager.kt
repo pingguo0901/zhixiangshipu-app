@@ -25,6 +25,10 @@ object SessionManager {
         this.role = role
     }
 
+    fun setToken(token: String) {
+        accessToken = token
+    }
+
     fun clear() {
         accessToken = null
         staffId = null

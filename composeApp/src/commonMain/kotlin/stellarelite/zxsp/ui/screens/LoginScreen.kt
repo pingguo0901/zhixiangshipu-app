@@ -38,6 +38,7 @@ fun LoginScreen() {
             val session = SupabaseClient.login(email.trim(), password)
             if (session.isSuccess) {
                 val s = session.getOrNull()
+                SessionManager.setToken(s?.access_token ?: "")
                 val staff = s?.user?.id?.let { SupabaseClient.fetchMyStaff(it) }
                 if (staff != null && staff.is_active) {
                     SessionManager.setSession(
