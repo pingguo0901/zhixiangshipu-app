@@ -26,17 +26,19 @@ import stellarelite.zxsp.network.WarehouseItem
 import stellarelite.zxsp.ui.theme.DiningColors
 
 // ============ 进货入库 ============
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun StockInScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var suppliers by remember { mutableStateOf<List<Supplier>>(emptyList()) }
     var items by remember { mutableStateOf<List<WarehouseItem>>(emptyList()) }
     var supplierId by remember { mutableStateOf<Long?>(null) }
-    val inQuantities = remember { mutableStateMapOf<Long, String>() }
-    val inPrices = remember { mutableStateMapOf<Long, String>() }
+    val entries = remember { mutableStateListOf<StockInEntry>() }
     var payMethod by remember { mutableStateOf("cash") }
     var ref by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(todayDate()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showAddItem by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -50,8 +52,8 @@ fun StockInScreen(onBack: () -> Unit) {
         loading = false
     }
 
-    val totalCost = items.sumOf { it -> (inQuantities[it.id]?.toDoubleOrNull() ?: 0.0) * (inPrices[it.id]?.toDoubleOrNull() ?: 0.0) }
-    val hasItems = items.any { (inQuantities[it.id]?.toDoubleOrNull() ?: 0.0) > 0 }
+    val totalCost = entries.sumOf { (it.qty.toDoubleOrNull() ?: 0.0) * (it.price.toDoubleOrNull() ?: 0.0) }
+    val hasItems = entries.isNotEmpty()
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -76,7 +78,7 @@ fun StockInScreen(onBack: () -> Unit) {
                 item {
                     Text("选择供应商", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         suppliers.forEach { s ->
                             FilterChip(selected = supplierId == s.id, onClick = { supplierId = s.id }, label = { Text(s.supplier_name) })
                         }
@@ -86,22 +88,45 @@ fun StockInScreen(onBack: () -> Unit) {
                 item {
                     Text("进货日期", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = date,
-                        onValueChange = { date = it },
-                        label = { Text("YYYY-MM-DD") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                items(items, key = { it.id }) { item ->
-                    StockInRow(item, inQuantities[item.id] ?: "", inPrices[item.id] ?: "",
-                        onQty = { inQuantities[item.id] = it }, onPrice = { inPrices[item.id] = it })
+                    OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(12.dp)) {
+                        Text("📅 $date", color = DiningColors.TextPrimary, fontWeight = FontWeight.Medium)
+                    }
                 }
 
                 item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("进货物料", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (entries.isEmpty()) {
+                        Text("还没有添加物料，点下方按钮添加", fontSize = 13.sp, color = DiningColors.TextMuted)
+                    }
+                }
+
+                items(entries) { e ->
+                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(e.itemName, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                Text("数量 ${e.qty} ${e.unit} · 单价 RM${e.price}", fontSize = 12.sp, color = DiningColors.TextMuted)
+                            }
+                            TextButton(onClick = { entries.remove(e) }) { Text("删除", color = DiningColors.Error) }
+                        }
+                    }
+                }
+
+                item {
+                    OutlinedButton(onClick = { showAddItem = true }, modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(12.dp)) {
+                        Text("＋ 添加物料", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+
+                item {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("cash" to "现金", "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to "支付宝").forEach { (v, l) ->
                             FilterChip(selected = payMethod == v, onClick = { payMethod = v }, label = { Text(l) })
                         }
@@ -124,7 +149,7 @@ fun StockInScreen(onBack: () -> Unit) {
                             scope.launch {
                                 saving = true
                                 error = null
-                                val inItemsJson = buildStockInJson(items, inQuantities, inPrices)
+                                val inItemsJson = buildStockInJson(entries)
                                 val log = StockInLog(
                                     supplier_id = supplierId ?: 0,
                                     in_items = inItemsJson,
@@ -157,44 +182,102 @@ fun StockInScreen(onBack: () -> Unit) {
             }
         }
     }
-}
 
-@Composable
-private fun StockInRow(item: WarehouseItem, qty: String, price: String, onQty: (String) -> Unit, onPrice: (String) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(item.item_name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = qty, onValueChange = onQty,
-                    label = { Text("数量 (${item.unit})") }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = price, onValueChange = onPrice,
-                    label = { Text("单价 (RM)") }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { date = millisToDate(it) }
+                    showDatePicker = false
+                }) { Text("确定", color = DiningColors.Primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("取消", color = DiningColors.TextMuted) }
             }
+        ) {
+            DatePicker(state = datePickerState)
         }
+    }
+
+    if (showAddItem) {
+        AddStockItemDialog(
+            items = items,
+            onAdd = { entries.add(it) },
+            onDismiss = { showAddItem = false }
+        )
     }
 }
 
-private fun buildStockInJson(items: List<WarehouseItem>, quantities: Map<Long, String>, prices: Map<Long, String>): String {
+private data class StockInEntry(
+    val itemId: Long,
+    val itemName: String,
+    val unit: String,
+    val qty: String,
+    val price: String
+)
+
+@Composable
+private fun AddStockItemDialog(items: List<WarehouseItem>, onAdd: (StockInEntry) -> Unit, onDismiss: () -> Unit) {
+    var itemId by remember { mutableStateOf<Long?>(null) }
+    var qty by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+
+    val selectedItem = items.firstOrNull { it.id == itemId }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("添加进货物料", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box {
+                    OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(selectedItem?.item_name ?: "选择物料类型", modifier = Modifier.weight(1f), color = DiningColors.TextPrimary)
+                            Text("▾", color = DiningColors.TextMuted)
+                        }
+                    }
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        items.forEach { item ->
+                            DropdownMenuItem(
+                                text = { Text(item.item_name) },
+                                onClick = { itemId = item.id; expanded = false }
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(value = qty, onValueChange = { qty = it }, label = { Text("数量 (${selectedItem?.unit ?: ""})") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = price, onValueChange = { price = it }, label = { Text("单价 (RM)") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = itemId != null && (qty.toDoubleOrNull() ?: 0.0) > 0 && !price.isBlank(),
+                onClick = {
+                    val s = selectedItem
+                    if (s != null) {
+                        onAdd(StockInEntry(itemId = s.id, itemName = s.item_name, unit = s.unit, qty = qty.trim(), price = price.trim()))
+                    }
+                }
+            ) { Text("添加", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
+}
+
+private fun buildStockInJson(entries: List<StockInEntry>): String {
     val sb = StringBuilder("[")
-    var first = true
-    items.forEach { item ->
-        val q = quantities[item.id]?.toDoubleOrNull() ?: 0.0
-        if (q > 0) {
-            if (!first) sb.append(",")
-            val p = prices[item.id]?.toDoubleOrNull() ?: 0.0
-            sb.append("{\"warehouse_item_id\":${item.id},\"qty\":$q,\"unit_price\":$p}")
-            first = false
-        }
+    entries.forEachIndexed { i, e ->
+        if (i > 0) sb.append(",")
+        val q = e.qty.toDoubleOrNull() ?: 0.0
+        val p = e.price.toDoubleOrNull() ?: 0.0
+        sb.append("{\"warehouse_item_id\":${e.itemId},\"qty\":$q,\"unit_price\":$p}")
     }
     sb.append("]")
     return sb.toString()
