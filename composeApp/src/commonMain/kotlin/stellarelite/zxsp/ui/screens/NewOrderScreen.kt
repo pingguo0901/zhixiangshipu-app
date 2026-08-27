@@ -23,6 +23,7 @@ import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.ui.theme.DiningColors
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun NewOrderScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -42,7 +43,7 @@ fun NewOrderScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) {
         runCatching {
             val m = SupabaseClient.fetchMenuItems().filter { it.is_active }
-            val t = SupabaseClient.fetchTables().filter { it.table_status == "free" && !it.table_no.startsWith("外卖") }
+            val t = SupabaseClient.fetchTables().filter { it.table_status == "free" }
             menuItems = m
             tables = t
         }
@@ -51,6 +52,8 @@ fun NewOrderScreen(onBack: () -> Unit) {
 
     val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) }
     val totalCount = quantities.values.sum()
+    val dineInTables = tables.filter { !it.table_no.startsWith("外卖") }
+    val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -79,12 +82,12 @@ fun NewOrderScreen(onBack: () -> Unit) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = !isTakeaway,
-                            onClick = { isTakeaway = false; tableId = tables.firstOrNull()?.id },
+                            onClick = { isTakeaway = false; tableId = dineInTables.firstOrNull()?.id },
                             label = { Text("堂食") }
                         )
                         FilterChip(
                             selected = isTakeaway,
-                            onClick = { isTakeaway = true; tableId = null },
+                            onClick = { isTakeaway = true; tableId = takeawayTables.firstOrNull()?.id },
                             label = { Text("外卖") }
                         )
                     }
@@ -95,11 +98,40 @@ fun NewOrderScreen(onBack: () -> Unit) {
                     item {
                         Text("选择桌台", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                         Spacer(modifier = Modifier.height(8.dp))
-                        if (tables.isEmpty()) {
+                        if (dineInTables.isEmpty()) {
                             Text("暂无空闲桌台", fontSize = 13.sp, color = DiningColors.TextMuted)
                         } else {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                tables.forEach { t ->
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                dineInTables.forEach { t ->
+                                    FilterChip(
+                                        selected = tableId == t.id,
+                                        onClick = { tableId = t.id },
+                                        label = { Text(t.table_no) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 外卖号选择（外卖，自动分配可手动改）
+                if (isTakeaway) {
+                    item {
+                        Text("外卖号（自动分配，可手动改）", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (takeawayTables.isEmpty()) {
+                            Text("暂无空闲外卖号", fontSize = 13.sp, color = DiningColors.TextMuted)
+                        } else {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                takeawayTables.forEach { t ->
                                     FilterChip(
                                         selected = tableId == t.id,
                                         onClick = { tableId = t.id },

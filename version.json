@@ -1,7 +1,7 @@
 {
-  "versionCode": 20,
-  "versionName": "1.1.4",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.4/zhixiangshipu-app.apk",
-  "changelog": "- 修复：桌台看板有数据后闪退（去掉嵌套可滚动网格，改用固定 4 列排版）\n- 桌台看板分「堂食桌台」与「外卖」两区（堂食 16 桌、外卖 20 号）\n- 新建订单堂食只选堂食桌台\n- 新增：更多页「菜品管理」页面\n- 修复：登录提示「该账号未关联员工档案」",
+  "versionCode": 22,
+  "versionName": "1.1.6",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.6/zhixiangshipu-app.apk",
+  "changelog": "- 工作台「＋新建订单」按钮接通：点击进入新建订单页（跟订单管理「新建」同一页面）\n- 新建订单「外卖」自动分配外卖号（外卖01起，可手动换）\n- 订单详情：桌台/外卖号显示修正\n- 桌台看板分堂食(16桌)/外卖(20号)\n- 新增：更多页「菜品管理」\n- 修复：登录「该账号未关联员工档案」、桌台看板闪退",
   "buildDate": "2026-08-28"
 }

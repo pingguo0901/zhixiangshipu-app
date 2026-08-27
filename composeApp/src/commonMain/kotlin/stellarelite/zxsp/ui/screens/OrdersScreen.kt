@@ -146,6 +146,13 @@ private fun OrderCard(order: CustomerOrder, onClick: () -> Unit) {
 private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var showPay by remember { mutableStateOf(false) }
+    var tableNo by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(order.table_id) {
+        tableNo = order.table_id?.let { id ->
+            runCatching { SupabaseClient.fetchTables().firstOrNull { it.id == id }?.table_no }.getOrNull()
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -162,7 +169,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 DetailRow("收据号", order.receipt_no)
                 DetailRow("顾客", order.customer_name ?: "—")
                 DetailRow("电话", order.customer_phone ?: "—")
-                DetailRow("桌台", if (order.table_id != null) "桌 #${order.table_id}" else "外卖")
+                DetailRow("桌台", tableNo ?: (if (order.table_id != null) "桌 #${order.table_id}" else "外卖"))
                 DetailRow("状态", when (order.payment_status) {
                     "paid" -> "已付清"; "partial" -> "部分付"; else -> "未付"
                 })
