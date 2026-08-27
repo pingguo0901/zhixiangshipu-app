@@ -1,7 +1,7 @@
 {
-  "versionCode": 24,
-  "versionName": "1.1.8",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.8/zhixiangshipu-app.apk",
-  "changelog": "- 进货入库：新增「进货日期」字段；仓库新增「＋新增物料」按钮（可建肉类类型）\n- 修复：进货入库缺肉类类型/日期/价格导致无法保存\n- 修复：菜品管理上架下架点不动\n- 工作台新建订单按钮接通、外卖自动分配外卖号\n- 桌台看板分堂食/外卖、菜品管理、登录修复等",
+  "versionCode": 25,
+  "versionName": "1.1.9",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.9/zhixiangshipu-app.apk",
+  "changelog": "- 修复：上架/下架点一次后没反应（改为本地即时切换，不再整页刷新导致闪烁）\n- 进货入库新增日期字段、仓库新增物料\n- 工作台新建订单、外卖自动分配、桌台看板、菜品管理等",
   "buildDate": "2026-08-28"
 }

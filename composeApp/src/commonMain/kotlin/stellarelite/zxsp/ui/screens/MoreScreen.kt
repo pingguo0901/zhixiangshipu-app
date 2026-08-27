@@ -163,8 +163,10 @@ private fun MenuManageScreen(onBack: () -> Unit) {
                                 selected = m.is_active,
                                 onClick = {
                                     scope.launch {
-                                        SupabaseClient.updateMenuItem(m.id, m.copy(is_active = !m.is_active))
-                                        load()
+                                        val ok = SupabaseClient.updateMenuItem(m.id, m.copy(is_active = !m.is_active))
+                                        if (ok) {
+                                            menuItems = menuItems.map { if (it.id == m.id) it.copy(is_active = !m.is_active) else it }
+                                        }
                                     }
                                 },
                                 label = { Text(if (m.is_active) "上架" else "下架", fontSize = 11.sp) }
