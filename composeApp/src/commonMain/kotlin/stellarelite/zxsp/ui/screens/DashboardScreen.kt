@@ -20,17 +20,7 @@ import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.ui.theme.DiningColors
 
 @Composable
-fun DashboardScreen() {
-    var showNewOrder by remember { mutableStateOf(false) }
-    if (showNewOrder) {
-        NewOrderScreen(onBack = { showNewOrder = false })
-        return
-    }
-    DashboardView(onNewOrder = { showNewOrder = true })
-}
-
-@Composable
-private fun DashboardView(onNewOrder: () -> Unit) {
+fun DashboardScreen(onNewOrder: () -> Unit = {}) {
     val scope = rememberCoroutineScope()
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
