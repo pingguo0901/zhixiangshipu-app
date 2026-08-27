@@ -1,7 +1,7 @@
 {
-  "versionCode": 26,
-  "versionName": "1.1.10",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.10/zhixiangshipu-app.apk",
-  "changelog": "- 进货入库：进货日期改为日历弹窗选择；物料改为「＋添加物料」弹出式选项（不再一次性列出全部）\n- 上架/下架本地即时切换\n- 工作台新建订单、外卖自动分配、桌台看板、菜品管理等",
+  "versionCode": 27,
+  "versionName": "1.1.11",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.11/zhixiangshipu-app.apk",
+  "changelog": "- 新增：登录会话持久化，退出 APP 后台再打开无需重新登录\n- 进货日期日历弹窗、物料弹出式选择\n- 上架下架本地即时切换、工作台新建订单、外卖自动分配等",
   "buildDate": "2026-08-28"
 }
