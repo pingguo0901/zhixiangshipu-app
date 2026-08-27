@@ -1,7 +1,7 @@
 {
-  "versionCode": 19,
-  "versionName": "1.1.3",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.3/zhixiangshipu-app.apk",
-  "changelog": "- 新增：桌台看板分「堂食桌台」与「外卖」两区（堂食 16 桌、外卖 20 号）\n- 新建订单堂食只选堂食桌台，外卖号不混入\n- 新增：更多页「菜品管理」页面（老板可新增/编辑/上下架菜品）\n- 修复：登录提示「该账号未关联员工档案」（登录后先写入 token 再查员工档案）\n- 全新内部员工版：Supabase Auth 登录、工作台桌台看板、新建订单、订单&收款管理、仓库库存、进货入库、冰箱、肉品加工、开销记账、报表（老板）、桌台/供应商/员工管理（老板）\n- 后端：12 张业务表 + RLS 权限 + 审计日志触发器 + 库存/订单状态自动化",
+  "versionCode": 20,
+  "versionName": "1.1.4",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.4/zhixiangshipu-app.apk",
+  "changelog": "- 修复：桌台看板有数据后闪退（去掉嵌套可滚动网格，改用固定 4 列排版）\n- 桌台看板分「堂食桌台」与「外卖」两区（堂食 16 桌、外卖 20 号）\n- 新建订单堂食只选堂食桌台\n- 新增：更多页「菜品管理」页面\n- 修复：登录提示「该账号未关联员工档案」",
   "buildDate": "2026-08-28"
 }

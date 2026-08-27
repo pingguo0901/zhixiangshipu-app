@@ -3,9 +3,6 @@ package stellarelite.zxsp.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -110,17 +107,7 @@ fun DashboardScreen(onNewOrder: () -> Unit = {}) {
                         Text("暂无桌台，请老板先添加", color = DiningColors.TextMuted, fontSize = 14.sp)
                     }
                 } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(4),
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        userScrollEnabled = false
-                    ) {
-                        items(dineInTables, key = { it.id }) { table ->
-                            TableBadge(table)
-                        }
-                    }
+                    TableGrid(dineInTables)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -132,17 +119,7 @@ fun DashboardScreen(onNewOrder: () -> Unit = {}) {
                         Text("暂无外卖号", color = DiningColors.TextMuted, fontSize = 14.sp)
                     }
                 } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(4),
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        userScrollEnabled = false
-                    ) {
-                        items(takeawayTables, key = { it.id }) { table ->
-                            TableBadge(table)
-                        }
-                    }
+                    TableGrid(takeawayTables)
                 }
             }
         }
@@ -156,6 +133,27 @@ private fun StatItem(emoji: String, value: String, label: String) {
         Spacer(modifier = Modifier.height(2.dp))
         Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.Surface)
         Text(label, fontSize = 11.sp, color = DiningColors.Surface.copy(alpha = 0.75f))
+    }
+}
+
+@Composable
+private fun TableGrid(tables: List<TableList>) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        tables.chunked(4).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                row.forEach { table ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        TableBadge(table)
+                    }
+                }
+                repeat(4 - row.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
     }
 }
 
