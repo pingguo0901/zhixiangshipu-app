@@ -1,7 +1,7 @@
 {
-  "versionCode": 14,
-  "versionName": "1.0.13",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.0.13/zhixiangshipu-app.apk",
-  "changelog": "- App 名称更正为「炙巷食铺」",
-  "buildDate": "2026-08-26"
+  "versionCode": 16,
+  "versionName": "1.1.0",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.0/zhixiangshipu-app.apk",
+  "changelog": "- 全新内部员工版：Supabase Auth 登录、工作台桌台看板、新建订单、订单&收款管理、仓库库存、进货入库、冰箱、肉品加工、开销记账、报表（老板）、桌台/供应商/员工管理（老板）\n- 后端：12 张业务表 + RLS 权限 + 审计日志触发器 + 库存/订单状态自动化",
+  "buildDate": "2026-08-28"
 }

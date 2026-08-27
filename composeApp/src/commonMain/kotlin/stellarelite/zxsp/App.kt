@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.ui.components.BottomNavBar
 import stellarelite.zxsp.ui.components.DiningTab
 import stellarelite.zxsp.ui.screens.*
@@ -36,6 +37,11 @@ fun App(
         }
     }
 
+    if (!SessionManager.isLoggedIn) {
+        LoginScreen()
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -46,15 +52,14 @@ fun App(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 0.dp)
         ) {
             AnimatedContent(targetState = currentTab) { tab ->
                 when (tab) {
-                    DiningTab.Menu -> MenuScreen()
-                    DiningTab.Cashier -> CashierScreen()
-                    DiningTab.Home -> HomeScreen()
+                    DiningTab.Home -> DashboardScreen()
+                    DiningTab.Orders -> OrdersScreen()
                     DiningTab.Warehouse -> WarehouseScreen()
-                    DiningTab.Settings -> SettingsScreen()
+                    DiningTab.Finance -> FinanceScreen()
+                    DiningTab.More -> MoreScreen()
                 }
             }
         }
