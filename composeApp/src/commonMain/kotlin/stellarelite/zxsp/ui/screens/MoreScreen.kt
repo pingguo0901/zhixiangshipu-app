@@ -169,7 +169,7 @@ private fun MenuManageScreen(onBack: () -> Unit) {
                                         }
                                     }
                                 },
-                                label = { Text(if (m.is_active) "上架" else "下架", fontSize = 11.sp) }
+                                label = { Text(if (m.is_active) "下架" else "上架", fontSize = 11.sp) }
                             )
                         }
                     }

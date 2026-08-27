@@ -1,7 +1,7 @@
 {
-  "versionCode": 27,
-  "versionName": "1.1.11",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.11/zhixiangshipu-app.apk",
-  "changelog": "- 新增：登录会话持久化，退出 APP 后台再打开无需重新登录\n- 进货日期日历弹窗、物料弹出式选择\n- 上架下架本地即时切换、工作台新建订单、外卖自动分配等",
+  "versionCode": 28,
+  "versionName": "1.1.12",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.12/zhixiangshipu-app.apk",
+  "changelog": "- 修复：菜品上架/下架按钮文字改成「点击上架/点击下架」（原先是显示状态导致点反方向）\n- 已把全部菜品设为上架，可直接在新建订单下单\n- 登录会话持久化、进货日期日历、物料弹出式选择等",
   "buildDate": "2026-08-28"
 }
