@@ -16,6 +16,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.FridgeLog
 import stellarelite.zxsp.network.MeatProcessLog
@@ -271,16 +275,18 @@ private fun AddStockItemDialog(items: List<WarehouseItem>, onAdd: (StockInEntry)
     )
 }
 
-private fun buildStockInJson(entries: List<StockInEntry>): String {
-    val sb = StringBuilder("[")
-    entries.forEachIndexed { i, e ->
-        if (i > 0) sb.append(",")
-        val q = e.qty.toDoubleOrNull() ?: 0.0
-        val p = e.price.toDoubleOrNull() ?: 0.0
-        sb.append("{\"warehouse_item_id\":${e.itemId},\"qty\":$q,\"unit_price\":$p}")
+private fun buildStockInJson(entries: List<StockInEntry>): JsonElement {
+    return buildJsonArray {
+        entries.forEach { e ->
+            val q = e.qty.toDoubleOrNull() ?: 0.0
+            val p = e.price.toDoubleOrNull() ?: 0.0
+            add(buildJsonObject {
+                put("warehouse_item_id", JsonPrimitive(e.itemId))
+                put("qty", JsonPrimitive(q))
+                put("unit_price", JsonPrimitive(p))
+            })
+        }
     }
-    sb.append("]")
-    return sb.toString()
 }
 
 // ============ 冰箱操作 ============

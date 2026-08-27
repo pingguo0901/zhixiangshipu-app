@@ -1,6 +1,9 @@
 package stellarelite.zxsp.network
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 
 // ============ Auth ============
 @Serializable
@@ -59,9 +62,11 @@ data class CustomerOrder(
     val table_id: Long? = null,
     val customer_name: String? = null,
     val customer_phone: String? = null,
-    val order_items: String = "[]",
+    val order_items: JsonElement = JsonArray(emptyList()),
     val total_amount_myr: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val payment_status: String = "unpaid",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val receipt_no: String = "",
     val notes: String? = null,
     val created_by_staff_id: Long = 0,
@@ -75,6 +80,7 @@ data class PaymentRecord(
     val id: Long = 0,
     val order_id: Long = 0,
     val pay_amount_myr: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val pay_currency: String = "MYR",
     val exchange_rate: Double? = null,
     val pay_method: String = "",
@@ -105,12 +111,14 @@ data class StockInLog(
     val id: Long = 0,
     val stock_in_no: String = "",
     val supplier_id: Long = 0,
-    val in_items: String = "[]",
+    val in_items: JsonElement = JsonArray(emptyList()),
     val total_cost_myr: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val cost_currency: String = "MYR",
     val exchange_rate: Double? = null,
     val pay_method: String = "",
     val transaction_ref: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val payment_status: String = "unpaid",
     val supplier_invoice_no: String? = null,
     val supplier_invoice_attachment_url: String? = null,
@@ -139,6 +147,7 @@ data class FridgeLog(
     val warehouse_item_id: Long = 0,
     val take_qty: Double = 0.0,
     val return_qty: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val used_qty: Double = 0.0,
     val operate_staff_id: Long = 0,
     val log_time: String? = null,
@@ -164,12 +173,14 @@ data class ExpenseRecord(
     val expense_title: String = "",
     val expense_type: String = "",
     val amount_myr: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val expense_currency: String = "MYR",
     val exchange_rate: Double? = null,
     val pay_method: String = "",
     val transaction_ref: String = "",
     val receipt_invoice_no: String? = null,
     val attachment_url: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val is_personal: Boolean = false,
     val operate_staff_id: Long = 0,
     val transaction_datetime: String? = null,

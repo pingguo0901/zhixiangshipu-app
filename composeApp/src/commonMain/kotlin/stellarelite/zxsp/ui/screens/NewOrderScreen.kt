@@ -16,6 +16,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.MenuItem
@@ -244,19 +248,21 @@ fun NewOrderScreen(onBack: () -> Unit) {
     }
 }
 
-private fun buildOrderItemsJson(items: List<MenuItem>, quantities: Map<Long, Int>): String {
-    val sb = StringBuilder("[")
-    var first = true
-    items.forEach { item ->
-        val q = quantities[item.id] ?: 0
-        if (q > 0) {
-            if (!first) sb.append(",")
-            sb.append("{\"item_id\":${item.id},\"item_name\":\"${item.item_name}\",\"quantity\":$q,\"unit_price_myr\":${item.sell_price_myr},\"unit\":\"${item.unit}\"}")
-            first = false
+private fun buildOrderItemsJson(items: List<MenuItem>, quantities: Map<Long, Int>): JsonElement {
+    return buildJsonArray {
+        items.forEach { item ->
+            val q = quantities[item.id] ?: 0
+            if (q > 0) {
+                add(buildJsonObject {
+                    put("item_id", JsonPrimitive(item.id))
+                    put("item_name", JsonPrimitive(item.item_name))
+                    put("quantity", JsonPrimitive(q))
+                    put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
+                    put("unit", JsonPrimitive(item.unit))
+                })
+            }
         }
     }
-    sb.append("]")
-    return sb.toString()
 }
 
 @Composable

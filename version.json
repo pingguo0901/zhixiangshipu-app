@@ -1,7 +1,7 @@
 {
-  "versionCode": 28,
-  "versionName": "1.1.12",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.12/zhixiangshipu-app.apk",
-  "changelog": "- 修复：菜品上架/下架按钮文字改成「点击上架/点击下架」（原先是显示状态导致点反方向）\n- 已把全部菜品设为上架，可直接在新建订单下单\n- 登录会话持久化、进货日期日历、物料弹出式选择等",
+  "versionCode": 29,
+  "versionName": "1.1.13",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.13/zhixiangshipu-app.apk",
+  "changelog": "- 修复：入库/下单失败（payment_status、货币等必填字段被省略，且明细改为 JSON 数组格式）\n- 上架下架按钮动作语义、登录持久化、进货日期日历、物料弹出式选择等",
   "buildDate": "2026-08-28"
 }
