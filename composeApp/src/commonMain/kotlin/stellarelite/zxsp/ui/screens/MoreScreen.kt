@@ -142,7 +142,7 @@ private fun MenuManageScreen(onBack: () -> Unit) {
             ) {
                 items(menuItems, key = { it.id }) { m ->
                     Card(
-                        modifier = Modifier.fillMaxWidth().clickable { editing = m },
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
                     ) {
@@ -150,11 +150,15 @@ private fun MenuManageScreen(onBack: () -> Unit) {
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Column(
+                                modifier = Modifier.weight(1f).clickable { editing = m },
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
                                 Text(m.item_name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
                                 Text("${m.category} · ${m.unit}", fontSize = 12.sp, color = DiningColors.TextMuted)
                                 Text("RM%.2f".format(m.sell_price_myr), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.Primary)
                             }
+                            Spacer(modifier = Modifier.width(8.dp))
                             FilterChip(
                                 selected = m.is_active,
                                 onClick = {
