@@ -36,6 +36,7 @@ fun StockInScreen(onBack: () -> Unit) {
     val inPrices = remember { mutableStateMapOf<Long, String>() }
     var payMethod by remember { mutableStateOf("cash") }
     var ref by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf(todayDate()) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -82,6 +83,18 @@ fun StockInScreen(onBack: () -> Unit) {
                     }
                 }
 
+                item {
+                    Text("进货日期", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = date,
+                        onValueChange = { date = it },
+                        label = { Text("YYYY-MM-DD") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 items(items, key = { it.id }) { item ->
                     StockInRow(item, inQuantities[item.id] ?: "", inPrices[item.id] ?: "",
                         onQty = { inQuantities[item.id] = it }, onPrice = { inPrices[item.id] = it })
@@ -119,7 +132,7 @@ fun StockInScreen(onBack: () -> Unit) {
                                     pay_method = payMethod,
                                     transaction_ref = ref.trim(),
                                     operate_staff_id = SessionManager.staffId ?: 0,
-                                    transaction_datetime = currentIso()
+                                    transaction_datetime = if (date.isNotBlank()) "${date.trim()}T${currentIso().substringAfter('T')}" else currentIso()
                                 )
                                 val r = SupabaseClient.insertStockIn(log)
                                 saving = false

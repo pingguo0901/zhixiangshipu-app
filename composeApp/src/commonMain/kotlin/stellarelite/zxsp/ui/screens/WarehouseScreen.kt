@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -46,6 +48,7 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
     var items by remember { mutableStateOf<List<WarehouseItem>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showAdd by remember { mutableStateOf(false) }
 
     fun load() {
         scope.launch {
@@ -69,6 +72,10 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
             Text("📦 仓库库存", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
             IconButton(onClick = { load() }) { Text("🔄", fontSize = 18.sp) }
+            Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
+                Text("＋ 新增物料", color = DiningColors.Surface)
+            }
         }
 
         // 快捷入口
@@ -138,6 +145,10 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
             }
         }
     }
+
+    if (showAdd) {
+        AddMaterialDialog(onDismiss = { showAdd = false }, onDone = { showAdd = false; load() })
+    }
 }
 
 @Composable
@@ -156,4 +167,48 @@ private fun QuickBtn(emoji: String, label: String, modifier: Modifier = Modifier
             Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
         }
     }
+}
+
+@Composable
+private fun AddMaterialDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var name by remember { mutableStateOf("") }
+    var unit by remember { mutableStateOf("") }
+    var warningQty by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("新增物料", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("物料名称（如：五花肉、牛肉）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("单位（如：kg、串、瓶）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = warningQty, onValueChange = { warningQty = it }, label = { Text("预警库存值") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（可选）") }, modifier = Modifier.fillMaxWidth())
+                if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = name.isNotBlank() && unit.isNotBlank() && !saving, onClick = {
+                scope.launch {
+                    saving = true; error = null
+                    val wq = warningQty.trim().toDoubleOrNull() ?: 0.0
+                    val r = SupabaseClient.insertWarehouseItem(WarehouseItem(
+                        item_name = name.trim(), unit = unit.trim(),
+                        stock_qty = 0.0, warning_qty = wq,
+                        notes = notes.trim().ifBlank { null }
+                    ))
+                    saving = false
+                    if (r != null) onDone() else error = "保存失败"
+                }
+            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
 }
