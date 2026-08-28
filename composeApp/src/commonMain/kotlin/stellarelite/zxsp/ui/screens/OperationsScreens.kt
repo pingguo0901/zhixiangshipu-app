@@ -160,7 +160,7 @@ fun StockInScreen(onBack: () -> Unit) {
                                     total_cost_myr = totalCost,
                                     pay_method = payMethod,
                                     transaction_ref = ref.trim(),
-                                    operate_staff_id = SessionManager.staffId ?: 0,
+                                    operate_staff_id = SupabaseClient.currentStaffId(),
                                     transaction_datetime = if (date.isNotBlank()) "${date.trim()}T${currentIso().substringAfter('T')}" else currentIso()
                                 )
                                 val r = SupabaseClient.insertStockIn(log)

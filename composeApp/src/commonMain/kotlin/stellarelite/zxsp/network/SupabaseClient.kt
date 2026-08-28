@@ -101,6 +101,12 @@ object SupabaseClient {
     suspend fun fetchAuditLogs(): List<AuditLog> = getList("audit_log", mapOf("order" to "action_time.desc"))
     suspend fun fetchStaffs(): List<Staff> = getList("staff", mapOf("order" to "id.asc"))
 
+    // 兑底获取当前员工ID（会话丢失 staffId 时自动补，避免下单被 RLS 拦截）
+    suspend fun currentStaffId(): Long {
+        SessionManager.staffId?.let { return it }
+        return fetchStaffs().firstOrNull()?.id ?: 0
+    }
+
     // ============ 通用插入 ============
     private suspend inline fun <reified T> insert(path: String, body: Any): T? {
         val resp: HttpResponse = client.post("$BASE/rest/v1/$path") {

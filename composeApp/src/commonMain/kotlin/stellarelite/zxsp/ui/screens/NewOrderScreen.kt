@@ -219,7 +219,7 @@ fun NewOrderScreen(onBack: () -> Unit) {
                                     order_items = itemsJson,
                                     total_amount_myr = totalAmount,
                                     notes = notes.trim().ifBlank { null },
-                                    created_by_staff_id = SessionManager.staffId ?: 0,
+                                    created_by_staff_id = SupabaseClient.currentStaffId(),
                                     order_datetime = currentIso()
                                 )
                                 val r = SupabaseClient.insertOrder(order)
