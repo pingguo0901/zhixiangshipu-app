@@ -514,11 +514,13 @@ private fun StaffManageScreen(onBack: () -> Unit) {
                                 selected = s.is_active,
                                 onClick = {
                                     scope.launch {
-                                        SupabaseClient.updateStaff(s.id, s.copy(is_active = !s.is_active))
-                                        load()
+                                        val ok = SupabaseClient.updateStaff(s.id, s.copy(is_active = !s.is_active))
+                                        if (ok) {
+                                            staffs = staffs.map { if (it.id == s.id) it.copy(is_active = !s.is_active) else it }
+                                        }
                                     }
                                 },
-                                label = { Text(if (s.is_active) "在职" else "已停用", fontSize = 11.sp) }
+                                label = { Text(if (s.is_active) "停用" else "启用", fontSize = 11.sp) }
                             )
                         }
                     }

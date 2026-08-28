@@ -1,7 +1,7 @@
 {
-  "versionCode": 30,
-  "versionName": "1.1.14",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.14/zhixiangshipu-app.apk",
-  "changelog": "- 下单/入库失败时显示具体报错原因（方便定位问题）\n- 上架下架按钮动作语义、登录持久化、进货日期日历、物料弹出式选择、下单入库明细JSON数组修复等",
+  "versionCode": 31,
+  "versionName": "1.1.15",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.15/zhixiangshipu-app.apk",
+  "changelog": "- 员工管理「在职/已停用」按钮改为动作语义（停用/启用）+ 本地即时切换，修复点一次后没反应\n- 下单/入库失败显示具体报错\n- 上架下架动作语义、登录持久化、进货日期日历、物料弹出式选择等",
   "buildDate": "2026-08-28"
 }
