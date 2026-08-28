@@ -1,7 +1,7 @@
 {
-  "versionCode": 65,
-  "versionName": "1.1.49",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.49/zhixiangshipu-app.apk",
-  "changelog": "- 收据照片点击可放大；订单编辑弹窗增加类型/顾客/电话/状态/折扣/付款方式/顾客支付/已上传收据",
+  "versionCode": 66,
+  "versionName": "1.1.50",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.50/zhixiangshipu-app.apk",
+  "changelog": "- 编辑订单弹窗增加独立桌台字段（堂食选桌台号，外卖显示外卖）",
   "buildDate": "2026-08-29"
 }

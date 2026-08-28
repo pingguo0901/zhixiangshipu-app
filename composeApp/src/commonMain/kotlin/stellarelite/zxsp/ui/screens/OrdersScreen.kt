@@ -452,8 +452,18 @@ private fun OrderEditDialog(
                         FilterChip(selected = !isTakeaway, onClick = { isTakeaway = false }, label = { Text("堂食") })
                         FilterChip(selected = isTakeaway, onClick = { isTakeaway = true }, label = { Text("外卖") })
                     }
-                    // 堂食时选桌台
-                    if (!isTakeaway) {
+                    // 桌台（独立字段）
+                    Text("桌台", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    if (isTakeaway) {
+                        OutlinedTextField(
+                            value = "外卖",
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = false,
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
                         Box {
                             OutlinedButton(onClick = { tableExpanded = true }, modifier = Modifier.fillMaxWidth()) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
