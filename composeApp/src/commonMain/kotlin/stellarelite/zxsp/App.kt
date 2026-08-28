@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.sp
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.components.BottomNavBar
+import stellarelite.zxsp.util.decodeJwtSub
 import stellarelite.zxsp.ui.components.DiningTab
 import stellarelite.zxsp.ui.screens.*
 import stellarelite.zxsp.ui.theme.DiningColors
@@ -39,7 +40,7 @@ fun App(
 
         // 会话缺 staffId（下单会被 RLS 拦截），尝试补全，否则强制重新登录
         if (SessionManager.isLoggedIn && SessionManager.staffId == null) {
-            val uid = SessionManager.authUid
+            val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
             val staff = if (uid != null) runCatching { SupabaseClient.fetchMyStaff(uid) }.getOrNull() else null
             if (staff != null && staff.is_active) {
                 SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)

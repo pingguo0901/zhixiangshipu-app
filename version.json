@@ -1,7 +1,7 @@
 {
-  "versionCode": 32,
-  "versionName": "1.1.16",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.16/zhixiangshipu-app.apk",
-  "changelog": "- 修复：下单报「new row violates row-level security policy」（登录会话丢了员工ID导致）\n- 登录时保存员工auth_uid，启动时自动补全员工ID，异常时强制重新登录\n- 员工管理停用/启用动作语义、下单入库显示具体报错等",
+  "versionCode": 33,
+  "versionName": "1.1.17",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.17/zhixiangshipu-app.apk",
+  "changelog": "- 修复：下单报 RLS 拦截（员工ID丢失）——启动时从 token 解析 auth_uid 自动补全员工ID，无需重新登录",
   "buildDate": "2026-08-28"
 }
