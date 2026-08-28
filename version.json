@@ -1,7 +1,7 @@
 {
-  "versionCode": 44,
-  "versionName": "1.1.28",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.28/zhixiangshipu-app.apk",
-  "changelog": "- 结账后弹窗显示收据（含打印/完成按钮）\n- 结账自动写入收据主表+明细表",
+  "versionCode": 45,
+  "versionName": "1.1.29",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.29/zhixiangshipu-app.apk",
+  "changelog": "- 打印收据改为蓝牙小票热敏打印(ESC/POS，适配 Zy808 80mm)",
   "buildDate": "2026-08-29"
 }

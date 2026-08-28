@@ -1,75 +1,97 @@
 package stellarelite.zxsp.platform
 
-import android.content.Context
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
-import android.graphics.pdf.PdfDocument
-import android.os.Bundle
-import android.os.CancellationSignal
-import android.os.ParcelFileDescriptor
-import android.print.PageRange
-import android.print.PrintAttributes
-import android.print.PrintDocumentAdapter
-import android.print.PrintDocumentInfo
-import android.print.PrintManager
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
+import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
+import java.util.UUID
 
+private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+
+// ESC/POS 蓝牙热敏打印（Zy808，80mm，GBK 中文）
 actual fun printReceiptText(text: String) {
-    val context = AppContext.context
-    val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
-    val jobName = "炙巷食铺-收据"
-
-    val adapter = object : PrintDocumentAdapter() {
-        override fun onLayout(
-            oldAttributes: PrintAttributes?,
-            newAttributes: PrintAttributes,
-            cancellationSignal: CancellationSignal?,
-            callback: LayoutResultCallback,
-            extras: Bundle?
-        ) {
-            if (cancellationSignal?.isCanceled == true) {
-                callback.onLayoutCancelled()
-                return
+    Thread {
+        val msg = try {
+            val adapter = BluetoothAdapter.getDefaultAdapter()
+            if (adapter == null) {
+                "此设备不支持蓝牙"
+            } else {
+                val devices = bondedDevices(adapter)
+                val printer = pickPrinter(devices)
+                if (printer == null) {
+                    "未找到已配对的蓝牙打印机，请先在系统蓝牙里配对 Zy808"
+                } else {
+                    printToDevice(printer, text)
+                    "已发送到打印机：${printer.name ?: "未知"}"
+                }
             }
-            val info = PrintDocumentInfo.Builder(jobName)
-                .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                .build()
-            callback.onLayoutFinished(info, true)
+        } catch (e: Exception) {
+            "打印失败：${e.message}"
         }
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(AppContext.context, msg, Toast.LENGTH_LONG).show()
+        }
+    }.start()
+}
 
-        override fun onWrite(
-            pages: Array<out PageRange>,
-            destination: ParcelFileDescriptor,
-            cancellationSignal: CancellationSignal?,
-            callback: WriteResultCallback
-        ) {
-            val pdf = PdfDocument()
-            try {
-                val pageInfo = PdfDocument.PageInfo.Builder(384, 900, 1).create()
-                val page = pdf.startPage(pageInfo)
-                val canvas = page.canvas
-                val paint = Paint().apply {
-                    color = Color.BLACK
-                    textSize = 10f
-                    typeface = Typeface.MONOSPACE
-                }
-                var y = 16f
-                for (line in text.split("\n")) {
-                    canvas.drawText(line, 8f, y, paint)
-                    y += 13f
-                }
-                pdf.finishPage(page)
-                ParcelFileDescriptor.AutoCloseOutputStream(destination).use { os ->
-                    pdf.writeTo(os)
-                }
-                callback.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
-            } catch (e: Exception) {
-                callback.onWriteFailed(e.message)
-            } finally {
-                pdf.close()
-            }
+private fun bondedDevices(adapter: BluetoothAdapter): Set<BluetoothDevice> {
+    return if (Build.VERSION.SDK_INT >= 31) {
+        try { adapter.bondedDevices } catch (e: SecurityException) { emptySet() }
+    } else {
+        adapter.bondedDevices
+    }
+}
+
+private fun pickPrinter(devices: Set<BluetoothDevice>): BluetoothDevice? {
+    val list = devices.toList()
+    if (list.isEmpty()) return null
+    return list.firstOrNull {
+        val n = it.name?.uppercase() ?: ""
+        n.contains("ZY") || n.contains("PRINT") || n.contains("808")
+    } ?: list.first()
+}
+
+private fun printToDevice(device: BluetoothDevice, text: String) {
+    val adapter = BluetoothAdapter.getDefaultAdapter()
+    if (adapter != null && adapter.isDiscovering) adapter.cancelDiscovery()
+    val socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
+    try {
+        socket.connect()
+        val os = socket.outputStream
+        os.write(buildEscPos(text))
+        os.flush()
+        os.close()
+    } finally {
+        try { socket.close() } catch (_: Exception) { }
+    }
+}
+
+private fun buildEscPos(text: String): ByteArray {
+    val out = ByteArrayOutputStream()
+    val gbk = Charset.forName("GBK")
+    // 初始化打印机
+    out.write(byteArrayOf(0x1B, 0x40))
+    // 逐行输出，分隔线/标题居中
+    for (line in text.split("\n")) {
+        val t = line.trim()
+        val isDivider = t.startsWith("========") || t.startsWith("--------")
+        val isTitle = t == "OFFICIAL SALES RECEIPT"
+        if (isDivider || isTitle) {
+            out.write(byteArrayOf(0x1B, 0x61, 0x01)) // 居中
+            out.write(line.toByteArray(gbk))
+            out.write(0x0A)
+            out.write(byteArrayOf(0x1B, 0x61, 0x00)) // 左对齐
+        } else {
+            out.write(line.toByteArray(gbk))
+            out.write(0x0A)
         }
     }
-
-    printManager.print(jobName, adapter, PrintAttributes.Builder().build())
+    // 走纸 3 行 + 切纸
+    out.write(byteArrayOf(0x1B, 0x64, 0x03))
+    out.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
+    return out.toByteArray()
 }
