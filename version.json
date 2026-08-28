@@ -1,7 +1,7 @@
 {
-  "versionCode": 69,
-  "versionName": "1.1.53",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.53/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情页新增删除订单按钮(仅Admin)；编辑物料弹窗新增删除按钮(仅Admin)；开销记账点击可编辑",
+  "versionCode": 70,
+  "versionName": "1.1.54",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.54/zhixiangshipu-app.apk",
+  "changelog": "- 开销编辑点击、菜品/桌台/供应商/员工管理入口均限Admin角色",
   "buildDate": "2026-08-29"
 }

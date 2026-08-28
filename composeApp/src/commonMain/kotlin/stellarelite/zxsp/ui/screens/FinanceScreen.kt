@@ -107,7 +107,7 @@ private fun ExpenseListView(onReport: () -> Unit) {
             ) {
                 items(expenses, key = { it.id }) { e ->
                     Card(
-                        modifier = Modifier.fillMaxWidth().clickable { editing = e },
+                        modifier = Modifier.fillMaxWidth().clickable(enabled = SessionManager.isAdmin) { editing = e },
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
                     ) {

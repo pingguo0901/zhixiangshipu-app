@@ -56,11 +56,13 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
         Text("你好，${SessionManager.staffName}（${if (SessionManager.isAdmin) "老板" else "员工"}）", fontSize = 14.sp, color = DiningColors.TextSecondary)
         Spacer(modifier = Modifier.height(4.dp))
 
-        // 菜单管理（老板维护菜品价格上下架）
-        MenuEntry("📋", "菜品管理", "维护菜品、价格、上下架") { onMenu() }
-        MenuEntry("🪑", "桌台管理", "新增/编辑桌台、修改状态") { onTables() }
-        MenuEntry("📦", "供应商管理", "批发商档案、BRN、TIN") { onSuppliers() }
-        MenuEntry("👷", "员工管理", "新增/停用员工账号") { onStaffs() }
+        // 菜单管理（仅老板，维护菜品价格上下架）
+        if (SessionManager.isAdmin) {
+            MenuEntry("📋", "菜品管理", "维护菜品、价格、上下架") { onMenu() }
+            MenuEntry("🪑", "桌台管理", "新增/编辑桌台、修改状态") { onTables() }
+            MenuEntry("📦", "供应商管理", "批发商档案、BRN、TIN") { onSuppliers() }
+            MenuEntry("👷", "员工管理", "新增/停用员工账号") { onStaffs() }
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
