@@ -6,24 +6,35 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.compose.resources.painterResource
+import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.generated.resources.*
 import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.PaymentRecord
+import stellarelite.zxsp.network.ReceiptItem
+import stellarelite.zxsp.network.ReceiptMaster
 import stellarelite.zxsp.network.SupabaseClient
+import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
@@ -156,6 +167,8 @@ private fun OrderCard(order: CustomerOrder, onClick: () -> Unit) {
 private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var showPay by remember { mutableStateOf(false) }
+    var showReceipt by remember { mutableStateOf(false) }
+    var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
     var tableNo by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(order.table_id) {
@@ -204,7 +217,23 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     }
 
     if (showPay) {
-        PaymentDialog(order = order, onDismiss = { showPay = false }, onDone = { onBack() })
+        PaymentDialog(
+            order = order,
+            onDismiss = { showPay = false },
+            onPaid = { data ->
+                showPay = false
+                receiptData = data
+                showReceipt = true
+            }
+        )
+    }
+
+    if (showReceipt && receiptData != null) {
+        ReceiptDialog(
+            data = receiptData!!,
+            onPrint = { printReceiptText(receiptData!!.toReceiptText()) },
+            onDone = { showReceipt = false; onBack() }
+        )
     }
 }
 
@@ -220,7 +249,7 @@ private fun DetailRow(label: String, value: String) {
 }
 
 @Composable
-fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit) {
+fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptData) -> Unit) {
     val scope = rememberCoroutineScope()
     var method by remember { mutableStateOf("cash") }
     var cashReceived by remember { mutableStateOf("") }
@@ -307,6 +336,43 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                                 receiptUrl = SupabaseClient.uploadFile("receipts", path, bytes)
                             }
                         }
+                        val payMode = mapPayMode(method)
+                        val now = currentIso()
+                        val lines = parseOrderLines(order.order_items)
+                        val amountReceived = if (method == "cash") received else total
+                        val changeGiven = if (method == "cash") change else 0.0
+
+                        val master = ReceiptMaster(
+                            trans_datetime = now,
+                            sub_total = total,
+                            discount = 0.0,
+                            total_amount = total,
+                            payment_mode = payMode,
+                            amount_received = amountReceived,
+                            change_given = changeGiven,
+                            operator = SessionManager.staffName,
+                            remark = order.order_no
+                        )
+                        val m = SupabaseClient.insertReceiptMaster(master)
+                        if (m == null) {
+                            saving = false
+                            error = "收款失败：${SupabaseClient.lastError ?: "未知原因"}"
+                            return@launch
+                        }
+                        val receiptNo = m.receipt_no
+
+                        lines.forEach { line ->
+                            SupabaseClient.insertReceiptItem(
+                                ReceiptItem(
+                                    receipt_no = receiptNo,
+                                    item_name = line.name,
+                                    qty = line.qty,
+                                    unit_price = line.unitPrice,
+                                    item_amount = line.amount
+                                )
+                            )
+                        }
+
                         val p = PaymentRecord(
                             order_id = order.id,
                             pay_amount_myr = total,
@@ -314,7 +380,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                             transaction_ref = "",
                             receipt_attachment_url = receiptUrl,
                             received_by_staff_id = SupabaseClient.currentStaffId(),
-                            transaction_datetime = currentIso()
+                            transaction_datetime = now
                         )
                         val r = SupabaseClient.insertPayment(p)
                         saving = false
@@ -322,7 +388,19 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                             if (order.table_id != null) {
                                 SupabaseClient.setTableStatus(order.table_id!!, "free")
                             }
-                            onDone()
+                            onPaid(
+                                ReceiptData(
+                                    receiptNo = receiptNo,
+                                    transDatetime = now,
+                                    items = lines,
+                                    subTotal = total,
+                                    discount = 0.0,
+                                    total = total,
+                                    paymentMode = payMode,
+                                    amountReceived = amountReceived,
+                                    changeGiven = changeGiven
+                                )
+                            )
                         } else {
                             error = "收款失败：${SupabaseClient.lastError ?: "未知原因"}"
                         }
@@ -333,5 +411,113 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
+}
+
+data class ReceiptLine(
+    val name: String,
+    val qty: Int,
+    val unitPrice: Double,
+    val amount: Double
+)
+
+data class ReceiptData(
+    val receiptNo: String,
+    val transDatetime: String,
+    val items: List<ReceiptLine>,
+    val subTotal: Double,
+    val discount: Double,
+    val total: Double,
+    val paymentMode: String,
+    val amountReceived: Double,
+    val changeGiven: Double
+) {
+    fun toReceiptText(): String {
+        val sb = StringBuilder()
+        sb.appendLine("========================================")
+        sb.appendLine("       OFFICIAL SALES RECEIPT")
+        sb.appendLine()
+        sb.appendLine("ZHI XIANG FOOD ENTERPRISE")
+        sb.appendLine("(Trade Name: 炙巷食铺)")
+        sb.appendLine("SSM BRN: ")
+        sb.appendLine("2313, Jalan Dato Sulaiman,")
+        sb.appendLine("Taman Abad, 80250 Johor Bahru,")
+        sb.appendLine("Johor Darul Ta'zim")
+        sb.appendLine("WHATSAPP: +852 5140 3695")
+        sb.appendLine("Business Hour: 6PM-6AM | Last Order 5:50AM")
+        sb.appendLine("========================================")
+        sb.appendLine("Receipt No.: $receiptNo")
+        sb.appendLine("Date/Time: ${transDatetime.take(16).replace("T", " ")}")
+        sb.appendLine("========================================")
+        sb.appendLine()
+        sb.appendLine("Item                    Qty  Unit   Amount")
+        sb.appendLine("----------------------------------------")
+        items.forEach { line ->
+            sb.appendLine("${line.name}  ${line.qty}  %.2f  %.2f".format(line.unitPrice, line.amount))
+        }
+        sb.appendLine("----------------------------------------")
+        sb.appendLine("Sub Total              RM %.2f".format(subTotal))
+        sb.appendLine("Discount               RM %.2f".format(discount))
+        sb.appendLine("----------------------------------------")
+        sb.appendLine("TOTAL AMOUNT           RM %.2f".format(total))
+        sb.appendLine()
+        sb.appendLine("Payment Mode: $paymentMode")
+        sb.appendLine("Amount Received: RM %.2f".format(amountReceived))
+        sb.appendLine("Change Given:   RM %.2f".format(changeGiven))
+        sb.appendLine("========================================")
+        sb.appendLine("Currency: MYR (Ringgit Malaysia)")
+        sb.appendLine()
+        sb.appendLine("* Goods Sold Are Non-Refundable")
+        sb.appendLine("Thank You For Your Patronage")
+        sb.appendLine("========================================")
+        return sb.toString()
+    }
+}
+
+private fun mapPayMode(method: String): String = when (method) {
+    "cash" -> "CASH"
+    "duitnow" -> "DUITNOW"
+    "tng_ewallet" -> "TNG"
+    "alipay" -> "ALIPAY"
+    else -> "CASH"
+}
+
+private fun parseOrderLines(items: JsonElement): List<ReceiptLine> {
+    return items.jsonArray.mapNotNull { el ->
+        val obj = el.jsonObject
+        val name = obj["item_name"]?.jsonPrimitive?.content ?: return@mapNotNull null
+        val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+        val price = obj["unit_price_myr"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+        ReceiptLine(name, qty, price, qty * price)
+    }
+}
+
+@Composable
+fun ReceiptDialog(data: ReceiptData, onPrint: () -> Unit, onDone: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDone,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(16.dp),
+        title = { Text("收据", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    data.toReceiptText(),
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = DiningColors.TextPrimary,
+                    lineHeight = 15.sp
+                )
+            }
+        },
+        confirmButton = {
+            Row {
+                OutlinedButton(onClick = onPrint) { Text("🖨 打印收据", color = DiningColors.Primary) }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }
+        }
     )
 }

@@ -187,6 +187,8 @@ object SupabaseClient {
 
     suspend fun insertOrder(order: CustomerOrder): CustomerOrder? = insert("customer_orders", order)
     suspend fun insertPayment(p: PaymentRecord): PaymentRecord? = insert("payment_records", p)
+    suspend fun insertReceiptMaster(r: ReceiptMaster): ReceiptMaster? = insert("receipt_master", r)
+    suspend fun insertReceiptItem(i: ReceiptItem): ReceiptItem? = insert("receipt_item", i)
     suspend fun insertStockIn(s: StockInLog): StockInLog? = insert("stock_in_log", s)
     suspend fun insertFridgeLog(f: FridgeLog): FridgeLog? = insert("fridge_log", f)
     suspend fun insertMeatProcessLog(m: MeatProcessLog): MeatProcessLog? = insert("meat_process_log", m)

@@ -93,6 +93,48 @@ data class PaymentRecord(
     val created_at: String? = null
 )
 
+// ============ receipt_master ============
+@Serializable
+data class ReceiptMaster(
+    val receipt_id: Long = 0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val receipt_no: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val ssm_brand: String = "ZHI XIANG FOOD ENTERPRISE",
+    val ssm_brn: String? = null,
+    val trans_datetime: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val sub_total: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val discount: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val total_amount: Double = 0.0,
+    val payment_mode: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val amount_received: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val change_given: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val operator: String = "",
+    val create_time: String? = null,
+    val remark: String? = null
+)
+
+// ============ receipt_item ============
+@Serializable
+data class ReceiptItem(
+    val item_id: Long = 0,
+    val receipt_no: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val item_name: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val qty: Int = 1,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val unit_price: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val item_amount: Double = 0.0
+)
+
 // ============ supplier ============
 @Serializable
 data class Supplier(

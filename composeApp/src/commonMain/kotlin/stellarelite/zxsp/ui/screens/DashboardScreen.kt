@@ -26,6 +26,7 @@ import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
+import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.ui.theme.DiningColors
 
 @Composable
@@ -230,6 +231,8 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
     var showPayment by remember { mutableStateOf(false) }
     var showAddItems by remember { mutableStateOf(false) }
+    var showReceipt by remember { mutableStateOf(false) }
+    var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
 
     fun loadOrder() {
         scope.launch {
@@ -285,7 +288,22 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
     )
 
     if (showPayment && order != null) {
-        PaymentDialog(order = order!!, onDismiss = { showPayment = false }, onDone = { showPayment = false; onDismiss() })
+        PaymentDialog(
+            order = order!!,
+            onDismiss = { showPayment = false },
+            onPaid = { data ->
+                showPayment = false
+                receiptData = data
+                showReceipt = true
+            }
+        )
+    }
+    if (showReceipt && receiptData != null) {
+        ReceiptDialog(
+            data = receiptData!!,
+            onPrint = { printReceiptText(receiptData!!.toReceiptText()) },
+            onDone = { showReceipt = false; onDismiss() }
+        )
     }
     if (showAddItems && order != null) {
         AddItemsDialog(order = order!!, onDismiss = { showAddItems = false }, onDone = { showAddItems = false; loadOrder() })

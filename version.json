@@ -1,7 +1,7 @@
 {
-  "versionCode": 43,
-  "versionName": "1.1.27",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.27/zhixiangshipu-app.apk",
-  "changelog": "- 修复拍收据后结账显示收款失败的问题（交易号字段缺省导致）",
+  "versionCode": 44,
+  "versionName": "1.1.28",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.28/zhixiangshipu-app.apk",
+  "changelog": "- 结账后弹窗显示收据（含打印/完成按钮）\n- 结账自动写入收据主表+明细表",
   "buildDate": "2026-08-29"
 }
