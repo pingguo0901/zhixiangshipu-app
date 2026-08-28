@@ -78,11 +78,11 @@ object ReceiptFormatter {
         return sb.toString()
     }
 
-    // 6. 生成底部结算行 (Sub Total、Total Amount、金额通用)
+    // 6. 生成底部结算行 (Sub Total、Total Amount、金额通用)（34 + 4 + 10 = 48列）
     fun generateTotalRow(label: String, currency: String, amount: String): String {
-        val leftPart = padRight(label, 24) // 标签左对齐（24格）
-        val midPart = padRight(currency, 14) // 币种靠左（14格）
-        val rightPart = padLeft(amount, 10) // 金额数字绝对右对齐（10格），完美对齐上面的 Amount
+        val leftPart = padRight(label, 34) // 左侧标签拓宽到 34 格
+        val midPart = padRight(currency, 4) // 货币符号紧凑固定为 4 格 (足够容纳 "RM" 和 2个空格)
+        val rightPart = padLeft(amount, 10) // 金额数字绝对右对齐（10格），完美对齐上方的数字
         return "$leftPart$midPart$rightPart"
     }
 }
