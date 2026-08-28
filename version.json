@@ -1,7 +1,7 @@
 {
-  "versionCode": 41,
-  "versionName": "1.1.25",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.25/zhixiangshipu-app.apk",
-  "changelog": "- 更换最新付款二维码：DuitNow/TNG 共用一张，支付宝一张",
-  "buildDate": "2026-08-28"
+  "versionCode": 42,
+  "versionName": "1.1.26",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.26/zhixiangshipu-app.apk",
+  "changelog": "- 修复退出App后需重新登录的问题（登录状态持久化+token自动刷新）",
+  "buildDate": "2026-08-29"
 }

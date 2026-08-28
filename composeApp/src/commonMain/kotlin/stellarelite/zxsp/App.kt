@@ -9,9 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.Clock
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.components.BottomNavBar
+import stellarelite.zxsp.util.decodeJwtExp
 import stellarelite.zxsp.util.decodeJwtSub
 import stellarelite.zxsp.ui.components.DiningTab
 import stellarelite.zxsp.ui.screens.*
@@ -39,6 +41,21 @@ fun App(
         }
 
         // 会话缺 staffId（下单会被 RLS 拦截），尝试补全，否则强制重新登录
+        if (SessionManager.isLoggedIn) {
+            // access token 过期自动用 refresh_token 刷新，避免退出后重开又掉线
+            val exp = SessionManager.accessToken?.let { decodeJwtExp(it) }
+            val nowSec = Clock.System.now().toEpochMilliseconds() / 1000
+            if (exp == null || exp <= nowSec) {
+                val rt = SessionManager.refreshToken
+                val ns = rt?.let { SupabaseClient.refreshSession(it).getOrNull() }
+                if (ns != null) {
+                    SessionManager.updateTokens(ns.access_token, ns.refresh_token)
+                } else {
+                    SessionManager.clear()
+                }
+            }
+        }
+
         if (SessionManager.isLoggedIn && SessionManager.staffId == null) {
             val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
             val staff = if (uid != null) runCatching { SupabaseClient.fetchMyStaff(uid) }.getOrNull() else null

@@ -27,6 +27,9 @@ import stellarelite.zxsp.data.SessionManager
 @Serializable
 data class LoginRequest(val email: String, val password: String)
 
+@Serializable
+data class RefreshRequest(val refresh_token: String)
+
 object SupabaseClient {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -61,6 +64,20 @@ object SupabaseClient {
         }
         if (!resp.status.isSuccess()) {
             throw Exception("登录失败（${resp.status.value}），请检查账号密码")
+        }
+        resp.body<AuthSession>()
+    }
+
+    // ============ Auth 刷新 token ============
+    suspend fun refreshSession(refreshToken: String): Result<AuthSession> = runCatching {
+        val resp: HttpResponse = client.post("$BASE/auth/v1/token") {
+            header("apikey", SupabaseConfig.ANON_KEY)
+            url { parameters.append("grant_type", "refresh_token") }
+            contentType(ContentType.Application.Json)
+            setBody(RefreshRequest(refreshToken))
+        }
+        if (!resp.status.isSuccess()) {
+            throw Exception("登录已过期（${resp.status.value}）")
         }
         resp.body<AuthSession>()
     }

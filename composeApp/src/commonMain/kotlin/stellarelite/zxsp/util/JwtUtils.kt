@@ -17,3 +17,14 @@ fun decodeJwtSub(token: String): String? = runCatching {
     val json = Base64.UrlSafe.decode(padded).decodeToString()
     Json.parseToJsonElement(json).jsonObject["sub"]?.jsonPrimitive?.content
 }.getOrNull()
+
+// 从 JWT access_token 解析出 exp（过期时间，Unix 秒）
+@OptIn(ExperimentalEncodingApi::class)
+fun decodeJwtExp(token: String): Long? = runCatching {
+    val parts = token.split(".")
+    if (parts.size < 2) return null
+    val payload = parts[1]
+    val padded = payload + "=".repeat((4 - payload.length % 4) % 4)
+    val json = Base64.UrlSafe.decode(padded).decodeToString()
+    Json.parseToJsonElement(json).jsonObject["exp"]?.jsonPrimitive?.content?.toLongOrNull()
+}.getOrNull()

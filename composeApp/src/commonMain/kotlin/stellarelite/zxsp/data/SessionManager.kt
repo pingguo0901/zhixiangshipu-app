@@ -17,16 +17,26 @@ object SessionManager {
         private set
     var authUid by mutableStateOf<String?>(null)
         private set
+    var refreshToken by mutableStateOf<String?>(null)
+        private set
 
     val isLoggedIn: Boolean get() = accessToken != null
     val isAdmin: Boolean get() = role == "admin"
 
-    fun setSession(token: String?, staffId: Long?, staffName: String, role: String, authUid: String? = null) {
+    fun setSession(token: String?, staffId: Long?, staffName: String, role: String, authUid: String? = null, refreshToken: String? = null) {
         accessToken = token
         this.staffId = staffId
         this.staffName = staffName
         this.role = role
         if (authUid != null) this.authUid = authUid
+        if (refreshToken != null) this.refreshToken = refreshToken
+        save()
+    }
+
+    // 刷新 token 后更新（保留员工信息）
+    fun updateTokens(accessToken: String, refreshToken: String?) {
+        this.accessToken = accessToken
+        if (refreshToken != null) this.refreshToken = refreshToken
         save()
     }
 
@@ -40,11 +50,13 @@ object SessionManager {
         staffName = ""
         role = ""
         authUid = null
+        refreshToken = null
         SessionStorage.remove("token")
         SessionStorage.remove("staffId")
         SessionStorage.remove("staffName")
         SessionStorage.remove("role")
         SessionStorage.remove("authUid")
+        SessionStorage.remove("refreshToken")
     }
 
     // 登录成功后持久化，重开 APP 免登录
@@ -54,6 +66,7 @@ object SessionManager {
         SessionStorage.put("staffName", staffName)
         SessionStorage.put("role", role)
         SessionStorage.put("authUid", authUid ?: "")
+        SessionStorage.put("refreshToken", refreshToken ?: "")
     }
 
     // APP 启动时恢复会话
@@ -65,6 +78,7 @@ object SessionManager {
             staffName = SessionStorage.get("staffName") ?: ""
             role = SessionStorage.get("role") ?: ""
             authUid = SessionStorage.get("authUid")?.takeIf { it.isNotBlank() }
+            refreshToken = SessionStorage.get("refreshToken")?.takeIf { it.isNotBlank() }
         }
     }
 }
