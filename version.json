@@ -1,7 +1,7 @@
 {
-  "versionCode": 62,
-  "versionName": "1.1.46",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.46/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔改版：物品单选+批发商下拉+G/KG重量，现金无交易号，非现金拍照上传2张收据，保存后食材自动入库",
+  "versionCode": 63,
+  "versionName": "1.1.47",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.47/zhixiangshipu-app.apk",
+  "changelog": "- 仓库库存：点击物料可编辑（名称/单位/预警值/备注，仅admin角色）",
   "buildDate": "2026-08-29"
 }

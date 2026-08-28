@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.WarehouseItem
 import stellarelite.zxsp.ui.theme.DiningColors
@@ -49,6 +50,7 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var showAdd by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<WarehouseItem?>(null) }
 
     fun load() {
         scope.launch {
@@ -115,7 +117,8 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
                 items(items, key = { it.id }) { item ->
                     val low = item.stock_qty < item.warning_qty
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth()
+                            .clickable(enabled = SessionManager.isAdmin) { editing = item },
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (low) DiningColors.Error.copy(alpha = 0.06f) else DiningColors.Surface
@@ -149,6 +152,9 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
     if (showAdd) {
         AddMaterialDialog(onDismiss = { showAdd = false }, onDone = { showAdd = false; load() })
     }
+    editing?.let { item ->
+        EditMaterialDialog(item = item, onDismiss = { editing = null }, onDone = { editing = null; load() })
+    }
 }
 
 @Composable
@@ -167,6 +173,49 @@ private fun QuickBtn(emoji: String, label: String, modifier: Modifier = Modifier
             Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
         }
     }
+}
+
+@Composable
+private fun EditMaterialDialog(item: WarehouseItem, onDismiss: () -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var name by remember { mutableStateOf(item.item_name) }
+    var unit by remember { mutableStateOf(item.unit) }
+    var warningQty by remember { mutableStateOf(if (item.warning_qty > 0) item.warning_qty.toString() else "") }
+    var notes by remember { mutableStateOf(item.notes ?: "") }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("编辑物料", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("物料名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("单位（如：kg、串、瓶）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = warningQty, onValueChange = { warningQty = it }, label = { Text("预警库存值") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（可选）") }, modifier = Modifier.fillMaxWidth())
+                if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = name.isNotBlank() && unit.isNotBlank() && !saving, onClick = {
+                scope.launch {
+                    saving = true; error = null
+                    val wq = warningQty.trim().toDoubleOrNull() ?: 0.0
+                    val ok = SupabaseClient.updateWarehouseItem(item.id, item.copy(
+                        item_name = name.trim(), unit = unit.trim(),
+                        warning_qty = wq, notes = notes.trim().ifBlank { null }
+                    ))
+                    saving = false
+                    if (ok) onDone() else error = "保存失败"
+                }
+            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
 }
 
 @Composable
