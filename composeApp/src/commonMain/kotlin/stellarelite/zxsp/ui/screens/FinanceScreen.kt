@@ -392,7 +392,19 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                 }
             }) { Text("保存", color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (initial != null) {
+                    TextButton(onClick = {
+                        scope.launch {
+                            val ok = SupabaseClient.deleteExpense(initial.id)
+                            if (ok) onDone()
+                        }
+                    }) { Text("删除", color = DiningColors.Error) }
+                }
+                TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+            }
+        }
     )
 }
 
