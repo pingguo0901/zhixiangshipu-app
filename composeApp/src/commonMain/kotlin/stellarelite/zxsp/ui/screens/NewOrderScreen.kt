@@ -224,7 +224,7 @@ fun NewOrderScreen(onBack: () -> Unit) {
                                 )
                                 val r = SupabaseClient.insertOrder(order)
                                 saving = false
-                                if (r != null) onBack() else error = "下单失败"
+                                if (r != null) onBack() else error = "下单失败：" + (SupabaseClient.lastError ?: "")
                             }
                         },
                         enabled = totalCount > 0 && !saving,

@@ -31,6 +31,8 @@ object SupabaseClient {
     }
     private const val BASE = SupabaseConfig.BASE_URL
 
+    var lastError: String? = null
+
     private val client = HttpClient {
         install(ContentNegotiation) { json(json) }
     }
@@ -109,7 +111,10 @@ object SupabaseClient {
         }
         return if (resp.status.isSuccess()) {
             runCatching { resp.body<List<T>>().firstOrNull() }.getOrNull()
-        } else null
+        } else {
+            lastError = runCatching { resp.readRawBytes().decodeToString() }.getOrNull() ?: "HTTP ${resp.status.value}"
+            null
+        }
     }
 
     suspend fun insertOrder(order: CustomerOrder): CustomerOrder? = insert("customer_orders", order)

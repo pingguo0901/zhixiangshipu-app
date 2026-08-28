@@ -165,7 +165,7 @@ fun StockInScreen(onBack: () -> Unit) {
                                 )
                                 val r = SupabaseClient.insertStockIn(log)
                                 saving = false
-                                if (r != null) onBack() else error = "入库失败（交易号不能为空）"
+                                if (r != null) onBack() else error = "入库失败：" + (SupabaseClient.lastError ?: "")
                             }
                         },
                         enabled = hasItems && supplierId != null && ref.isNotBlank() && !saving,
