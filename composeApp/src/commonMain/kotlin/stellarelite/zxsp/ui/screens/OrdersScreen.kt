@@ -435,7 +435,7 @@ data class ReceiptData(
     fun toReceiptText(): String {
         val sb = StringBuilder()
         sb.appendLine("========================================")
-        sb.appendLine("       OFFICIAL SALES RECEIPT")
+        sb.appendLine("OFFICIAL SALES RECEIPT")
         sb.appendLine()
         sb.appendLine("ZHI XIANG FOOD ENTERPRISE")
         sb.appendLine("(Trade Name: 炙巷食铺)")

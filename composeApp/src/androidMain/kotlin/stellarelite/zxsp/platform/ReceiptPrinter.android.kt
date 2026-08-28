@@ -75,20 +75,10 @@ private fun buildEscPos(text: String): ByteArray {
     val gbk = Charset.forName("GBK")
     // 初始化打印机
     out.write(byteArrayOf(0x1B, 0x40))
-    // 逐行输出，分隔线/标题居中
+    // 逐行输出，全部左对齐（文字与分界线同一条直线）
     for (line in text.split("\n")) {
-        val t = line.trim()
-        val isDivider = t.startsWith("========") || t.startsWith("--------")
-        val isTitle = t == "OFFICIAL SALES RECEIPT"
-        if (isDivider || isTitle) {
-            out.write(byteArrayOf(0x1B, 0x61, 0x01)) // 居中
-            out.write(line.toByteArray(gbk))
-            out.write(0x0A)
-            out.write(byteArrayOf(0x1B, 0x61, 0x00)) // 左对齐
-        } else {
-            out.write(line.toByteArray(gbk))
-            out.write(0x0A)
-        }
+        out.write(line.toByteArray(gbk))
+        out.write(0x0A)
     }
     // 走纸 3 行 + 切纸
     out.write(byteArrayOf(0x1B, 0x64, 0x03))

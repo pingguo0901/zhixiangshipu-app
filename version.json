@@ -1,7 +1,7 @@
 {
-  "versionCode": 45,
-  "versionName": "1.1.29",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.29/zhixiangshipu-app.apk",
-  "changelog": "- 打印收据改为蓝牙小票热敏打印(ESC/POS，适配 Zy808 80mm)",
+  "versionCode": 46,
+  "versionName": "1.1.30",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.30/zhixiangshipu-app.apk",
+  "changelog": "- 收据打印文字与分界线统一左对齐（同一条直线）",
   "buildDate": "2026-08-29"
 }
