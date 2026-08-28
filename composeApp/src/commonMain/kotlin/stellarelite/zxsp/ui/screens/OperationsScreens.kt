@@ -385,6 +385,9 @@ fun FridgeScreen(onBack: () -> Unit) {
 }
 
 // ============ 肉品加工 ============
+// 肉品加工仅允许选择这四种肉
+private val MEAT_ITEMS = setOf("五花肉", "鸡腿肉", "牛上脑", "羊肩肉")
+
 @Composable
 fun MeatProcessScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -397,7 +400,9 @@ fun MeatProcessScreen(onBack: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
-        runCatching { items = SupabaseClient.fetchWarehouseItems() }
+        runCatching {
+            items = SupabaseClient.fetchWarehouseItems().filter { it.item_name in MEAT_ITEMS }
+        }
         loading = false
     }
 

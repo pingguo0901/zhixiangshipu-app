@@ -1,7 +1,7 @@
 {
-  "versionCode": 67,
-  "versionName": "1.1.51",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.51/zhixiangshipu-app.apk",
-  "changelog": "- 报表统计日期改为点击弹出原生日历选择",
+  "versionCode": 68,
+  "versionName": "1.1.52",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.52/zhixiangshipu-app.apk",
+  "changelog": "- 肉品加工页物料选择仅保留五花肉/鸡腿肉/牛上脑/羊肩肉",
   "buildDate": "2026-08-29"
 }
