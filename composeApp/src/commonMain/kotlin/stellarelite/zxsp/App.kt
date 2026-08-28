@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.components.BottomNavBar
 import stellarelite.zxsp.ui.components.DiningTab
 import stellarelite.zxsp.ui.screens.*
@@ -34,6 +35,17 @@ fun App(
                     showUpdateDialog = true
                 }
             } catch (_: Exception) { }
+        }
+
+        // 会话缺 staffId（下单会被 RLS 拦截），尝试补全，否则强制重新登录
+        if (SessionManager.isLoggedIn && SessionManager.staffId == null) {
+            val uid = SessionManager.authUid
+            val staff = if (uid != null) runCatching { SupabaseClient.fetchMyStaff(uid) }.getOrNull() else null
+            if (staff != null && staff.is_active) {
+                SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+            } else {
+                SessionManager.clear()
+            }
         }
     }
 

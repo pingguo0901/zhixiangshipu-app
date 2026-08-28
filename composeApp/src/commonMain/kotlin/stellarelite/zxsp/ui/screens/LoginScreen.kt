@@ -45,7 +45,8 @@ fun LoginScreen() {
                         token = s.access_token,
                         staffId = staff.id,
                         staffName = staff.staff_name,
-                        role = staff.role
+                        role = staff.role,
+                        authUid = s.user.id
                     )
                 } else if (staff != null && !staff.is_active) {
                     error = "该账号已停用，请联系老板"

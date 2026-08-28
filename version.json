@@ -1,7 +1,7 @@
 {
-  "versionCode": 31,
-  "versionName": "1.1.15",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.15/zhixiangshipu-app.apk",
-  "changelog": "- 员工管理「在职/已停用」按钮改为动作语义（停用/启用）+ 本地即时切换，修复点一次后没反应\n- 下单/入库失败显示具体报错\n- 上架下架动作语义、登录持久化、进货日期日历、物料弹出式选择等",
+  "versionCode": 32,
+  "versionName": "1.1.16",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.16/zhixiangshipu-app.apk",
+  "changelog": "- 修复：下单报「new row violates row-level security policy」（登录会话丢了员工ID导致）\n- 登录时保存员工auth_uid，启动时自动补全员工ID，异常时强制重新登录\n- 员工管理停用/启用动作语义、下单入库显示具体报错等",
   "buildDate": "2026-08-28"
 }
