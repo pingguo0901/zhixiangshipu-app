@@ -79,18 +79,11 @@ private fun buildEscPos(text: String): ByteArray {
     out.write(byteArrayOf(0x1B, 0x21, 0x00)) // ESC ! 0 正常字号
     out.write(byteArrayOf(0x1B, 0x61, 0x00)) // ESC A 0 默认全局左对齐
 
-    // 标题居中，其余左对齐
+    // 所有内容居中
     for (line in text.split("\n")) {
-        val t = line.trim()
-        if (t == "OFFICIAL SALES RECEIPT") {
-            out.write(byteArrayOf(0x1B, 0x61, 0x01)) // 居中
-            out.write(line.toByteArray(gbk))
-            out.write(0x0A)
-            out.write(byteArrayOf(0x1B, 0x61, 0x00)) // 恢复左对齐
-        } else {
-            out.write(line.toByteArray(gbk))
-            out.write(0x0A)
-        }
+        out.write(byteArrayOf(0x1B, 0x61, 0x01)) // 居中
+        out.write(line.toByteArray(gbk))
+        out.write(0x0A)
     }
     // 走纸 3 行 + 切纸
     out.write(byteArrayOf(0x1B, 0x64, 0x03))

@@ -446,7 +446,7 @@ data class ReceiptData(
         sb.appendLine("Taman Abad, 80250 Johor Bahru,")
         sb.appendLine("Johor Darul Ta'zim")
         sb.appendLine("WHATSAPP: +852 5140 3695")
-        sb.appendLine("Business Hour: 6PM-6AM | Last Order 5:50AM")
+        sb.appendLine("Business Hour: 6PM-6AM")
         sb.appendLine(EQ)
         sb.appendLine("Receipt No.: $receiptNo")
         sb.appendLine("Date/Time: ${formatDateTimeMy(transDatetime)}")

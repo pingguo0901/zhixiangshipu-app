@@ -1,7 +1,7 @@
 {
-  "versionCode": 53,
-  "versionName": "1.1.37",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.37/zhixiangshipu-app.apk",
-  "changelog": "- 收据格式改回简洁版：标题居中，明细/金额简单空格分隔，分割线32=和40-",
+  "versionCode": 54,
+  "versionName": "1.1.38",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.38/zhixiangshipu-app.apk",
+  "changelog": "- 收据所有内容居中，营业时间简化为6PM-6AM",
   "buildDate": "2026-08-29"
 }
