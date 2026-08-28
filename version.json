@@ -1,7 +1,7 @@
 {
-  "versionCode": 71,
-  "versionName": "1.1.55",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.55/zhixiangshipu-app.apk",
-  "changelog": "- 编辑开销弹窗取消按钮左边新增删除按钮",
+  "versionCode": 72,
+  "versionName": "1.1.56",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.56/zhixiangshipu-app.apk",
+  "changelog": "- 报表页新增打印日账/打印月账，弹窗选择中英文版本后打印",
   "buildDate": "2026-08-29"
 }

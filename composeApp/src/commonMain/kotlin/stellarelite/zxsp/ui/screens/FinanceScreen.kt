@@ -32,8 +32,10 @@ import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.WarehouseItem
 import stellarelite.zxsp.platform.rememberCamera
+import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
+import stellarelite.zxsp.util.ReceiptFormatter
 
 private sealed class FinanceNav {
     object Expense : FinanceNav()
@@ -420,6 +422,9 @@ private fun ReportScreen(onBack: () -> Unit) {
     var rows by remember { mutableStateOf<List<DailySales>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showPrintDialog by remember { mutableStateOf(false) }
+    var printMode by remember { mutableStateOf("daily") } // daily / monthly
+    var printLang by remember { mutableStateOf("zh") } // zh / en
 
     fun load() {
         scope.launch {
@@ -451,6 +456,26 @@ private fun ReportScreen(onBack: () -> Unit) {
         Button(onClick = { load() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
             Text("查询", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 打印日账 / 打印月账
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(
+                onClick = { printMode = "daily"; showPrintDialog = true },
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("🖨 打印日账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+            OutlinedButton(
+                onClick = { printMode = "monthly"; showPrintDialog = true },
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("🖨 打印月账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -529,6 +554,36 @@ private fun ReportScreen(onBack: () -> Unit) {
             DatePicker(state = datePickerState)
         }
     }
+
+    // 打印日账/月账弹窗（选择语言）
+    if (showPrintDialog) {
+        AlertDialog(
+            onDismissRequest = { showPrintDialog = false },
+            containerColor = DiningColors.Surface,
+            shape = RoundedCornerShape(20.dp),
+            title = { Text(if (printMode == "daily") "打印日账" else "打印月账", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("选择版本", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(selected = printLang == "zh", onClick = { printLang = "zh" }, label = { Text("中文版") })
+                        FilterChip(selected = printLang == "en", onClick = { printLang = "en" }, label = { Text("英文版") })
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    printReceiptText(buildReportText(printMode == "monthly", printLang == "en", rows, start, end))
+                }) { Text("打印", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { showPrintDialog = false }) { Text("取消", color = DiningColors.TextMuted) }
+                    TextButton(onClick = { showPrintDialog = false }) { Text("完成", color = DiningColors.Primary) }
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -537,4 +592,57 @@ private fun ReportRow(label: String, value: String) {
         Text(label, fontSize = 13.sp, color = DiningColors.Surface.copy(alpha = 0.8f))
         Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = DiningColors.Surface)
     }
+}
+
+// 生成报表打印文本（日账/月账，中/英）
+private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, rows: List<DailySales>, start: String, end: String): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+    val totalSales = rows.sumOf { it.total_sales_myr }
+    val totalCost = rows.sumOf { it.total_stock_cost_myr }
+    val totalExpense = rows.sumOf { it.total_expense_myr }
+    val totalProfit = rows.sumOf { it.gross_profit_myr }
+
+    fun row(label: String, value: Double): String {
+        return ReceiptFormatter.padRight(label, 20) + ReceiptFormatter.padLeft("RM %.2f".format(value), W - 20)
+    }
+
+    r.add("=".repeat(W))
+    if (isEnglish) {
+        r.add(ReceiptFormatter.padCenter(if (isMonthly) "MONTHLY SALES REPORT" else "DAILY SALES REPORT", W))
+        r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
+    } else {
+        r.add(ReceiptFormatter.padCenter(if (isMonthly) "月 报 表" else "日 报 表", W))
+        r.add(ReceiptFormatter.padCenter("炙巷食铺", W))
+    }
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padRight(if (isEnglish) "Period: $start ~ $end" else "期间：$start ~ $end", W))
+    r.add("-".repeat(W))
+
+    // 日账：逐日明细
+    if (!isMonthly) {
+        rows.forEach { d ->
+            r.add(ReceiptFormatter.padRight(d.period_date, 18) + ReceiptFormatter.padLeft("RM %.2f".format(d.total_sales_myr), W - 18))
+        }
+        r.add("-".repeat(W))
+    }
+
+    if (isEnglish) {
+        r.add(row("Total Sales", totalSales))
+        r.add(row("Total Cost", totalCost))
+        r.add(row("Total Expense", totalExpense))
+    } else {
+        r.add(row("营业收入", totalSales))
+        r.add(row("进货成本", totalCost))
+        r.add(row("业务开销", totalExpense))
+    }
+    r.add("-".repeat(W))
+    if (isEnglish) {
+        r.add(row("Gross Profit", totalProfit))
+    } else {
+        r.add(row("毛利", totalProfit))
+    }
+    r.add("=".repeat(W))
+    r.add("\n\n\n")
+    return r.joinToString("\n")
 }
