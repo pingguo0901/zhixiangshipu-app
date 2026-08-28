@@ -117,14 +117,10 @@ private fun MenuManageScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) { load() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("📋 菜品管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-            Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            Text("📋 菜品管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+            Button(onClick = { showAdd = true }, modifier = Modifier.align(Alignment.CenterEnd), shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
                 Text("＋ 新增", color = DiningColors.Surface)
             }
@@ -264,14 +260,10 @@ private fun TableManageScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) { load() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("🪑 桌台管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-            Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            Text("🪑 桌台管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+            Button(onClick = { showAdd = true }, modifier = Modifier.align(Alignment.CenterEnd), shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
                 Text("＋ 新增", color = DiningColors.Surface)
             }
@@ -376,14 +368,10 @@ private fun SupplierManageScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) { load() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("📦 供应商管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-            Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            Text("📦 供应商管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+            Button(onClick = { showAdd = true }, modifier = Modifier.align(Alignment.CenterEnd), shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
                 Text("＋ 新增", color = DiningColors.Surface)
             }
@@ -482,13 +470,9 @@ private fun StaffManageScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) { load() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("👷 员工管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            Text("👷 员工管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
         }
 
         if (loading) {

@@ -1,7 +1,7 @@
 {
-  "versionCode": 59,
-  "versionName": "1.1.43",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.43/zhixiangshipu-app.apk",
-  "changelog": "- 订单列表修复桌台单被误判为外卖；订单详情页补全类型/菜品明细/数量/单价/折扣/付款方式/顾客给多少/找零，新增打印收据(未付款/已付款)两个按钮，标题居中+Admin编辑按钮",
+  "versionCode": 60,
+  "versionName": "1.1.44",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.44/zhixiangshipu-app.apk",
+  "changelog": "- 菜品/桌台/供应商/员工管理页标题居中；订单详情页编辑按钮移至右上角",
   "buildDate": "2026-08-29"
 }

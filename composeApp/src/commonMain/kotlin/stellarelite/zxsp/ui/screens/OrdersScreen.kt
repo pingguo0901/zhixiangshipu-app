@@ -192,14 +192,9 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     val isTakeaway = currentOrder.table_id == null
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // 标题居中，左上角编辑按钮（仅 Admin）
+        // 标题居中，返回在左，编辑按钮（仅 Admin）在右上角
         Box(modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.align(Alignment.CenterStart)) {
-                TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-                if (SessionManager.isAdmin) {
-                    TextButton(onClick = { showEdit = true }) { Text("✏️ 编辑", color = DiningColors.Primary) }
-                }
-            }
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
             Text(
                 "订单详情",
                 fontSize = 20.sp,
@@ -207,6 +202,9 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 color = DiningColors.TextPrimary,
                 modifier = Modifier.align(Alignment.Center)
             )
+            if (SessionManager.isAdmin) {
+                TextButton(onClick = { showEdit = true }, modifier = Modifier.align(Alignment.CenterEnd)) { Text("✏️ 编辑", color = DiningColors.Primary) }
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
 
