@@ -269,7 +269,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                             pay_amount_myr = payAmount!!,
                             pay_method = method,
                             transaction_ref = ref.trim(),
-                            received_by_staff_id = stellarelite.zxsp.data.SessionManager.staffId ?: 0,
+                            received_by_staff_id = SupabaseClient.currentStaffId(),
                             transaction_datetime = currentIso()
                         )
                         val r = SupabaseClient.insertPayment(p)

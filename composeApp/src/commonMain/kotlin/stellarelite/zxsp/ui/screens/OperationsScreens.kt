@@ -363,7 +363,7 @@ fun FridgeScreen(onBack: () -> Unit) {
                         take_qty = take,
                         return_qty = ret,
                         used_qty = 0.0, // 后端计算
-                        operate_staff_id = SessionManager.staffId ?: 0,
+                        operate_staff_id = SupabaseClient.currentStaffId(),
                         log_time = currentIso()
                     )
                     val r = SupabaseClient.insertFridgeLog(log)
@@ -454,7 +454,7 @@ fun MeatProcessScreen(onBack: () -> Unit) {
                         warehouse_item_id = itemId ?: 0,
                         process_status = status,
                         process_qty = processQty,
-                        operate_staff_id = SessionManager.staffId ?: 0,
+                        operate_staff_id = SupabaseClient.currentStaffId(),
                         process_time = currentIso()
                     )
                     val r = SupabaseClient.insertMeatProcessLog(log)

@@ -1,7 +1,7 @@
 {
-  "versionCode": 35,
-  "versionName": "1.1.19",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.19/zhixiangshipu-app.apk",
-  "changelog": "- 桌台看板可点击：占用桌台/外卖号弹窗显示订单详情（订单号/收据号/顾客/电话/桌台/状态/明细/总金额）+ 加单/结账\n- 空闲桌台/外卖号点击直接进入新建订单页（自动预选）\n- 修复：外卖订单绑定对应外卖号",
+  "versionCode": 36,
+  "versionName": "1.1.20",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.20/zhixiangshipu-app.apk",
+  "changelog": "- 修复：收款/记账/冰箱/加工保存报 RLS 拦截（员工ID丢失）——全部改为保存前兜底解析员工ID\n- 桌台看板点击交互、外卖绑定外卖号等",
   "buildDate": "2026-08-28"
 }

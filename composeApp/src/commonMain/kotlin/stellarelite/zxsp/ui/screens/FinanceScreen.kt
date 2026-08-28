@@ -177,7 +177,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
                         expense_title = title.trim(), expense_type = type, amount_myr = amt!!,
                         pay_method = method, transaction_ref = ref.trim(), is_personal = isPersonal,
                         notes = notes.trim().ifBlank { null },
-                        operate_staff_id = SessionManager.staffId ?: 0,
+                        operate_staff_id = SupabaseClient.currentStaffId(),
                         transaction_datetime = currentIso()
                     )
                     val r = SupabaseClient.insertExpense(rec)
