@@ -1,7 +1,7 @@
 {
-  "versionCode": 39,
-  "versionName": "1.1.23",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.23/zhixiangshipu-app.apk",
-  "changelog": "- 现金结账记录找零：消费金额/客户给多少/找零写入后端(收款单备注+操作日记audit_log)",
+  "versionCode": 40,
+  "versionName": "1.1.24",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.24/zhixiangshipu-app.apk",
+  "changelog": "- 撤回找零记录（收款单备注/操作日记）",
   "buildDate": "2026-08-28"
 }
