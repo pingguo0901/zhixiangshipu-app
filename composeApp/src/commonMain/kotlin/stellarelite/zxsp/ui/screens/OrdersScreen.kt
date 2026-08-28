@@ -271,8 +271,8 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                     )
                 } else {
                     val qr = when (method) {
-                        "duitnow" -> Res.drawable.duitnow_mybqr
-                        "tng_ewallet" -> Res.drawable.tng_qr
+                        "duitnow" -> Res.drawable.duitnow_tng_qr
+                        "tng_ewallet" -> Res.drawable.duitnow_tng_qr
                         else -> Res.drawable.alipay_qr
                     }
                     Image(

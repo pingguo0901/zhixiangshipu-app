@@ -1,7 +1,7 @@
 {
-  "versionCode": 40,
-  "versionName": "1.1.24",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.24/zhixiangshipu-app.apk",
-  "changelog": "- 撤回找零记录（收款单备注/操作日记）",
+  "versionCode": 41,
+  "versionName": "1.1.25",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.25/zhixiangshipu-app.apk",
+  "changelog": "- 更换最新付款二维码：DuitNow/TNG 共用一张，支付宝一张",
   "buildDate": "2026-08-28"
 }
