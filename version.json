@@ -1,7 +1,7 @@
 {
-  "versionCode": 46,
-  "versionName": "1.1.30",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.30/zhixiangshipu-app.apk",
-  "changelog": "- 收据打印文字与分界线统一左对齐（同一条直线）",
+  "versionCode": 47,
+  "versionName": "1.1.31",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.31/zhixiangshipu-app.apk",
+  "changelog": "- 收据排版更新（新格式：分隔线/日期/明细/金额样式）",
   "buildDate": "2026-08-29"
 }
