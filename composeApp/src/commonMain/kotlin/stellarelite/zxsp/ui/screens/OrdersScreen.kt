@@ -274,7 +274,15 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                         )
                         val r = SupabaseClient.insertPayment(p)
                         saving = false
-                        if (r != null) onDone() else error = "收款失败"
+                        if (r != null) {
+                            // 全额结清 → 释放桌台为空闲
+                            if (payAmount != null && order.table_id != null && payAmount >= order.total_amount_myr) {
+                                SupabaseClient.setTableStatus(order.table_id!!, "free")
+                            }
+                            onDone()
+                        } else {
+                            error = "收款失败"
+                        }
                     }
                 }
             ) {

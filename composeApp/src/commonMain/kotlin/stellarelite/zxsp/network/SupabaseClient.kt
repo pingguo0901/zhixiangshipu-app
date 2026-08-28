@@ -141,6 +141,17 @@ object SupabaseClient {
         return resp.status.isSuccess()
     }
 
+    // 设置桌台状态（结账后释放为空闲等）
+    suspend fun setTableStatus(tableId: Long, status: String): Boolean {
+        val resp: HttpResponse = client.patch("$BASE/rest/v1/table_list") {
+            applyAuth()
+            url { parameters.append("id", "eq.$tableId") }
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("table_status", JsonPrimitive(status)) })
+        }
+        return resp.status.isSuccess()
+    }
+
     // ============ 通用插入 ============
     private suspend inline fun <reified T> insert(path: String, body: Any): T? {
         val resp: HttpResponse = client.post("$BASE/rest/v1/$path") {

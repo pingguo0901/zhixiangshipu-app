@@ -1,7 +1,7 @@
 {
-  "versionCode": 36,
-  "versionName": "1.1.20",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.20/zhixiangshipu-app.apk",
-  "changelog": "- 修复：收款/记账/冰箱/加工保存报 RLS 拦截（员工ID丢失）——全部改为保存前兜底解析员工ID\n- 桌台看板点击交互、外卖绑定外卖号等",
+  "versionCode": 37,
+  "versionName": "1.1.21",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.21/zhixiangshipu-app.apk",
+  "changelog": "- 修复：结账后桌台/外卖号自动变回空闲（之前结账后仍显示占用）\n- 收款/记账/冰箱/加工保存兜底解析员工ID等",
   "buildDate": "2026-08-28"
 }
