@@ -29,7 +29,7 @@ import stellarelite.zxsp.ui.theme.DiningColors
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-fun NewOrderScreen(onBack: () -> Unit) {
+fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     val scope = rememberCoroutineScope()
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
@@ -52,6 +52,17 @@ fun NewOrderScreen(onBack: () -> Unit) {
             tables = t
         }
         loading = false
+    }
+
+    // 从桌台看板点击空闲桌台进入时，预选该桌台/外卖号
+    LaunchedEffect(initialTableId, tables) {
+        if (initialTableId != null) {
+            val t = tables.firstOrNull { it.id == initialTableId }
+            if (t != null) {
+                tableId = t.id
+                isTakeaway = t.table_no.startsWith("外卖")
+            }
+        }
     }
 
     val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) }
@@ -213,7 +224,7 @@ fun NewOrderScreen(onBack: () -> Unit) {
                                 error = null
                                 val itemsJson = buildOrderItemsJson(menuItems, quantities)
                                 val order = CustomerOrder(
-                                    table_id = if (isTakeaway) null else tableId,
+                                    table_id = tableId,
                                     customer_name = customerName.trim().ifBlank { null },
                                     customer_phone = customerPhone.trim().ifBlank { null },
                                     order_items = itemsJson,

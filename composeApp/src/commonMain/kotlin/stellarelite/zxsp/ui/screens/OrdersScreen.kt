@@ -210,7 +210,7 @@ private fun DetailRow(label: String, value: String) {
 }
 
 @Composable
-private fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit) {
+fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     var amount by remember { mutableStateOf(order.total_amount_myr.toString()) }
     var method by remember { mutableStateOf("cash") }

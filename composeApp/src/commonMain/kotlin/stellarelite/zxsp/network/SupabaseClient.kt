@@ -18,6 +18,9 @@ import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import stellarelite.zxsp.data.SessionManager
 
 // ============ 请求体 DTO ============
@@ -105,6 +108,37 @@ object SupabaseClient {
     suspend fun currentStaffId(): Long {
         SessionManager.staffId?.let { return it }
         return fetchStaffs().firstOrNull()?.id ?: 0
+    }
+
+    // 按桌台查当前未结账订单（用于桌台看板点击）
+    suspend fun fetchActiveOrderByTable(tableId: Long): CustomerOrder? {
+        val resp: HttpResponse = client.get("$BASE/rest/v1/customer_orders") {
+            applyAuth()
+            url {
+                parameters.append("select", "*")
+                parameters.append("table_id", "eq.$tableId")
+                parameters.append("payment_status", "neq.paid")
+                parameters.append("order", "id.desc")
+                parameters.append("limit", "1")
+            }
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<List<CustomerOrder>>().firstOrNull() }.getOrNull()
+        } else null
+    }
+
+    // 加单：更新订单明细与总金额
+    suspend fun updateOrderItems(orderId: Long, orderItems: JsonElement, totalAmount: Double): Boolean {
+        val resp: HttpResponse = client.patch("$BASE/rest/v1/customer_orders") {
+            applyAuth()
+            url { parameters.append("id", "eq.$orderId") }
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject {
+                put("order_items", orderItems)
+                put("total_amount_myr", JsonPrimitive(totalAmount))
+            })
+        }
+        return resp.status.isSuccess()
     }
 
     // ============ 通用插入 ============

@@ -14,7 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.network.CustomerOrder
+import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.ui.theme.DiningColors
@@ -22,15 +31,32 @@ import stellarelite.zxsp.ui.theme.DiningColors
 @Composable
 fun DashboardScreen() {
     var showNewOrder by remember { mutableStateOf(false) }
+    var newOrderTableId by remember { mutableStateOf<Long?>(null) }
+    var orderDialogTable by remember { mutableStateOf<TableList?>(null) }
+
     if (showNewOrder) {
-        NewOrderScreen(onBack = { showNewOrder = false })
+        NewOrderScreen(onBack = { showNewOrder = false }, initialTableId = newOrderTableId)
         return
     }
-    DashboardView(onNewOrder = { showNewOrder = true })
+    DashboardView(
+        onNewOrder = { newOrderTableId = null; showNewOrder = true },
+        onTableClick = { table ->
+            if (table.table_status == "occupied") {
+                orderDialogTable = table
+            } else {
+                newOrderTableId = table.id
+                showNewOrder = true
+            }
+        }
+    )
+
+    orderDialogTable?.let { table ->
+        TableOrderDialog(table = table, onDismiss = { orderDialogTable = null })
+    }
 }
 
 @Composable
-private fun DashboardView(onNewOrder: () -> Unit) {
+private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit) {
     val scope = rememberCoroutineScope()
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -117,7 +143,7 @@ private fun DashboardView(onNewOrder: () -> Unit) {
                         Text("暂无桌台，请老板先添加", color = DiningColors.TextMuted, fontSize = 14.sp)
                     }
                 } else {
-                    TableGrid(dineInTables)
+                    TableGrid(dineInTables, onTableClick)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -129,7 +155,7 @@ private fun DashboardView(onNewOrder: () -> Unit) {
                         Text("暂无外卖号", color = DiningColors.TextMuted, fontSize = 14.sp)
                     }
                 } else {
-                    TableGrid(takeawayTables)
+                    TableGrid(takeawayTables, onTableClick)
                 }
             }
         }
@@ -147,7 +173,7 @@ private fun StatItem(emoji: String, value: String, label: String) {
 }
 
 @Composable
-private fun TableGrid(tables: List<TableList>) {
+private fun TableGrid(tables: List<TableList>, onTableClick: (TableList) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         tables.chunked(4).forEach { row ->
             Row(
@@ -156,7 +182,7 @@ private fun TableGrid(tables: List<TableList>) {
             ) {
                 row.forEach { table ->
                     Box(modifier = Modifier.weight(1f)) {
-                        TableBadge(table)
+                        TableBadge(table, onClick = { onTableClick(table) })
                     }
                 }
                 repeat(4 - row.size) {
@@ -168,7 +194,7 @@ private fun TableGrid(tables: List<TableList>) {
 }
 
 @Composable
-private fun TableBadge(table: TableList) {
+private fun TableBadge(table: TableList, onClick: () -> Unit) {
     val bg = when (table.table_status) {
         "occupied" -> DiningColors.Primary
         "cleaning" -> DiningColors.Warning
@@ -187,10 +213,187 @@ private fun TableBadge(table: TableList) {
         modifier = Modifier
             .fillMaxWidth()
             .background(bg, RoundedCornerShape(10.dp))
+            .clickable { onClick() }
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(table.table_no, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = fg)
         Text(label, fontSize = 10.sp, color = fg.copy(alpha = 0.8f))
     }
+}
+
+// ============ 桌台订单弹窗 ============
+@Composable
+private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var order by remember { mutableStateOf<CustomerOrder?>(null) }
+    var loading by remember { mutableStateOf(true) }
+    var showPayment by remember { mutableStateOf(false) }
+    var showAddItems by remember { mutableStateOf(false) }
+
+    fun loadOrder() {
+        scope.launch {
+            loading = true
+            order = runCatching { SupabaseClient.fetchActiveOrderByTable(table.id) }.getOrNull()
+            loading = false
+        }
+    }
+    LaunchedEffect(Unit) { loadOrder() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("${table.table_no}（${if (table.table_no.startsWith("外卖")) "外卖" else "堂食"}）", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            when {
+                loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = DiningColors.Primary)
+                }
+                order == null -> Text("该桌台暂无未结账订单", color = DiningColors.TextMuted, fontSize = 14.sp)
+                else -> {
+                    val o = order!!
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        OrderInfoRow("订单号", o.order_no)
+                        OrderInfoRow("收据号", o.receipt_no)
+                        OrderInfoRow("顾客", o.customer_name ?: "—")
+                        OrderInfoRow("电话", o.customer_phone ?: "—")
+                        OrderInfoRow("桌台", table.table_no)
+                        OrderInfoRow("状态", when (o.payment_status) {
+                            "paid" -> "已付清"; "partial" -> "部分付"; else -> "未付"
+                        })
+                        HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                        Text("订单明细", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                        parseOrderItems(o.order_items).forEach { line ->
+                            Text("• $line", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                        }
+                        HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                        OrderInfoRow("总金额", "RM%.2f".format(o.total_amount_myr))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (order != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { showAddItems = true }) { Text("加单", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                    TextButton(onClick = { showPayment = true }) { Text("结账", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                }
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("关闭", color = DiningColors.TextMuted) } }
+    )
+
+    if (showPayment && order != null) {
+        PaymentDialog(order = order!!, onDismiss = { showPayment = false }, onDone = { showPayment = false; onDismiss() })
+    }
+    if (showAddItems && order != null) {
+        AddItemsDialog(order = order!!, onDismiss = { showAddItems = false }, onDone = { showAddItems = false; loadOrder() })
+    }
+}
+
+@Composable
+private fun OrderInfoRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, fontSize = 13.sp, color = DiningColors.TextSecondary)
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+    }
+}
+
+private fun parseOrderItems(items: JsonElement): List<String> {
+    return items.jsonArray.mapNotNull { el ->
+        val obj = el.jsonObject
+        val name = obj["item_name"]?.jsonPrimitive?.content ?: return@mapNotNull null
+        val qty = obj["quantity"]?.jsonPrimitive?.content ?: ""
+        val price = obj["unit_price_myr"]?.jsonPrimitive?.content ?: ""
+        "$name × $qty  RM$price"
+    }
+}
+
+// ============ 加单弹窗 ============
+@Composable
+private fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val quantities = remember { mutableStateMapOf<Long, Int>() }
+
+    LaunchedEffect(Unit) {
+        runCatching {
+            menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active }
+            order.order_items.jsonArray.forEach { el ->
+                val obj = el.jsonObject
+                val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
+                val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull()
+                if (itemId != null && qty != null) quantities[itemId] = qty
+            }
+        }
+        loading = false
+    }
+
+    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("加单 · ${order.order_no}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            if (loading) {
+                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = DiningColors.Primary)
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    menuItems.forEach { item ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(item.item_name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                Text("RM%.2f/${item.unit}".format(item.sell_price_myr), fontSize = 11.sp, color = DiningColors.TextMuted)
+                            }
+                            TextButton(onClick = {
+                                val q = quantities[item.id] ?: 0
+                                if (q > 1) quantities[item.id] = q - 1 else quantities.remove(item.id)
+                            }) { Text("−", fontSize = 18.sp, color = DiningColors.Primary) }
+                            Text("${quantities[item.id] ?: 0}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                            TextButton(onClick = { quantities[item.id] = (quantities[item.id] ?: 0) + 1 }) {
+                                Text("＋", fontSize = 18.sp, color = DiningColors.Primary)
+                            }
+                        }
+                    }
+                    if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !loading && !saving, onClick = {
+                scope.launch {
+                    saving = true; error = null
+                    val itemsJson = buildJsonArray {
+                        menuItems.forEach { item ->
+                            val q = quantities[item.id] ?: 0
+                            if (q > 0) {
+                                add(buildJsonObject {
+                                    put("item_id", JsonPrimitive(item.id))
+                                    put("item_name", JsonPrimitive(item.item_name))
+                                    put("quantity", JsonPrimitive(q))
+                                    put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
+                                    put("unit", JsonPrimitive(item.unit))
+                                })
+                            }
+                        }
+                    }
+                    val ok = SupabaseClient.updateOrderItems(order.id, itemsJson, totalAmount)
+                    saving = false
+                    if (ok) onDone() else error = "加单失败"
+                }
+            }) { Text("保存加单 · RM %.2f".format(totalAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
 }
