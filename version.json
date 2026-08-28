@@ -1,7 +1,7 @@
 {
-  "versionCode": 60,
-  "versionName": "1.1.44",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.44/zhixiangshipu-app.apk",
-  "changelog": "- 菜品/桌台/供应商/员工管理页标题居中；订单详情页编辑按钮移至右上角",
+  "versionCode": 61,
+  "versionName": "1.1.45",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.45/zhixiangshipu-app.apk",
+  "changelog": "- 修复启动时不刷新角色导致老板被误判为员工、看不到编辑按钮的问题",
   "buildDate": "2026-08-29"
 }

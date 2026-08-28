@@ -56,14 +56,18 @@ fun App(
             }
         }
 
-        if (SessionManager.isLoggedIn && SessionManager.staffId == null) {
+        // 每次启动都从数据库刷新角色（修复旧会话 role 不更新导致权限判断错误）
+        if (SessionManager.isLoggedIn) {
             val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
             val staff = if (uid != null) runCatching { SupabaseClient.fetchMyStaff(uid) }.getOrNull() else null
-            if (staff != null && staff.is_active) {
-                SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
-            } else {
-                SessionManager.clear()
+            if (staff != null) {
+                if (staff.is_active) {
+                    SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+                } else {
+                    SessionManager.clear()
+                }
             }
+            // staff == null（网络异常）：保留现有会话，避免误踢
         }
     }
 
