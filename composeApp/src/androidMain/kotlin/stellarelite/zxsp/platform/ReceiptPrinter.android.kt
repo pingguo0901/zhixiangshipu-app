@@ -79,9 +79,8 @@ private fun buildEscPos(text: String): ByteArray {
     out.write(byteArrayOf(0x1B, 0x21, 0x00)) // ESC ! 0 正常字号
     out.write(byteArrayOf(0x1B, 0x61, 0x00)) // ESC A 0 默认全局左对齐
 
-    // 所有内容居中
+    // 全部左对齐（每行已在文本里带 1 空格左边距）
     for (line in text.split("\n")) {
-        out.write(byteArrayOf(0x1B, 0x61, 0x01)) // 居中
         out.write(line.toByteArray(gbk))
         out.write(0x0A)
     }

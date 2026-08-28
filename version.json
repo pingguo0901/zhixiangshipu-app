@@ -1,7 +1,7 @@
 {
-  "versionCode": 54,
-  "versionName": "1.1.38",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.38/zhixiangshipu-app.apk",
-  "changelog": "- 收据所有内容居中，营业时间简化为6PM-6AM",
+  "versionCode": 55,
+  "versionName": "1.1.39",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.39/zhixiangshipu-app.apk",
+  "changelog": "- 收据所有内容统一左对齐+1空格左边距，分割线38=和51-，上下对齐",
   "buildDate": "2026-08-29"
 }
