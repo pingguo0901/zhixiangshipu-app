@@ -436,7 +436,7 @@ data class ReceiptData(
         val DIV = "-".repeat(72)
         val sb = StringBuilder()
         sb.appendLine(DIV)
-        sb.appendLine("OFFICIAL SALES RECEIPT")
+        sb.appendLine(center("OFFICIAL SALES RECEIPT", 72))
         sb.appendLine()
         sb.appendLine("ZHI XIANG FOOD ENTERPRISE")
         sb.appendLine("(Trade Name: 炙巷食铺)")
@@ -492,6 +492,13 @@ private fun padRight(s: String, width: Int): String {
 private fun padLeft(s: String, width: Int): String {
     val pad = (width - displayWidth(s)).coerceAtLeast(0)
     return " ".repeat(pad) + s
+}
+
+// 居中（空格模拟，Font-A 等宽下有效）
+private fun center(s: String, width: Int): String {
+    val pad = (width - displayWidth(s)).coerceAtLeast(0)
+    val left = pad / 2
+    return " ".repeat(left) + s + " ".repeat(pad - left)
 }
 
 // 金额行：文字靠左，RM+数字靠右，总宽 72

@@ -1,7 +1,7 @@
 {
-  "versionCode": 51,
-  "versionName": "1.1.35",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.35/zhixiangshipu-app.apk",
-  "changelog": "- 取消所有居中指令，全部左对齐(修复打印对齐错乱)",
+  "versionCode": 52,
+  "versionName": "1.1.36",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.36/zhixiangshipu-app.apk",
+  "changelog": "- 标题改为空格模拟居中(全部左对齐不变)",
   "buildDate": "2026-08-29"
 }
