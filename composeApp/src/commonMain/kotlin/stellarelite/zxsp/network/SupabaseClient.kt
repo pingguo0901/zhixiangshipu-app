@@ -145,6 +145,22 @@ object SupabaseClient {
         } else null
     }
     suspend fun fetchPayments(): List<PaymentRecord> = getList("payment_records", mapOf("order" to "transaction_datetime.desc"))
+
+    // 按订单ID查付款记录（用于订单详情页显示已上传收据）
+    suspend fun fetchPaymentByOrder(orderId: Long): PaymentRecord? {
+        val resp: HttpResponse = client.get("$BASE/rest/v1/payment_records") {
+            applyAuth()
+            url {
+                parameters.append("select", "*")
+                parameters.append("order_id", "eq.$orderId")
+                parameters.append("order", "id.desc")
+                parameters.append("limit", "1")
+            }
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<List<PaymentRecord>>().firstOrNull() }.getOrNull()
+        } else null
+    }
     suspend fun fetchStockInLogs(): List<StockInLog> = getList("stock_in_log", mapOf("order" to "transaction_datetime.desc"))
     suspend fun fetchFridgeLogs(): List<FridgeLog> = getList("fridge_log", mapOf("order" to "log_time.desc"))
     suspend fun fetchMeatProcessLogs(): List<MeatProcessLog> = getList("meat_process_log", mapOf("order" to "process_time.desc"))

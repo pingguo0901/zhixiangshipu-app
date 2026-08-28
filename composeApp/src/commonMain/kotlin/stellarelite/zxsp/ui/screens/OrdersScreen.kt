@@ -36,9 +36,11 @@ import stellarelite.zxsp.network.ReceiptMaster
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.rememberCamera
+import stellarelite.zxsp.platform.toImageBitmap
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
 import stellarelite.zxsp.util.ReceiptFormatter
+import stellarelite.zxsp.util.decodeJwtSub
 
 private sealed class OrdersNav {
     object List : OrdersNav()
@@ -180,12 +182,30 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     var showEdit by remember { mutableStateOf(false) }
     var tableNo by remember { mutableStateOf<String?>(null) }
     var receipt by remember { mutableStateOf<ReceiptMaster?>(null) }
+    var payment by remember { mutableStateOf<PaymentRecord?>(null) }
+    var receiptPhoto by remember { mutableStateOf<ImageBitmap?>(null) }
 
     LaunchedEffect(currentOrder.table_id, currentOrder.order_no) {
         tableNo = currentOrder.table_id?.let { id ->
             runCatching { SupabaseClient.fetchTables().firstOrNull { it.id == id }?.table_no }.getOrNull()
         }
         receipt = runCatching { SupabaseClient.fetchReceiptByOrderNo(currentOrder.order_no) }.getOrNull()
+    }
+
+    // 进入详情页时强制刷新角色 + 查付款记录（含已上传收据）
+    LaunchedEffect(currentOrder.id) {
+        val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
+        val staff = uid?.let { runCatching { SupabaseClient.fetchMyStaff(it) }.getOrNull() }
+        if (staff != null && staff.is_active) {
+            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+        }
+        val p = runCatching { SupabaseClient.fetchPaymentByOrder(currentOrder.id) }.getOrNull()
+        payment = p
+        if (p != null && p.pay_method != "cash" && p.receipt_attachment_url != null) {
+            receiptPhoto = runCatching {
+                SupabaseClient.downloadFile(p.receipt_attachment_url)?.toImageBitmap()
+            }.getOrNull()
+        }
     }
 
     val lines = remember(currentOrder.order_items) { parseOrderLines(currentOrder.order_items) }
@@ -251,6 +271,18 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // 非现金付款：显示已上传的收据照片
+        if (receiptPhoto != null) {
+            Text("已上传收据照片", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+            Spacer(modifier = Modifier.height(8.dp))
+            Image(
+                bitmap = receiptPhoto!!,
+                contentDescription = "收据照片",
+                modifier = Modifier.fillMaxWidth().height(180.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         // 打印收据两个按钮
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

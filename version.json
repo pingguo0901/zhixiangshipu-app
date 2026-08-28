@@ -1,7 +1,7 @@
 {
-  "versionCode": 63,
-  "versionName": "1.1.47",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.47/zhixiangshipu-app.apk",
-  "changelog": "- 仓库库存：点击物料可编辑（名称/单位/预警值/备注，仅admin角色）",
+  "versionCode": 64,
+  "versionName": "1.1.48",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.48/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情页进入时强制刷新角色(修复编辑按钮不显示)；非现金付款订单显示已上传收据照片",
   "buildDate": "2026-08-29"
 }
