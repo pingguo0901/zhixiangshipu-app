@@ -1,7 +1,7 @@
 {
-  "versionCode": 47,
-  "versionName": "1.1.31",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.31/zhixiangshipu-app.apk",
-  "changelog": "- 收据排版更新（新格式：分隔线/日期/明细/金额样式）",
+  "versionCode": 48,
+  "versionName": "1.1.32",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.32/zhixiangshipu-app.apk",
+  "changelog": "- 收据栏位精确对齐：商品名34/数量4/单价6/金额12，中文=2字符\n- 分割线统一72个-，金额右对齐，日期改马来西亚格式",
   "buildDate": "2026-08-29"
 }
