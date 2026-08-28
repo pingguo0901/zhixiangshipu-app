@@ -1,7 +1,7 @@
 {
-  "versionCode": 58,
-  "versionName": "1.1.42",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.42/zhixiangshipu-app.apk",
-  "changelog": "- 收据菜品中英双语：第一行中文名带数据，第二行英文名右侧留空；菜品管理新增英文名输入框",
+  "versionCode": 59,
+  "versionName": "1.1.43",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.43/zhixiangshipu-app.apk",
+  "changelog": "- 订单列表修复桌台单被误判为外卖；订单详情页补全类型/菜品明细/数量/单价/折扣/付款方式/顾客给多少/找零，新增打印收据(未付款/已付款)两个按钮，标题居中+Admin编辑按钮",
   "buildDate": "2026-08-29"
 }

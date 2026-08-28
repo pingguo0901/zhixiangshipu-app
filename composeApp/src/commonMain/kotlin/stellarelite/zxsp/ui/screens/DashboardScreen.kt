@@ -330,7 +330,7 @@ private fun parseOrderItems(items: JsonElement): List<String> {
 
 // ============ 加单弹窗 ============
 @Composable
-private fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit) {
+internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit, title: String = "加单") {
     val scope = rememberCoroutineScope()
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -357,7 +357,7 @@ private fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: 
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("加单 · ${order.order_no}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text("$title · ${order.order_no}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             if (loading) {
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -411,7 +411,7 @@ private fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: 
                     saving = false
                     if (ok) onDone() else error = "加单失败"
                 }
-            }) { Text("保存加单 · RM %.2f".format(totalAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text("保存$title · RM %.2f".format(totalAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
     )

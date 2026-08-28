@@ -113,6 +113,37 @@ object SupabaseClient {
     suspend fun fetchSuppliers(): List<Supplier> = getList("supplier", mapOf("order" to "supplier_name.asc"))
     suspend fun fetchWarehouseItems(): List<WarehouseItem> = getList("warehouse_items", mapOf("order" to "item_name.asc"))
     suspend fun fetchOrders(): List<CustomerOrder> = getList("customer_orders", mapOf("order" to "order_datetime.desc"))
+
+    // 按ID查单个订单
+    suspend fun fetchOrder(orderId: Long): CustomerOrder? {
+        val resp: HttpResponse = client.get("$BASE/rest/v1/customer_orders") {
+            applyAuth()
+            url {
+                parameters.append("select", "*")
+                parameters.append("id", "eq.$orderId")
+                parameters.append("limit", "1")
+            }
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<List<CustomerOrder>>().firstOrNull() }.getOrNull()
+        } else null
+    }
+
+    // 按订单号查收据主表（remark 字段存的是 order_no）
+    suspend fun fetchReceiptByOrderNo(orderNo: String): ReceiptMaster? {
+        val resp: HttpResponse = client.get("$BASE/rest/v1/receipt_master") {
+            applyAuth()
+            url {
+                parameters.append("select", "*")
+                parameters.append("remark", "eq.$orderNo")
+                parameters.append("order", "receipt_id.desc")
+                parameters.append("limit", "1")
+            }
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<List<ReceiptMaster>>().firstOrNull() }.getOrNull()
+        } else null
+    }
     suspend fun fetchPayments(): List<PaymentRecord> = getList("payment_records", mapOf("order" to "transaction_datetime.desc"))
     suspend fun fetchStockInLogs(): List<StockInLog> = getList("stock_in_log", mapOf("order" to "transaction_datetime.desc"))
     suspend fun fetchFridgeLogs(): List<FridgeLog> = getList("fridge_log", mapOf("order" to "log_time.desc"))

@@ -64,6 +64,7 @@ fun OrdersScreen() {
 private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) {
     val scope = rememberCoroutineScope()
     var orders by remember { mutableStateOf<List<CustomerOrder>>(emptyList()) }
+    var tableMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -74,6 +75,8 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
             runCatching { SupabaseClient.fetchOrders() }
                 .onSuccess { orders = it }
                 .onFailure { error = it.message ?: "加载失败" }
+            runCatching { SupabaseClient.fetchTables() }
+                .onSuccess { tableMap = it.associate { t -> t.id to t.table_no } }
             loading = false
         }
     }
@@ -114,7 +117,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(orders, key = { it.id }) { order ->
-                    OrderCard(order, onClick = { onDetail(order) })
+                    OrderCard(order, tableMap[order.table_id], onClick = { onDetail(order) })
                 }
             }
         }
@@ -122,7 +125,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
 }
 
 @Composable
-private fun OrderCard(order: CustomerOrder, onClick: () -> Unit) {
+private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Unit) {
     val statusLabel = when (order.payment_status) {
         "paid" -> "已付清"
         "partial" -> "部分付"
@@ -133,6 +136,9 @@ private fun OrderCard(order: CustomerOrder, onClick: () -> Unit) {
         "partial" -> DiningColors.Warning
         else -> DiningColors.Error
     }
+    // 堂食/外卖判断：有桌台就是堂食，否则才是外卖
+    val orderType = if (order.table_id != null) "堂食 · 桌 ${tableNo ?: order.table_id}" else "外卖订单"
+    val orderTypeColor = if (order.table_id != null) DiningColors.Primary else DiningColors.TextSecondary
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
@@ -146,9 +152,9 @@ private fun OrderCard(order: CustomerOrder, onClick: () -> Unit) {
             Column {
                 Text(order.order_no, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
                 Text(
-                    order.customer_name ?: "外卖订单",
+                    if (order.table_id != null) orderType else (order.customer_name ?: orderType),
                     fontSize = 13.sp,
-                    color = DiningColors.TextSecondary
+                    color = orderTypeColor
                 )
                 Text(
                     order.order_datetime?.take(16)?.replace("T", " ") ?: "",
@@ -167,45 +173,109 @@ private fun OrderCard(order: CustomerOrder, onClick: () -> Unit) {
 @Composable
 private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
+    var currentOrder by remember { mutableStateOf(order) }
     var showPay by remember { mutableStateOf(false) }
     var showReceipt by remember { mutableStateOf(false) }
     var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
+    var showEdit by remember { mutableStateOf(false) }
     var tableNo by remember { mutableStateOf<String?>(null) }
+    var receipt by remember { mutableStateOf<ReceiptMaster?>(null) }
 
-    LaunchedEffect(order.table_id) {
-        tableNo = order.table_id?.let { id ->
+    LaunchedEffect(currentOrder.table_id, currentOrder.order_no) {
+        tableNo = currentOrder.table_id?.let { id ->
             runCatching { SupabaseClient.fetchTables().firstOrNull { it.id == id }?.table_no }.getOrNull()
         }
+        receipt = runCatching { SupabaseClient.fetchReceiptByOrderNo(currentOrder.order_no) }.getOrNull()
     }
 
+    val lines = remember(currentOrder.order_items) { parseOrderLines(currentOrder.order_items) }
+    val isTakeaway = currentOrder.table_id == null
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("订单详情", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+        // 标题居中，左上角编辑按钮（仅 Admin）
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.align(Alignment.CenterStart)) {
+                TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
+                if (SessionManager.isAdmin) {
+                    TextButton(onClick = { showEdit = true }) { Text("✏️ 编辑", color = DiningColors.Primary) }
+                }
+            }
+            Text(
+                "订单详情",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = DiningColors.TextPrimary,
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
 
         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailRow("订单号", order.order_no)
-                DetailRow("收据号", order.receipt_no)
-                DetailRow("顾客", order.customer_name ?: "—")
-                DetailRow("电话", order.customer_phone ?: "—")
-                DetailRow("桌台", tableNo ?: (if (order.table_id != null) "桌 #${order.table_id}" else "外卖"))
-                DetailRow("状态", when (order.payment_status) {
+                DetailRow("订单号", currentOrder.order_no)
+                DetailRow("收据号", currentOrder.receipt_no.ifBlank { "—" })
+                DetailRow("类型", if (isTakeaway) "外卖" else "堂食")
+                DetailRow("顾客", currentOrder.customer_name ?: "—")
+                DetailRow("电话", currentOrder.customer_phone ?: "—")
+                DetailRow("桌台", if (isTakeaway) "外卖" else (tableNo ?: "桌 #${currentOrder.table_id}"))
+                DetailRow("状态", when (currentOrder.payment_status) {
                     "paid" -> "已付清"; "partial" -> "部分付"; else -> "未付"
                 })
-                DetailRow("总金额", "RM%.2f".format(order.total_amount_myr))
-                order.notes?.takeIf { it.isNotBlank() }?.let { DetailRow("备注", it) }
+
+                // 菜品明细
+                if (lines.isNotEmpty()) {
+                    HorizontalDivider(color = DiningColors.SurfaceVariant)
+                    Text("菜品明细", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+                    lines.forEach { line ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(line.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                Text("${line.qty} × RM%.2f".format(line.unitPrice), fontSize = 12.sp, color = DiningColors.TextMuted)
+                            }
+                            Text("RM%.2f".format(line.amount), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = DiningColors.SurfaceVariant)
+                DetailRow("折扣", "RM%.2f".format(receipt?.discount ?: 0.0))
+                DetailRow("付款方式", receipt?.payment_mode?.ifBlank { "未付" } ?: "未付")
+                DetailRow("顾客给多少", "RM%.2f".format(receipt?.amount_received ?: 0.0))
+                DetailRow("找零", "RM%.2f".format(receipt?.change_given ?: 0.0))
+                DetailRow("总金额", "RM%.2f".format(currentOrder.total_amount_myr))
+                currentOrder.notes?.takeIf { it.isNotBlank() }?.let { DetailRow("备注", it) }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // 打印收据两个按钮
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(
+                onClick = { printReceiptText(buildUnpaidReceipt(currentOrder).toReceiptText()) },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("🖨 打印收据\n（未付款）", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+            OutlinedButton(
+                onClick = { printReceiptText(buildPaidReceipt(currentOrder, receipt).toReceiptText()) },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("🖨 打印收据\n（已付款）", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         // 收款按钮
-        if (order.payment_status != "paid") {
+        if (currentOrder.payment_status != "paid") {
             Button(
                 onClick = { showPay = true },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -217,9 +287,23 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
         }
     }
 
+    if (showEdit) {
+        AddItemsDialog(
+            order = currentOrder,
+            onDismiss = { showEdit = false },
+            onDone = {
+                showEdit = false
+                scope.launch {
+                    SupabaseClient.fetchOrder(currentOrder.id)?.let { currentOrder = it }
+                }
+            },
+            title = "编辑"
+        )
+    }
+
     if (showPay) {
         PaymentDialog(
-            order = order,
+            order = currentOrder,
             onDismiss = { showPay = false },
             onPaid = { data ->
                 showPay = false
@@ -236,6 +320,38 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             onDone = { showReceipt = false; onBack() }
         )
     }
+}
+
+// 未付款收据（用订单数据构造，无付款信息）
+private fun buildUnpaidReceipt(order: CustomerOrder): ReceiptData {
+    val lines = parseOrderLines(order.order_items)
+    return ReceiptData(
+        receiptNo = order.receipt_no.ifBlank { order.order_no },
+        transDatetime = order.order_datetime ?: "",
+        items = lines,
+        subTotal = order.total_amount_myr,
+        discount = 0.0,
+        total = order.total_amount_myr,
+        paymentMode = "UNPAID",
+        amountReceived = 0.0,
+        changeGiven = 0.0
+    )
+}
+
+// 已付款收据（优先用 receipt_master 数据）
+private fun buildPaidReceipt(order: CustomerOrder, receipt: ReceiptMaster?): ReceiptData {
+    val lines = parseOrderLines(order.order_items)
+    return ReceiptData(
+        receiptNo = receipt?.receipt_no ?: order.receipt_no,
+        transDatetime = receipt?.trans_datetime ?: order.order_datetime ?: "",
+        items = lines,
+        subTotal = receipt?.sub_total ?: order.total_amount_myr,
+        discount = receipt?.discount ?: 0.0,
+        total = receipt?.total_amount ?: order.total_amount_myr,
+        paymentMode = receipt?.payment_mode ?: "UNPAID",
+        amountReceived = receipt?.amount_received ?: 0.0,
+        changeGiven = receipt?.change_given ?: 0.0
+    )
 }
 
 @Composable
