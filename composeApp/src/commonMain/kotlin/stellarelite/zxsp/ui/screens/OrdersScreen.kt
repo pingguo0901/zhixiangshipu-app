@@ -324,7 +324,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                             }
                             onDone()
                         } else {
-                            error = "收款失败"
+                            error = "收款失败：${SupabaseClient.lastError ?: "未知原因"}"
                         }
                     }
                 }

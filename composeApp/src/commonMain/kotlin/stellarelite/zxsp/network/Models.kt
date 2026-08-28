@@ -84,6 +84,7 @@ data class PaymentRecord(
     val pay_currency: String = "MYR",
     val exchange_rate: Double? = null,
     val pay_method: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val transaction_ref: String = "",
     val receipt_attachment_url: String? = null,
     val received_by_staff_id: Long = 0,

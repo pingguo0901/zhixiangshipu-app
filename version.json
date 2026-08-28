@@ -1,7 +1,7 @@
 {
-  "versionCode": 42,
-  "versionName": "1.1.26",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.26/zhixiangshipu-app.apk",
-  "changelog": "- 修复退出App后需重新登录的问题（登录状态持久化+token自动刷新）",
+  "versionCode": 43,
+  "versionName": "1.1.27",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.27/zhixiangshipu-app.apk",
+  "changelog": "- 修复拍收据后结账显示收款失败的问题（交易号字段缺省导致）",
   "buildDate": "2026-08-29"
 }
