@@ -267,6 +267,7 @@ private fun buildOrderItemsJson(items: List<MenuItem>, quantities: Map<Long, Int
                 add(buildJsonObject {
                     put("item_id", JsonPrimitive(item.id))
                     put("item_name", JsonPrimitive(item.item_name))
+                    put("name_en", JsonPrimitive(item.name_en ?: ""))
                     put("quantity", JsonPrimitive(q))
                     put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
                     put("unit", JsonPrimitive(item.unit))

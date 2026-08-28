@@ -1,7 +1,7 @@
 {
-  "versionCode": 57,
-  "versionName": "1.1.41",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.41/zhixiangshipu-app.apk",
-  "changelog": "- 结算行标签拓宽至34格、币种收紧至4格(34+4+10=48)，金额列垂直对齐更精准",
+  "versionCode": 58,
+  "versionName": "1.1.42",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.42/zhixiangshipu-app.apk",
+  "changelog": "- 收据菜品中英双语：第一行中文名带数据，第二行英文名右侧留空；菜品管理新增英文名输入框",
   "buildDate": "2026-08-29"
 }

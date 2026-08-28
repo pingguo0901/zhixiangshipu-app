@@ -417,6 +417,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
 
 data class ReceiptLine(
     val name: String,
+    val nameEn: String = "",
     val qty: Int,
     val unitPrice: Double,
     val amount: Double
@@ -462,7 +463,7 @@ data class ReceiptData(
 
         // 商品明细注入
         items.forEach { line ->
-            r.add(ReceiptFormatter.generateItemRow(line.name, null, line.qty.toString(), "%.2f".format(line.unitPrice), "%.2f".format(line.amount)))
+            r.add(ReceiptFormatter.generateItemRow(line.nameEn, line.name, line.qty.toString(), "%.2f".format(line.unitPrice), "%.2f".format(line.amount)))
         }
         r.add("-".repeat(W))
 
@@ -511,9 +512,10 @@ private fun parseOrderLines(items: JsonElement): List<ReceiptLine> {
     return items.jsonArray.mapNotNull { el ->
         val obj = el.jsonObject
         val name = obj["item_name"]?.jsonPrimitive?.content ?: return@mapNotNull null
+        val nameEn = obj["name_en"]?.jsonPrimitive?.content ?: ""
         val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
         val price = obj["unit_price_myr"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
-        ReceiptLine(name, qty, price, qty * price)
+        ReceiptLine(name, nameEn, qty, price, qty * price)
     }
 }
 

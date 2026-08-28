@@ -190,6 +190,7 @@ private fun MenuManageScreen(onBack: () -> Unit) {
 private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf(item?.item_name ?: "") }
+    var nameEn by remember { mutableStateOf(item?.name_en ?: "") }
     var category by remember { mutableStateOf(item?.category ?: "") }
     var unit by remember { mutableStateOf(item?.unit ?: "") }
     var price by remember { mutableStateOf(if (item != null && item.sell_price_myr > 0) item.sell_price_myr.toString() else "") }
@@ -207,6 +208,7 @@ private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () ->
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("菜品名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = nameEn, onValueChange = { nameEn = it }, label = { Text("英文名（收据第二行，可空）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = category, onValueChange = { category = it }, label = { Text("分类（如：烧烤、主食）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("单位（如：串、份、瓶）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = price, onValueChange = { price = it }, label = { Text("售价 (RM)") }, singleLine = true,
@@ -226,12 +228,12 @@ private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () ->
                     }
                     val ok = if (isEdit) {
                         SupabaseClient.updateMenuItem(item!!.id, item.copy(
-                            item_name = name.trim(), category = category.trim(), unit = unit.trim(),
+                            item_name = name.trim(), name_en = nameEn.trim().ifBlank { null }, category = category.trim(), unit = unit.trim(),
                             sell_price_myr = p, notes = notes.trim().ifBlank { null }
                         ))
                     } else {
                         SupabaseClient.insertMenuItem(MenuItem(
-                            item_name = name.trim(), category = category.trim(), unit = unit.trim(),
+                            item_name = name.trim(), name_en = nameEn.trim().ifBlank { null }, category = category.trim(), unit = unit.trim(),
                             sell_price_myr = p, notes = notes.trim().ifBlank { null }, is_active = true
                         )) != null
                     }

@@ -56,23 +56,25 @@ object ReceiptFormatter {
         return " ".repeat(leftSpaces) + str + " ".repeat(rightSpaces)
     }
 
-    // 5. 生成商品明细行（Item占24格，Qty占5格，Unit占9格，Amount占10格）
-    // name 为品名（中文/英文皆可，按实际显示宽度对齐）；chineseName 为可选的中文品名辅助行
-    fun generateItemRow(name: String, chineseName: String?, qty: String, unit: String, amount: String): String {
+    // 5. 生成商品明细行（中文名在上带数据，英文名在下右侧留空）
+    fun generateItemRow(englishName: String, chineseName: String?, qty: String, unit: String, amount: String): String {
         val sb = StringBuilder()
 
-        // 第一行：品名左对齐24格，其余数据全部右对齐
-        val col1 = padRight(name, 24)
+        // 有效主名称：中文名优先，否则英文名兜底
+        val primaryName = if (!chineseName.isNullOrBlank()) chineseName else englishName
+
+        // 第一行：中文菜品名左对齐24格 + Qty/Unit/Amount 右对齐（24 + 5 + 9 + 10 = 48）
+        val col1 = padRight(primaryName, 24)
         val col2 = padLeft(qty, 5)
         val col3 = padLeft(unit, 9)
         val col4 = padLeft(amount, 10)
         sb.append(col1).append(col2).append(col3).append(col4)
 
-        // 第二行：如果存在中文品名，则单独一行输出，且左侧对齐品名，右侧留空防折行错位
-        if (!chineseName.isNullOrBlank()) {
-            val chCol = padRight(chineseName, 24)
+        // 第二行：若中文名存在且英文名非空，英文名左对齐24格 + 右侧留空24格撑满48列
+        if (!chineseName.isNullOrBlank() && englishName.isNotBlank()) {
+            val enCol = padRight(englishName, 24)
             val emptyCol = " ".repeat(24)
-            sb.append("\n").append(chCol).append(emptyCol)
+            sb.append("\n").append(enCol).append(emptyCol)
         }
 
         return sb.toString()

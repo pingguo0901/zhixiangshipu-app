@@ -46,6 +46,7 @@ data class TableList(
 data class MenuItem(
     val id: Long = 0,
     val item_name: String = "",
+    val name_en: String? = null,
     val category: String = "",
     val unit: String = "",
     val sell_price_myr: Double = 0.0,
