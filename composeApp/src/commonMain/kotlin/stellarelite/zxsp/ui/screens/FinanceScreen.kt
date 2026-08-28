@@ -1,25 +1,38 @@
 package stellarelite.zxsp.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.DailySales
 import stellarelite.zxsp.network.ExpenseRecord
+import stellarelite.zxsp.network.StockInLog
+import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
+import stellarelite.zxsp.network.WarehouseItem
+import stellarelite.zxsp.platform.rememberCamera
+import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
 
 private sealed class FinanceNav {
@@ -123,21 +136,64 @@ private fun expenseTypeLabel(t: String): String = when (t) {
     "stock" -> "进货"; "utility" -> "杂费"; "logistics" -> "运费"; "maintenance" -> "维修"; else -> t
 }
 
+// 开销物品固定清单（员工、租金为费用项不入库；其余为食材，保存后自动入库）
+private data class ExpenseItemOption(val name: String, val isStock: Boolean)
+
+private val EXPENSE_ITEM_OPTIONS = listOf(
+    ExpenseItemOption("员工", false),
+    ExpenseItemOption("租金", false),
+    ExpenseItemOption("五花肉", true),
+    ExpenseItemOption("鸡腿肉", true),
+    ExpenseItemOption("牛上脑", true),
+    ExpenseItemOption("羊肩肉", true),
+    ExpenseItemOption("生抽", true),
+    ExpenseItemOption("蚝油", true),
+    ExpenseItemOption("花雕酒", true),
+    ExpenseItemOption("糖", true),
+    ExpenseItemOption("白胡椒粉", true),
+    ExpenseItemOption("孜然粉", true),
+    ExpenseItemOption("生姜", true),
+    ExpenseItemOption("食用油", true),
+    ExpenseItemOption("烧烤酱", true),
+    ExpenseItemOption("辣椒粉", true),
+    ExpenseItemOption("烧烤撒料（孜然味）", true),
+    ExpenseItemOption("烧烤撒料（香辣味）", true),
+)
+
 @Composable
 private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
-    var title by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("utility") }
+    var suppliers by remember { mutableStateOf<List<Supplier>>(emptyList()) }
+    var warehouseItems by remember { mutableStateOf<List<WarehouseItem>>(emptyList()) }
+    var itemName by remember { mutableStateOf("") }
+    var itemExpanded by remember { mutableStateOf(false) }
+    var supplierId by remember { mutableStateOf<Long?>(null) }
+    var supplierExpanded by remember { mutableStateOf(false) }
+    var weight by remember { mutableStateOf("") }
+    var weightUnit by remember { mutableStateOf("KG") }
     var amount by remember { mutableStateOf("") }
     var method by remember { mutableStateOf("cash") }
-    var ref by remember { mutableStateOf("") }
-    var isPersonal by remember { mutableStateOf(false) }
-    var notes by remember { mutableStateOf("") }
+    var receipt1 by remember { mutableStateOf<ImageBitmap?>(null) }
+    var receipt2 by remember { mutableStateOf<ImageBitmap?>(null) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    val takePhoto1 = rememberCamera { bitmap -> receipt1 = bitmap }
+    val takePhoto2 = rememberCamera { bitmap -> receipt2 = bitmap }
+
+    LaunchedEffect(Unit) {
+        runCatching { suppliers = SupabaseClient.fetchSuppliers() }
+        runCatching { warehouseItems = SupabaseClient.fetchWarehouseItems() }
+        supplierId = suppliers.firstOrNull()?.id
+    }
+
     val amt = amount.toDoubleOrNull()
-    val canSave = title.isNotBlank() && amt != null && amt > 0 && ref.isNotBlank() && !saving
+    val selectedItem = EXPENSE_ITEM_OPTIONS.firstOrNull { it.name == itemName }
+    val weightVal = weight.toDoubleOrNull() ?: 0.0
+    val needReceipts = method != "cash"
+    val canSave = itemName.isNotBlank() && supplierId != null && amt != null && amt > 0 &&
+        (selectedItem?.isStock != true || weightVal > 0) &&
+        (!needReceipts || (receipt1 != null && receipt2 != null)) && !saving
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -145,26 +201,91 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
         shape = RoundedCornerShape(20.dp),
         title = { Text("记一笔开销", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("开销名称（瓦斯、竹签…）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("stock" to "进货", "utility" to "杂费", "logistics" to "运费", "maintenance" to "维修").forEach { (v, l) ->
-                        FilterChip(selected = type == v, onClick = { type = v }, label = { Text(l) })
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // 物品（单选弹出式）
+                Box {
+                    OutlinedButton(onClick = { itemExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(itemName.ifBlank { "选择物品" }, modifier = Modifier.weight(1f), color = DiningColors.TextPrimary)
+                            Text("▾", color = DiningColors.TextMuted)
+                        }
+                    }
+                    DropdownMenu(expanded = itemExpanded, onDismissRequest = { itemExpanded = false }) {
+                        EXPENSE_ITEM_OPTIONS.forEach { opt ->
+                            DropdownMenuItem(
+                                text = { Text(opt.name) },
+                                onClick = { itemName = opt.name; itemExpanded = false }
+                            )
+                        }
                     }
                 }
+
+                // G/KG 输入框
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = weight,
+                        onValueChange = { weight = it },
+                        label = { Text("重量") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    listOf("KG" to "KG", "G" to "G").forEach { (v, l) ->
+                        FilterChip(selected = weightUnit == v, onClick = { weightUnit = v }, label = { Text(l) })
+                    }
+                }
+
+                // 批发商（弹出式选项框）
+                Box {
+                    OutlinedButton(onClick = { supplierExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                suppliers.firstOrNull { it.id == supplierId }?.supplier_name ?: "选择批发商",
+                                modifier = Modifier.weight(1f),
+                                color = DiningColors.TextPrimary
+                            )
+                            Text("▾", color = DiningColors.TextMuted)
+                        }
+                    }
+                    DropdownMenu(expanded = supplierExpanded, onDismissRequest = { supplierExpanded = false }) {
+                        suppliers.forEach { s ->
+                            DropdownMenuItem(
+                                text = { Text(s.supplier_name) },
+                                onClick = { supplierId = s.id; supplierExpanded = false }
+                            )
+                        }
+                    }
+                }
+
                 OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("金额 (RM)") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("cash" to "现金", "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to "支付宝").forEach { (v, l) ->
                         FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
                     }
                 }
-                OutlinedTextField(value = ref, onValueChange = { ref = it }, label = { Text(if (method == "cash") "现金编号 CASH-EXP-日期-序号" else "交易号") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = isPersonal, onCheckedChange = { isPersonal = it })
-                    Text("私人消费（报税不抵扣）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+
+                if (needReceipts) {
+                    Text("收据1（转账收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    OutlinedButton(onClick = { takePhoto1() }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (receipt1 == null) "📷 拍照上传" else "📷 重拍", color = DiningColors.Primary)
+                    }
+                    receipt1?.let {
+                        Image(it, contentDescription = "转账收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                    }
+                    Text("收据2（批发商收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    OutlinedButton(onClick = { takePhoto2() }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (receipt2 == null) "📷 拍照上传" else "📷 重拍", color = DiningColors.Primary)
+                    }
+                    receipt2?.let {
+                        Image(it, contentDescription = "批发商收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                    }
                 }
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("业务用途说明（LHDN）") }, modifier = Modifier.fillMaxWidth())
+
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
                 if (saving) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = DiningColors.Primary)
             }
@@ -173,16 +294,69 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
             TextButton(enabled = canSave, onClick = {
                 scope.launch {
                     saving = true; error = null
+                    var url1: String? = null
+                    var url2: String? = null
+                    if (needReceipts) {
+                        url1 = receipt1?.let { bmp ->
+                            bmp.toJpegBytes()?.let { bytes ->
+                                SupabaseClient.uploadFile("receipts", "expense_transfer_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
+                            }
+                        }
+                        url2 = receipt2?.let { bmp ->
+                            bmp.toJpegBytes()?.let { bytes ->
+                                SupabaseClient.uploadFile("receipts", "expense_supplier_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
+                            }
+                        }
+                    }
+                    val supplierName = suppliers.firstOrNull { it.id == supplierId }?.supplier_name ?: ""
                     val rec = ExpenseRecord(
-                        expense_title = title.trim(), expense_type = type, amount_myr = amt!!,
-                        pay_method = method, transaction_ref = ref.trim(), is_personal = isPersonal,
-                        notes = notes.trim().ifBlank { null },
+                        expense_title = supplierName,
+                        expense_type = itemName,
+                        amount_myr = amt!!,
+                        pay_method = method,
+                        transaction_ref = "",
+                        receipt_invoice_no = url2,
+                        attachment_url = url1,
+                        is_personal = false,
+                        notes = if (weightVal > 0) "${weight.trim()} $weightUnit" else null,
                         operate_staff_id = SupabaseClient.currentStaffId(),
                         transaction_datetime = currentIso()
                     )
                     val r = SupabaseClient.insertExpense(rec)
+                    if (r == null) {
+                        saving = false
+                        error = "保存失败"
+                        return@launch
+                    }
+
+                    // 食材类：仓库自动入库
+                    if (selectedItem?.isStock == true && weightVal > 0) {
+                        val wh = warehouseItems.firstOrNull { it.item_name == itemName }
+                        if (wh != null) {
+                            // G 换算成 KG（仓库单位为 KG）
+                            val qtyKg = if (weightUnit == "G") weightVal / 1000.0 else weightVal
+                            val inItemsJson = buildJsonArray {
+                                add(buildJsonObject {
+                                    put("warehouse_item_id", JsonPrimitive(wh.id))
+                                    put("qty", JsonPrimitive(qtyKg))
+                                    put("unit_price", JsonPrimitive(amt))
+                                })
+                            }
+                            SupabaseClient.insertStockIn(
+                                StockInLog(
+                                    supplier_id = supplierId ?: 0,
+                                    in_items = inItemsJson,
+                                    total_cost_myr = amt,
+                                    pay_method = method,
+                                    transaction_ref = "",
+                                    operate_staff_id = SupabaseClient.currentStaffId(),
+                                    transaction_datetime = currentIso()
+                                )
+                            )
+                        }
+                    }
                     saving = false
-                    if (r != null) onDone() else error = "保存失败"
+                    onDone()
                 }
             }) { Text("保存", color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
         },

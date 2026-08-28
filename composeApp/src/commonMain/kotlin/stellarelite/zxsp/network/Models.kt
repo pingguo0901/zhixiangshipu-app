@@ -161,6 +161,7 @@ data class StockInLog(
     val cost_currency: String = "MYR",
     val exchange_rate: Double? = null,
     val pay_method: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val transaction_ref: String = "",
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val payment_status: String = "unpaid",
@@ -221,6 +222,7 @@ data class ExpenseRecord(
     val expense_currency: String = "MYR",
     val exchange_rate: Double? = null,
     val pay_method: String = "",
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val transaction_ref: String = "",
     val receipt_invoice_no: String? = null,
     val attachment_url: String? = null,

@@ -1,7 +1,7 @@
 {
-  "versionCode": 61,
-  "versionName": "1.1.45",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.45/zhixiangshipu-app.apk",
-  "changelog": "- 修复启动时不刷新角色导致老板被误判为员工、看不到编辑按钮的问题",
+  "versionCode": 62,
+  "versionName": "1.1.46",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.46/zhixiangshipu-app.apk",
+  "changelog": "- 记一笔改版：物品单选+批发商下拉+G/KG重量，现金无交易号，非现金拍照上传2张收据，保存后食材自动入库",
   "buildDate": "2026-08-29"
 }
