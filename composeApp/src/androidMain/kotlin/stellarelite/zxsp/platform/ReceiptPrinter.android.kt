@@ -73,15 +73,51 @@ private fun printToDevice(device: BluetoothDevice, text: String) {
 private fun buildEscPos(text: String): ByteArray {
     val out = ByteArrayOutputStream()
     val gbk = Charset.forName("GBK")
-    // 初始化打印机
-    out.write(byteArrayOf(0x1B, 0x40))
-    // 逐行输出，全部左对齐（文字与分界线同一条直线）
+    // 前置指令：初始化 + Font-A 等宽点阵字体 + 正常字号（不设 Font-A 补空格会失效）
+    out.write(byteArrayOf(0x1B, 0x40))       // ESC @ 初始化
+    out.write(byteArrayOf(0x1B, 0x4D, 0x00)) // ESC M 0 选 Font-A（12x24 等宽）
+    out.write(byteArrayOf(0x1B, 0x21, 0x00)) // ESC ! 0 正常字号
+
     for (line in text.split("\n")) {
-        out.write(line.toByteArray(gbk))
-        out.write(0x0A)
+        val t = line.trim()
+        when {
+            t == "OFFICIAL SALES RECEIPT" -> {
+                // 标题硬件居中
+                out.write(byteArrayOf(0x1B, 0x61, 0x01))
+                out.write(line.toByteArray(gbk))
+                out.write(0x0A)
+                out.write(byteArrayOf(0x1B, 0x61, 0x00))
+            }
+            isAmountLine(t) -> {
+                // 金额行：文字左 + RM 右（硬件右对齐）
+                val idx = t.indexOf("RM")
+                if (idx > 0) {
+                    val label = t.substring(0, idx).trimEnd()
+                    val amount = t.substring(idx).trim()
+                    out.write(label.toByteArray(gbk))
+                    out.write(byteArrayOf(0x1B, 0x61, 0x02))
+                    out.write(amount.toByteArray(gbk))
+                    out.write(0x0A)
+                    out.write(byteArrayOf(0x1B, 0x61, 0x00))
+                } else {
+                    out.write(line.toByteArray(gbk))
+                    out.write(0x0A)
+                }
+            }
+            else -> {
+                out.write(line.toByteArray(gbk))
+                out.write(0x0A)
+            }
+        }
     }
     // 走纸 3 行 + 切纸
     out.write(byteArrayOf(0x1B, 0x64, 0x03))
-    out.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
+    out.write(byteArrayOf(0x1D, 0x56, 0x00))
     return out.toByteArray()
+}
+
+private fun isAmountLine(t: String): Boolean {
+    return t.startsWith("Sub Total") || t.startsWith("Discount") ||
+        t.startsWith("TOTAL AMOUNT") || t.startsWith("Amount Received") ||
+        t.startsWith("Change Given")
 }
