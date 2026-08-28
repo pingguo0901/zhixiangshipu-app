@@ -20,9 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -30,10 +34,12 @@ import org.jetbrains.compose.resources.painterResource
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.generated.resources.*
 import stellarelite.zxsp.network.CustomerOrder
+import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.PaymentRecord
 import stellarelite.zxsp.network.ReceiptItem
 import stellarelite.zxsp.network.ReceiptMaster
 import stellarelite.zxsp.network.SupabaseClient
+import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.toImageBitmap
@@ -184,6 +190,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     var receipt by remember { mutableStateOf<ReceiptMaster?>(null) }
     var payment by remember { mutableStateOf<PaymentRecord?>(null) }
     var receiptPhoto by remember { mutableStateOf<ImageBitmap?>(null) }
+    var showFullImage by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentOrder.table_id, currentOrder.order_no) {
         tableNo = currentOrder.table_id?.let { id ->
@@ -272,14 +279,14 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 非现金付款：显示已上传的收据照片
+        // 非现金付款：显示已上传的收据照片（点击放大）
         if (receiptPhoto != null) {
             Text("已上传收据照片", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
             Spacer(modifier = Modifier.height(8.dp))
             Image(
                 bitmap = receiptPhoto!!,
                 contentDescription = "收据照片",
-                modifier = Modifier.fillMaxWidth().height(180.dp)
+                modifier = Modifier.fillMaxWidth().height(180.dp).clickable { showFullImage = true }
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -318,16 +325,17 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     }
 
     if (showEdit) {
-        AddItemsDialog(
+        OrderEditDialog(
             order = currentOrder,
+            receipt = receipt,
+            payment = payment,
             onDismiss = { showEdit = false },
             onDone = {
                 showEdit = false
                 scope.launch {
                     SupabaseClient.fetchOrder(currentOrder.id)?.let { currentOrder = it }
                 }
-            },
-            title = "编辑"
+            }
         )
     }
 
@@ -349,6 +357,242 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             onPrint = { printReceiptText(receiptData!!.toReceiptText()) },
             onDone = { showReceipt = false; onBack() }
         )
+    }
+
+    // 收据照片全屏放大
+    if (showFullImage && receiptPhoto != null) {
+        Dialog(onDismissRequest = { showFullImage = false }) {
+            Box(
+                modifier = Modifier.fillMaxWidth().clickable { showFullImage = false },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    bitmap = receiptPhoto!!,
+                    contentDescription = "收据照片放大",
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+// ============ 订单编辑弹窗（仅 Admin） ============
+@Composable
+private fun OrderEditDialog(
+    order: CustomerOrder,
+    receipt: ReceiptMaster?,
+    payment: PaymentRecord?,
+    onDismiss: () -> Unit,
+    onDone: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
+    var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val quantities = remember { mutableStateMapOf<Long, Int>() }
+
+    // 订单字段
+    var isTakeaway by remember { mutableStateOf(order.table_id == null) }
+    var tableId by remember { mutableStateOf(order.table_id) }
+    var tableExpanded by remember { mutableStateOf(false) }
+    var customerName by remember { mutableStateOf(order.customer_name ?: "") }
+    var customerPhone by remember { mutableStateOf(order.customer_phone ?: "") }
+    var status by remember { mutableStateOf(order.payment_status) }
+    var discount by remember { mutableStateOf(if ((receipt?.discount ?: 0.0) > 0) (receipt?.discount ?: 0.0).toString() else "") }
+    var payMode by remember { mutableStateOf(receipt?.payment_mode ?: "CASH") }
+    var amountReceived by remember { mutableStateOf(if ((receipt?.amount_received ?: 0.0) > 0) (receipt?.amount_received ?: 0.0).toString() else "") }
+    var receiptPhoto by remember { mutableStateOf<ImageBitmap?>(null) }
+    var showFullImage by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        runCatching {
+            tables = SupabaseClient.fetchTables()
+            menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active }
+            order.order_items.jsonArray.forEach { el ->
+                val obj = el.jsonObject
+                val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
+                val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull()
+                if (itemId != null && qty != null) quantities[itemId] = qty
+            }
+        }
+        if (payment != null && payment.pay_method != "cash" && payment.receipt_attachment_url != null) {
+            receiptPhoto = runCatching {
+                SupabaseClient.downloadFile(payment.receipt_attachment_url)?.toImageBitmap()
+            }.getOrNull()
+        }
+        loading = false
+    }
+
+    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) }
+    val discountVal = discount.toDoubleOrNull() ?: 0.0
+    val finalTotal = (totalAmount - discountVal).coerceAtLeast(0.0)
+    val receivedVal = amountReceived.toDoubleOrNull() ?: 0.0
+    val changeVal = (receivedVal - finalTotal).coerceAtLeast(0.0)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("编辑订单 · ${order.order_no}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            if (loading) {
+                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = DiningColors.Primary)
+                }
+            } else {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // 类型
+                    Text("类型", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(selected = !isTakeaway, onClick = { isTakeaway = false }, label = { Text("堂食") })
+                        FilterChip(selected = isTakeaway, onClick = { isTakeaway = true }, label = { Text("外卖") })
+                    }
+                    // 堂食时选桌台
+                    if (!isTakeaway) {
+                        Box {
+                            OutlinedButton(onClick = { tableExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                                    Text(
+                                        tables.firstOrNull { it.id == tableId }?.table_no ?: "选择桌台",
+                                        modifier = Modifier.weight(1f),
+                                        color = DiningColors.TextPrimary
+                                    )
+                                    Text("▾", color = DiningColors.TextMuted)
+                                }
+                            }
+                            DropdownMenu(expanded = tableExpanded, onDismissRequest = { tableExpanded = false }) {
+                                tables.forEach { t ->
+                                    DropdownMenuItem(
+                                        text = { Text(t.table_no) },
+                                        onClick = { tableId = t.id; tableExpanded = false }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(value = customerName, onValueChange = { customerName = it }, label = { Text("顾客") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = customerPhone, onValueChange = { customerPhone = it }, label = { Text("电话") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+
+                    // 状态
+                    Text("状态", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("unpaid" to "未付", "partial" to "部分付", "paid" to "已付清").forEach { (v, l) ->
+                            FilterChip(selected = status == v, onClick = { status = v }, label = { Text(l) })
+                        }
+                    }
+
+                    // 折扣 / 付款方式 / 顾客支付
+                    OutlinedTextField(value = discount, onValueChange = { discount = it }, label = { Text("折扣 (RM)") }, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                    Text("付款方式", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("CASH" to "现金", "DUITNOW" to "DuitNow", "TNG" to "TNG", "ALIPAY" to "支付宝").forEach { (v, l) ->
+                            FilterChip(selected = payMode == v, onClick = { payMode = v }, label = { Text(l) })
+                        }
+                    }
+                    OutlinedTextField(value = amountReceived, onValueChange = { amountReceived = it }, label = { Text("顾客支付 (RM)") }, singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+
+                    // 已上传收据
+                    if (receiptPhoto != null) {
+                        Text("已上传收据", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                        Image(
+                            bitmap = receiptPhoto!!,
+                            contentDescription = "已上传收据",
+                            modifier = Modifier.fillMaxWidth().height(140.dp).clickable { showFullImage = true }
+                        )
+                    }
+
+                    // 菜品明细
+                    HorizontalDivider(color = DiningColors.SurfaceVariant)
+                    Text("菜品明细", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+                    menuItems.forEach { item ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(item.item_name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                Text("RM%.2f/${item.unit}".format(item.sell_price_myr), fontSize = 11.sp, color = DiningColors.TextMuted)
+                            }
+                            TextButton(onClick = {
+                                val q = quantities[item.id] ?: 0
+                                if (q > 1) quantities[item.id] = q - 1 else quantities.remove(item.id)
+                            }) { Text("−", fontSize = 18.sp, color = DiningColors.Primary) }
+                            Text("${quantities[item.id] ?: 0}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                            TextButton(onClick = { quantities[item.id] = (quantities[item.id] ?: 0) + 1 }) {
+                                Text("＋", fontSize = 18.sp, color = DiningColors.Primary)
+                            }
+                        }
+                    }
+
+                    Text(
+                        "实收合计 RM %.2f · 找零 RM %.2f".format(finalTotal, changeVal),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DiningColors.Primary
+                    )
+                    if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !loading && !saving, onClick = {
+                scope.launch {
+                    saving = true; error = null
+                    val ok1 = SupabaseClient.updateOrderInfo(
+                        order.id,
+                        customerName.trim().ifBlank { null },
+                        customerPhone.trim().ifBlank { null },
+                        if (isTakeaway) null else tableId,
+                        status
+                    )
+                    val itemsJson = buildJsonArray {
+                        menuItems.forEach { item ->
+                            val q = quantities[item.id] ?: 0
+                            if (q > 0) {
+                                add(buildJsonObject {
+                                    put("item_id", JsonPrimitive(item.id))
+                                    put("item_name", JsonPrimitive(item.item_name))
+                                    put("name_en", JsonPrimitive(item.name_en ?: ""))
+                                    put("quantity", JsonPrimitive(q))
+                                    put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
+                                    put("unit", JsonPrimitive(item.unit))
+                                })
+                            }
+                        }
+                    }
+                    val ok2 = SupabaseClient.updateOrderItems(order.id, itemsJson, totalAmount)
+                    var ok3 = true
+                    if (receipt != null) {
+                        ok3 = SupabaseClient.updateReceiptByNo(
+                            receipt.receipt_no, totalAmount, discountVal, finalTotal,
+                            payMode, receivedVal, changeVal
+                        )
+                    }
+                    saving = false
+                    if (ok1 && ok2 && ok3) onDone() else error = "保存失败"
+                }
+            }) { Text("保存", color = if (!loading && !saving) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
+
+    if (showFullImage && receiptPhoto != null) {
+        Dialog(onDismissRequest = { showFullImage = false }) {
+            Box(
+                modifier = Modifier.fillMaxWidth().clickable { showFullImage = false },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(bitmap = receiptPhoto!!, contentDescription = "收据照片放大", modifier = Modifier.fillMaxWidth())
+            }
+        }
     }
 }
 

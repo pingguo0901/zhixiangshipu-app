@@ -1,7 +1,7 @@
 {
-  "versionCode": 64,
-  "versionName": "1.1.48",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.48/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情页进入时强制刷新角色(修复编辑按钮不显示)；非现金付款订单显示已上传收据照片",
+  "versionCode": 65,
+  "versionName": "1.1.49",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.49/zhixiangshipu-app.apk",
+  "changelog": "- 收据照片点击可放大；订单编辑弹窗增加类型/顾客/电话/状态/折扣/付款方式/顾客支付/已上传收据",
   "buildDate": "2026-08-29"
 }

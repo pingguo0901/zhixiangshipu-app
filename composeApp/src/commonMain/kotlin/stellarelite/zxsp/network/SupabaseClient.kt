@@ -19,6 +19,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import stellarelite.zxsp.data.SessionManager
@@ -212,6 +213,40 @@ object SupabaseClient {
             url { parameters.append("id", "eq.$tableId") }
             contentType(ContentType.Application.Json)
             setBody(buildJsonObject { put("table_status", JsonPrimitive(status)) })
+        }
+        return resp.status.isSuccess()
+    }
+
+    // 更新订单基本信息（顾客/电话/桌台/支付状态）
+    suspend fun updateOrderInfo(orderId: Long, customerName: String?, customerPhone: String?, tableId: Long?, paymentStatus: String): Boolean {
+        val resp: HttpResponse = client.patch("$BASE/rest/v1/customer_orders") {
+            applyAuth()
+            url { parameters.append("id", "eq.$orderId") }
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject {
+                put("customer_name", if (customerName != null) JsonPrimitive(customerName) else JsonNull)
+                put("customer_phone", if (customerPhone != null) JsonPrimitive(customerPhone) else JsonNull)
+                put("table_id", if (tableId != null) JsonPrimitive(tableId) else JsonNull)
+                put("payment_status", JsonPrimitive(paymentStatus))
+            })
+        }
+        return resp.status.isSuccess()
+    }
+
+    // 更新收据主表（小计/折扣/付款方式/顾客支付/找零）
+    suspend fun updateReceiptByNo(receiptNo: String, subTotal: Double, discount: Double, totalAmount: Double, paymentMode: String, amountReceived: Double, changeGiven: Double): Boolean {
+        val resp: HttpResponse = client.patch("$BASE/rest/v1/receipt_master") {
+            applyAuth()
+            url { parameters.append("receipt_no", "eq.$receiptNo") }
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject {
+                put("sub_total", JsonPrimitive(subTotal))
+                put("discount", JsonPrimitive(discount))
+                put("total_amount", JsonPrimitive(totalAmount))
+                put("payment_mode", JsonPrimitive(paymentMode))
+                put("amount_received", JsonPrimitive(amountReceived))
+                put("change_given", JsonPrimitive(changeGiven))
+            })
         }
         return resp.status.isSuccess()
     }
