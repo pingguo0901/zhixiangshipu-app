@@ -79,19 +79,10 @@ private fun buildEscPos(text: String): ByteArray {
     out.write(byteArrayOf(0x1B, 0x21, 0x00)) // ESC ! 0 正常字号
     out.write(byteArrayOf(0x1B, 0x61, 0x00)) // ESC A 0 默认全局左对齐
 
+    // 全部左对齐输出（不居中，避免打印机状态错乱）
     for (line in text.split("\n")) {
-        val t = line.trim()
-        if (t == "OFFICIAL SALES RECEIPT") {
-            // 标题硬件居中
-            out.write(byteArrayOf(0x1B, 0x61, 0x01))
-            out.write(line.toByteArray(gbk))
-            out.write(0x0A)
-            out.write(byteArrayOf(0x1B, 0x61, 0x00))
-        } else {
-            // 整行一次输出（明细行/金额行已在文本里用 Font-A 补好空格）
-            out.write(line.toByteArray(gbk))
-            out.write(0x0A)
-        }
+        out.write(line.toByteArray(gbk))
+        out.write(0x0A)
     }
     // 走纸 3 行 + 切纸
     out.write(byteArrayOf(0x1B, 0x64, 0x03))
