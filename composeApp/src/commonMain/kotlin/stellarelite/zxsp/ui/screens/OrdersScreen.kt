@@ -38,6 +38,7 @@ import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
+import stellarelite.zxsp.util.ReceiptFormatter
 
 private sealed class OrdersNav {
     object List : OrdersNav()
@@ -433,45 +434,60 @@ data class ReceiptData(
     val changeGiven: Double
 ) {
     fun toReceiptText(): String {
-        val EQ = "=".repeat(38)
-        val DASH = "-".repeat(51)
-        val sb = StringBuilder()
-        sb.appendLine(" $EQ")
-        sb.appendLine(" OFFICIAL SALES RECEIPT")
-        sb.appendLine()
-        sb.appendLine(" ZHI XIANG FOOD ENTERPRISE")
-        sb.appendLine(" (Trade Name: 炙巷食铺)")
-        sb.appendLine(" SSM BRN: 【12位BRN NUMBER】")
-        sb.appendLine(" 2313, Jalan Dato Sulaiman,")
-        sb.appendLine(" Taman Abad, 80250 Johor Bahru,")
-        sb.appendLine(" Johor Darul Ta'zim")
-        sb.appendLine(" WHATSAPP: +852 5140 3695")
-        sb.appendLine(" Business Hour: 6PM-6AM")
-        sb.appendLine(" $EQ")
-        sb.appendLine(" Receipt No.: $receiptNo")
-        sb.appendLine(" Date/Time: ${formatDateTimeMy(transDatetime)}")
-        sb.appendLine(" $EQ")
-        sb.appendLine(" Item Qty Unit Amount")
-        sb.appendLine(" $DASH")
+        val W = ReceiptFormatter.TOTAL_WIDTH
+        val r = mutableListOf<String>()
+
+        // 头部
+        r.add("=".repeat(W))
+        r.add(ReceiptFormatter.padCenter("OFFICIAL SALES RECEIPT", W))
+        r.add("")
+        r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
+        r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
+        r.add(ReceiptFormatter.padCenter("SSM BRN: 【12位BRN NUMBER】", W))
+        r.add(ReceiptFormatter.padCenter("2313, Jalan Dato Sulaiman,", W))
+        r.add(ReceiptFormatter.padCenter("Taman Abad, 80250 Johor Bahru,", W))
+        r.add(ReceiptFormatter.padCenter("Johor Darul Ta'zim", W))
+        r.add(ReceiptFormatter.padCenter("WHATSAPP: +852 5140 3695", W))
+        r.add(ReceiptFormatter.padCenter("Business Hour: 6PM-6AM", W))
+        r.add("=".repeat(W))
+
+        // 单号与时间
+        r.add(ReceiptFormatter.padRight("Receipt No.: $receiptNo", W))
+        r.add(ReceiptFormatter.padRight("Date/Time: ${formatDateTimeMy(transDatetime)}", W))
+        r.add("=".repeat(W))
+
+        // 表头 (Item左对齐24，其余右对齐 5, 9, 10)
+        r.add(ReceiptFormatter.padRight("Item", 24) + ReceiptFormatter.padLeft("Qty", 5) + ReceiptFormatter.padLeft("Unit", 9) + ReceiptFormatter.padLeft("Amount", 10))
+        r.add("-".repeat(W))
+
+        // 商品明细注入
         items.forEach { line ->
-            sb.appendLine(" ${line.name} ${line.qty} %.2f %.2f".format(line.unitPrice, line.amount))
+            r.add(ReceiptFormatter.generateItemRow(line.name, null, line.qty.toString(), "%.2f".format(line.unitPrice), "%.2f".format(line.amount)))
         }
-        sb.appendLine(" $DASH")
-        sb.appendLine(" Sub Total RM %.2f".format(subTotal))
-        sb.appendLine(" Discount RM %.2f".format(discount))
-        sb.appendLine(" $DASH")
-        sb.appendLine(" TOTAL AMOUNT RM %.2f".format(total))
-        sb.appendLine()
-        sb.appendLine(" Payment Mode: $paymentMode")
-        sb.appendLine(" Amount Received: RM %.2f".format(amountReceived))
-        sb.appendLine(" Change Given: RM %.2f".format(changeGiven))
-        sb.appendLine(" $EQ")
-        sb.appendLine(" Currency: MYR (Ringgit Malaysia)")
-        sb.appendLine()
-        sb.appendLine(" * Goods Sold Are Non-Refundable")
-        sb.appendLine(" Thank You For Your Patronage")
-        sb.appendLine(" $EQ")
-        return sb.toString()
+        r.add("-".repeat(W))
+
+        // 财务结算（完美垂直靠右对齐）
+        r.add(ReceiptFormatter.generateTotalRow("Sub Total", "RM", "%.2f".format(subTotal)))
+        r.add(ReceiptFormatter.generateTotalRow("Discount", "RM", "%.2f".format(discount)))
+        r.add("-".repeat(W))
+        r.add(ReceiptFormatter.generateTotalRow("TOTAL AMOUNT", "RM", "%.2f".format(total)))
+        r.add("")
+
+        // 支付与找零
+        r.add(ReceiptFormatter.padRight("Payment Mode: $paymentMode", W))
+        r.add(ReceiptFormatter.generateTotalRow("Amount Received", "RM", "%.2f".format(amountReceived)))
+        r.add(ReceiptFormatter.generateTotalRow("Change Given", "RM", "%.2f".format(changeGiven)))
+        r.add("=".repeat(W))
+
+        // 页脚
+        r.add(ReceiptFormatter.padRight("Currency: MYR (Ringgit Malaysia)", W))
+        r.add("")
+        r.add(ReceiptFormatter.padCenter("* Goods Sold Are Non-Refundable", W))
+        r.add(ReceiptFormatter.padCenter("Thank You For Your Patronage", W))
+        r.add("=".repeat(W))
+        r.add("\n\n\n") // 留出撕纸空白
+
+        return r.joinToString("\n")
     }
 }
 

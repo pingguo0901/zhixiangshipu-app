@@ -1,7 +1,7 @@
 {
-  "versionCode": 55,
-  "versionName": "1.1.39",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.39/zhixiangshipu-app.apk",
-  "changelog": "- 收据所有内容统一左对齐+1空格左边距，分割线38=和51-，上下对齐",
+  "versionCode": 56,
+  "versionName": "1.1.40",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.40/zhixiangshipu-app.apk",
+  "changelog": "- 收据改为48列精准对齐排版(Item24+Qty5+Unit9+Amount10)，中文品名按UTF-8宽度正确对齐，金额列垂直对齐",
   "buildDate": "2026-08-29"
 }
