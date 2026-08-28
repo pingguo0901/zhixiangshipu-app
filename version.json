@@ -1,7 +1,7 @@
 {
-  "versionCode": 66,
-  "versionName": "1.1.50",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.50/zhixiangshipu-app.apk",
-  "changelog": "- 编辑订单弹窗增加独立桌台字段（堂食选桌台号，外卖显示外卖）",
+  "versionCode": 67,
+  "versionName": "1.1.51",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.51/zhixiangshipu-app.apk",
+  "changelog": "- 报表统计日期改为点击弹出原生日历选择",
   "buildDate": "2026-08-29"
 }

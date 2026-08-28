@@ -365,11 +365,14 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
 }
 
 // ============ 报表（仅老板） ============
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReportScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var start by remember { mutableStateOf(todayDate()) }
     var end by remember { mutableStateOf(todayDate()) }
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
     var rows by remember { mutableStateOf<List<DailySales>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -393,8 +396,12 @@ private fun ReportScreen(onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(value = start, onValueChange = { start = it }, label = { Text("开始 YYYY-MM-DD") }, singleLine = true, modifier = Modifier.weight(1f))
-            OutlinedTextField(value = end, onValueChange = { end = it }, label = { Text("结束 YYYY-MM-DD") }, singleLine = true, modifier = Modifier.weight(1f))
+            OutlinedButton(onClick = { showStartPicker = true }, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(12.dp)) {
+                Text("📅 $start", color = DiningColors.TextPrimary, fontWeight = FontWeight.Medium)
+            }
+            OutlinedButton(onClick = { showEndPicker = true }, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(12.dp)) {
+                Text("📅 $end", color = DiningColors.TextPrimary, fontWeight = FontWeight.Medium)
+            }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { load() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
@@ -440,6 +447,42 @@ private fun ReportScreen(onBack: () -> Unit) {
                     }
                 }
             }
+        }
+    }
+
+    if (showStartPicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showStartPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { start = millisToDate(it) }
+                    showStartPicker = false
+                }) { Text("确定", color = DiningColors.Primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartPicker = false }) { Text("取消", color = DiningColors.TextMuted) }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showEndPicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showEndPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { end = millisToDate(it) }
+                    showEndPicker = false
+                }) { Text("确定", color = DiningColors.Primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndPicker = false }) { Text("取消", color = DiningColors.TextMuted) }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
