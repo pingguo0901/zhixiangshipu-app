@@ -1,7 +1,7 @@
 {
-  "versionCode": 49,
-  "versionName": "1.1.33",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.33/zhixiangshipu-app.apk",
-  "changelog": "- 下发ESC/POS等宽字体Font-A(ESC M 0)，修复补空格对齐失效\n- 标题硬件居中(ESC A 1)，金额硬件右对齐(ESC A 2)",
+  "versionCode": 50,
+  "versionName": "1.1.34",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.34/zhixiangshipu-app.apk",
+  "changelog": "- 前置指令加ESC A 0默认左对齐，金额行改整行拼接输出(修复Amount换行)",
   "buildDate": "2026-08-29"
 }
