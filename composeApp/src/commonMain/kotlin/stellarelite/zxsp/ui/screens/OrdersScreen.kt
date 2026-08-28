@@ -1,21 +1,31 @@
 package stellarelite.zxsp.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import org.jetbrains.compose.resources.painterResource
+import stellarelite.zxsp.generated.resources.*
 import stellarelite.zxsp.network.CustomerOrder
+import stellarelite.zxsp.network.PaymentRecord
 import stellarelite.zxsp.network.SupabaseClient
+import stellarelite.zxsp.platform.rememberCamera
+import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
 
 private sealed class OrdersNav {
@@ -212,48 +222,73 @@ private fun DetailRow(label: String, value: String) {
 @Composable
 fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
-    var amount by remember { mutableStateOf(order.total_amount_myr.toString()) }
     var method by remember { mutableStateOf("cash") }
-    var ref by remember { mutableStateOf("") }
+    var cashReceived by remember { mutableStateOf("") }
+    var receiptBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val payAmount = amount.toDoubleOrNull()
-    val canSave = payAmount != null && payAmount > 0 && ref.isNotBlank() && !saving
+    val total = order.total_amount_myr
+    val received = cashReceived.toDoubleOrNull() ?: 0.0
+    val change = (received - total).coerceAtLeast(0.0)
+    val canSave = !saving && when (method) {
+        "cash" -> received >= total
+        else -> true
+    }
+
+    val takePhoto = rememberCamera { bitmap -> receiptBitmap = bitmap }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("录入收款", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text("结账", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("实收金额 (RM)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
                 // 付款方式
                 Text("付款方式", fontSize = 12.sp, color = DiningColors.TextSecondary)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("cash" to "现金", "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to "支付宝").forEach { (v, l) ->
-                        FilterChip(
-                            selected = method == v,
-                            onClick = { method = v },
-                            label = { Text(l) }
-                        )
+                        FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
                     }
                 }
-                OutlinedTextField(
-                    value = ref,
-                    onValueChange = { ref = it },
-                    label = { Text(if (method == "cash") "现金编号 CASH-YYYYMMDD-序号" else "交易号") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (error != null) Text(error!!, color = DiningColors.Error, fontSize = 13.sp)
+
+                if (method == "cash") {
+                    Text("消费金额：RM%.2f".format(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                    OutlinedTextField(
+                        value = cashReceived,
+                        onValueChange = { cashReceived = it },
+                        label = { Text("客户给多少 (RM)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        if (received >= total) "找零：RM%.2f".format(change) else "还需收 RM%.2f".format(total - received),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (received >= total) DiningColors.Success else DiningColors.Error
+                    )
+                } else {
+                    val qr = when (method) {
+                        "duitnow" -> Res.drawable.duitnow_mybqr
+                        "tng_ewallet" -> Res.drawable.tng_qr
+                        else -> Res.drawable.alipay_qr
+                    }
+                    Image(
+                        painter = painterResource(qr),
+                        contentDescription = "付款二维码",
+                        modifier = Modifier.fillMaxWidth().height(180.dp)
+                    )
+                    OutlinedButton(onClick = { takePhoto() }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (receiptBitmap == null) "📷 拍收据" else "📷 重拍收据", color = DiningColors.Primary)
+                    }
+                    receiptBitmap?.let {
+                        Image(it, contentDescription = "收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                    }
+                }
+
+                if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
                 if (saving) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = DiningColors.Primary)
             }
         },
@@ -264,19 +299,27 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                     scope.launch {
                         saving = true
                         error = null
-                        val p = stellarelite.zxsp.network.PaymentRecord(
+                        var receiptUrl: String? = null
+                        if (method != "cash" && receiptBitmap != null) {
+                            val bytes = receiptBitmap!!.toJpegBytes()
+                            if (bytes != null) {
+                                val path = "receipt_${order.id}_${Clock.System.now().toEpochMilliseconds()}.jpg"
+                                receiptUrl = SupabaseClient.uploadFile("receipts", path, bytes)
+                            }
+                        }
+                        val p = PaymentRecord(
                             order_id = order.id,
-                            pay_amount_myr = payAmount!!,
+                            pay_amount_myr = total,
                             pay_method = method,
-                            transaction_ref = ref.trim(),
+                            transaction_ref = "",
+                            receipt_attachment_url = receiptUrl,
                             received_by_staff_id = SupabaseClient.currentStaffId(),
                             transaction_datetime = currentIso()
                         )
                         val r = SupabaseClient.insertPayment(p)
                         saving = false
                         if (r != null) {
-                            // 全额结清 → 释放桌台为空闲
-                            if (payAmount != null && order.table_id != null && payAmount >= order.total_amount_myr) {
+                            if (order.table_id != null) {
                                 SupabaseClient.setTableStatus(order.table_id!!, "free")
                             }
                             onDone()
@@ -286,7 +329,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                     }
                 }
             ) {
-                Text("保存", color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold)
+                Text("结账", color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }

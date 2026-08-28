@@ -1,7 +1,7 @@
 {
-  "versionCode": 37,
-  "versionName": "1.1.21",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.21/zhixiangshipu-app.apk",
-  "changelog": "- 修复：结账后桌台/外卖号自动变回空闲（之前结账后仍显示占用）\n- 收款/记账/冰箱/加工保存兜底解析员工ID等",
+  "versionCode": 38,
+  "versionName": "1.1.22",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.22/zhixiangshipu-app.apk",
+  "changelog": "- 结账弹窗重做：现金显示消费金额/客户给多少/自动算找零；DuitNow/TNG/支付宝显示二维码+拍收据\n- 移除手动交易号，改为收据图片 receipt_url\n- 结账后桌台自动释放为空闲",
   "buildDate": "2026-08-28"
 }
