@@ -1,7 +1,7 @@
 {
-  "versionCode": 52,
-  "versionName": "1.1.36",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.36/zhixiangshipu-app.apk",
-  "changelog": "- 标题改为空格模拟居中(全部左对齐不变)",
+  "versionCode": 53,
+  "versionName": "1.1.37",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.37/zhixiangshipu-app.apk",
+  "changelog": "- 收据格式改回简洁版：标题居中，明细/金额简单空格分隔，分割线32=和40-",
   "buildDate": "2026-08-29"
 }

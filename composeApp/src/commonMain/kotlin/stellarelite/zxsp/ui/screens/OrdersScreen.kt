@@ -433,79 +433,47 @@ data class ReceiptData(
     val changeGiven: Double
 ) {
     fun toReceiptText(): String {
-        val DIV = "-".repeat(72)
+        val EQ = "=".repeat(32)
+        val DASH = "-".repeat(40)
         val sb = StringBuilder()
-        sb.appendLine(DIV)
-        sb.appendLine(center("OFFICIAL SALES RECEIPT", 72))
+        sb.appendLine(EQ)
+        sb.appendLine("OFFICIAL SALES RECEIPT")
         sb.appendLine()
         sb.appendLine("ZHI XIANG FOOD ENTERPRISE")
         sb.appendLine("(Trade Name: 炙巷食铺)")
-        sb.appendLine("SSM BRN: 【填写BRN】")
+        sb.appendLine("SSM BRN: 【12位BRN NUMBER】")
         sb.appendLine("2313, Jalan Dato Sulaiman,")
         sb.appendLine("Taman Abad, 80250 Johor Bahru,")
         sb.appendLine("Johor Darul Ta'zim")
         sb.appendLine("WHATSAPP: +852 5140 3695")
         sb.appendLine("Business Hour: 6PM-6AM | Last Order 5:50AM")
-        sb.appendLine(DIV)
+        sb.appendLine(EQ)
         sb.appendLine("Receipt No.: $receiptNo")
         sb.appendLine("Date/Time: ${formatDateTimeMy(transDatetime)}")
-        sb.appendLine(DIV)
-        sb.appendLine(padRight("Item", 34) + padLeft("Qty", 4) + padLeft("Unit", 6) + padLeft("Amount", 12))
-        sb.appendLine(DIV)
+        sb.appendLine(EQ)
+        sb.appendLine()
+        sb.appendLine("Item Qty Unit Amount")
+        sb.appendLine(DASH)
         items.forEach { line ->
-            sb.appendLine(
-                padRight(line.name, 34) + padLeft(line.qty.toString(), 4) +
-                    padLeft("%.2f".format(line.unitPrice), 6) + padLeft("%.2f".format(line.amount), 12)
-            )
+            sb.appendLine("${line.name} ${line.qty} %.2f %.2f".format(line.unitPrice, line.amount))
         }
-        sb.appendLine(DIV)
-        sb.appendLine(amountLine("Sub Total", subTotal))
-        sb.appendLine(amountLine("Discount", discount))
-        sb.appendLine(DIV)
-        sb.appendLine(amountLine("TOTAL AMOUNT", total))
+        sb.appendLine(DASH)
+        sb.appendLine("Sub Total RM %.2f".format(subTotal))
+        sb.appendLine("Discount RM %.2f".format(discount))
+        sb.appendLine(DASH)
+        sb.appendLine("TOTAL AMOUNT RM %.2f".format(total))
         sb.appendLine()
         sb.appendLine("Payment Mode: $paymentMode")
-        sb.appendLine(amountLine("Amount Received", amountReceived))
-        sb.appendLine(amountLine("Change Given", changeGiven))
-        sb.appendLine(DIV)
+        sb.appendLine("Amount Received: RM %.2f".format(amountReceived))
+        sb.appendLine("Change Given: RM %.2f".format(changeGiven))
+        sb.appendLine(EQ)
         sb.appendLine("Currency: MYR (Ringgit Malaysia)")
         sb.appendLine()
         sb.appendLine("* Goods Sold Are Non-Refundable")
         sb.appendLine("Thank You For Your Patronage")
-        sb.appendLine(DIV)
+        sb.appendLine(EQ)
         return sb.toString()
     }
-}
-
-// 显示宽度：中文/全角算 2 字符，ASCII 算 1
-private fun displayWidth(s: String): Int {
-    var w = 0
-    for (c in s) w += if (c.code > 0x7F) 2 else 1
-    return w
-}
-
-private fun padRight(s: String, width: Int): String {
-    val pad = (width - displayWidth(s)).coerceAtLeast(0)
-    return s + " ".repeat(pad)
-}
-
-private fun padLeft(s: String, width: Int): String {
-    val pad = (width - displayWidth(s)).coerceAtLeast(0)
-    return " ".repeat(pad) + s
-}
-
-// 居中（空格模拟，Font-A 等宽下有效）
-private fun center(s: String, width: Int): String {
-    val pad = (width - displayWidth(s)).coerceAtLeast(0)
-    val left = pad / 2
-    return " ".repeat(left) + s + " ".repeat(pad - left)
-}
-
-// 金额行：文字靠左，RM+数字靠右，总宽 72
-private fun amountLine(label: String, value: Double): String {
-    val rm = "RM %.2f".format(value)
-    val gap = (72 - displayWidth(label) - displayWidth(rm)).coerceAtLeast(1)
-    return label + " ".repeat(gap) + rm
 }
 
 // 日期转马来西亚格式 dd/MM/yyyy HH:mm
