@@ -57,6 +57,7 @@ private fun ExpenseListView(onReport: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var showAdd by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<ExpenseRecord?>(null) }
 
     fun load() {
         scope.launch {
@@ -105,8 +106,11 @@ private fun ExpenseListView(onReport: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(expenses, key = { it.id }) { e ->
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable { editing = e },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -129,6 +133,13 @@ private fun ExpenseListView(onReport: () -> Unit) {
 
     if (showAdd) {
         ExpenseAddDialog(onDismiss = { showAdd = false }, onDone = { showAdd = false; load() })
+    }
+    editing?.let { e ->
+        ExpenseAddDialog(
+            initial = e,
+            onDismiss = { editing = null },
+            onDone = { editing = null; load() }
+        )
     }
 }
 
@@ -161,18 +172,27 @@ private val EXPENSE_ITEM_OPTIONS = listOf(
 )
 
 @Composable
-private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
+private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial: ExpenseRecord? = null) {
     val scope = rememberCoroutineScope()
     var suppliers by remember { mutableStateOf<List<Supplier>>(emptyList()) }
     var warehouseItems by remember { mutableStateOf<List<WarehouseItem>>(emptyList()) }
-    var itemName by remember { mutableStateOf("") }
+    // 编辑模式：从 notes 解析重量（格式 "数量 单位"，如 "2 KG"）
+    val initWeight = remember(initial) {
+        val n = initial?.notes
+        if (n.isNullOrBlank()) "" else n.substringBefore(' ')
+    }
+    val initWeightUnit = remember(initial) {
+        val n = initial?.notes
+        if (n.isNullOrBlank()) "KG" else n.substringAfter(' ', "KG")
+    }
+    var itemName by remember(initial) { mutableStateOf(initial?.expense_type ?: "") }
     var itemExpanded by remember { mutableStateOf(false) }
     var supplierId by remember { mutableStateOf<Long?>(null) }
     var supplierExpanded by remember { mutableStateOf(false) }
-    var weight by remember { mutableStateOf("") }
-    var weightUnit by remember { mutableStateOf("KG") }
-    var amount by remember { mutableStateOf("") }
-    var method by remember { mutableStateOf("cash") }
+    var weight by remember(initial) { mutableStateOf(initWeight) }
+    var weightUnit by remember(initial) { mutableStateOf(initWeightUnit) }
+    var amount by remember(initial) { mutableStateOf(if (initial != null && initial.amount_myr > 0) initial.amount_myr.toString() else "") }
+    var method by remember(initial) { mutableStateOf(initial?.pay_method ?: "cash") }
     var receipt1 by remember { mutableStateOf<ImageBitmap?>(null) }
     var receipt2 by remember { mutableStateOf<ImageBitmap?>(null) }
     var saving by remember { mutableStateOf(false) }
@@ -184,22 +204,30 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
     LaunchedEffect(Unit) {
         runCatching { suppliers = SupabaseClient.fetchSuppliers() }
         runCatching { warehouseItems = SupabaseClient.fetchWarehouseItems() }
-        supplierId = suppliers.firstOrNull()?.id
+        // 编辑模式：按 expense_title（批发商名）匹配 supplierId
+        supplierId = if (initial != null) {
+            suppliers.firstOrNull { it.supplier_name == initial.expense_title }?.id
+                ?: suppliers.firstOrNull()?.id
+        } else {
+            suppliers.firstOrNull()?.id
+        }
     }
 
     val amt = amount.toDoubleOrNull()
     val selectedItem = EXPENSE_ITEM_OPTIONS.firstOrNull { it.name == itemName }
     val weightVal = weight.toDoubleOrNull() ?: 0.0
     val needReceipts = method != "cash"
+    // 编辑模式：已有收据不强制重拍
+    val hasExistingReceipts = initial != null && initial.attachment_url != null
     val canSave = itemName.isNotBlank() && supplierId != null && amt != null && amt > 0 &&
         (selectedItem?.isStock != true || weightVal > 0) &&
-        (!needReceipts || (receipt1 != null && receipt2 != null)) && !saving
+        (!needReceipts || hasExistingReceipts || (receipt1 != null && receipt2 != null)) && !saving
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("记一笔开销", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(if (initial == null) "记一笔开销" else "编辑开销", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -294,16 +322,16 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
             TextButton(enabled = canSave, onClick = {
                 scope.launch {
                     saving = true; error = null
-                    var url1: String? = null
-                    var url2: String? = null
+                    var url1: String? = initial?.attachment_url
+                    var url2: String? = initial?.receipt_invoice_no
                     if (needReceipts) {
-                        url1 = receipt1?.let { bmp ->
-                            bmp.toJpegBytes()?.let { bytes ->
+                        if (receipt1 != null) {
+                            url1 = receipt1!!.toJpegBytes()?.let { bytes ->
                                 SupabaseClient.uploadFile("receipts", "expense_transfer_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
                             }
                         }
-                        url2 = receipt2?.let { bmp ->
-                            bmp.toJpegBytes()?.let { bytes ->
+                        if (receipt2 != null) {
+                            url2 = receipt2!!.toJpegBytes()?.let { bytes ->
                                 SupabaseClient.uploadFile("receipts", "expense_supplier_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
                             }
                         }
@@ -322,15 +350,19 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
                         operate_staff_id = SupabaseClient.currentStaffId(),
                         transaction_datetime = currentIso()
                     )
-                    val r = SupabaseClient.insertExpense(rec)
-                    if (r == null) {
+                    val ok = if (initial == null) {
+                        SupabaseClient.insertExpense(rec) != null
+                    } else {
+                        SupabaseClient.updateExpense(initial.id, rec)
+                    }
+                    if (!ok) {
                         saving = false
                         error = "保存失败"
                         return@launch
                     }
 
-                    // 食材类：仓库自动入库
-                    if (selectedItem?.isStock == true && weightVal > 0) {
+                    // 食材类：仓库自动入库（仅新增时入库，编辑不重复入库）
+                    if (initial == null && selectedItem?.isStock == true && weightVal > 0) {
                         val wh = warehouseItems.firstOrNull { it.item_name == itemName }
                         if (wh != null) {
                             // G 换算成 KG（仓库单位为 KG）

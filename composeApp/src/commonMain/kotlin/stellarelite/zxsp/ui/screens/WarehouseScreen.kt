@@ -214,7 +214,19 @@ private fun EditMaterialDialog(item: WarehouseItem, onDismiss: () -> Unit, onDon
                 }
             }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (SessionManager.isAdmin) {
+                    TextButton(onClick = {
+                        scope.launch {
+                            val ok = SupabaseClient.deleteWarehouseItem(item.id)
+                            if (ok) onDone()
+                        }
+                    }) { Text("删除", color = DiningColors.Error) }
+                }
+                TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+            }
+        }
     )
 }
 

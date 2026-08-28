@@ -1,7 +1,7 @@
 {
-  "versionCode": 68,
-  "versionName": "1.1.52",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.52/zhixiangshipu-app.apk",
-  "changelog": "- 肉品加工页物料选择仅保留五花肉/鸡腿肉/牛上脑/羊肩肉",
+  "versionCode": 69,
+  "versionName": "1.1.53",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.53/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情页新增删除订单按钮(仅Admin)；编辑物料弹窗新增删除按钮(仅Admin)；开销记账点击可编辑",
   "buildDate": "2026-08-29"
 }

@@ -317,6 +317,26 @@ object SupabaseClient {
     suspend fun deleteStaff(id: Long): Boolean = delete("staff", id)
     suspend fun deleteExpense(id: Long): Boolean = delete("expense_records", id)
 
+    // 按列删除（用于 receipt_item / receipt_master / payment_records 等）
+    private suspend fun deleteBy(path: String, column: String, value: String): Boolean {
+        val resp: HttpResponse = client.delete("$BASE/rest/v1/$path") {
+            applyAuth()
+            url { parameters.append(column, "eq.$value") }
+        }
+        return resp.status.isSuccess()
+    }
+
+    // 删除订单（含关联的收据明细、收据主表、付款记录）
+    suspend fun deleteOrder(orderId: Long, orderNo: String): Boolean {
+        val receiptNo = fetchReceiptByOrderNo(orderNo)?.receipt_no
+        if (!receiptNo.isNullOrBlank()) {
+            deleteBy("receipt_item", "receipt_no", receiptNo)
+            deleteBy("receipt_master", "receipt_no", receiptNo)
+        }
+        deleteBy("payment_records", "order_id", orderId.toString())
+        return delete("customer_orders", orderId)
+    }
+
     // ============ 报表视图（仅 admin，走 RPC 函数） ============
     suspend fun fetchDailySales(start: String, end: String): List<DailySales> {
         val resp: HttpResponse = client.post("$BASE/rest/v1/rpc/get_daily_sales") {

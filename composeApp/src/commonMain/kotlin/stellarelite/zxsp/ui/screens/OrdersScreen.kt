@@ -191,6 +191,8 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     var payment by remember { mutableStateOf<PaymentRecord?>(null) }
     var receiptPhoto by remember { mutableStateOf<ImageBitmap?>(null) }
     var showFullImage by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentOrder.table_id, currentOrder.order_no) {
         tableNo = currentOrder.table_id?.let { id ->
@@ -309,6 +311,18 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             }
         }
 
+        // 删除订单（仅 Admin）
+        if (SessionManager.isAdmin) {
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { showDeleteConfirm = true },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("🗑 删除订单", color = DiningColors.Error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
 
         // 收款按钮
@@ -373,6 +387,32 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 )
             }
         }
+    }
+
+    // 删除订单确认
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            containerColor = DiningColors.Surface,
+            shape = RoundedCornerShape(16.dp),
+            title = { Text("删除订单", color = DiningColors.Error, fontWeight = FontWeight.SemiBold) },
+            text = { Text("确定要删除订单 ${currentOrder.order_no} 吗？此操作不可恢复，会连同付款记录、收据一起删除。", color = DiningColors.TextPrimary) },
+            confirmButton = {
+                TextButton(enabled = !deleting, onClick = {
+                    scope.launch {
+                        deleting = true
+                        val ok = SupabaseClient.deleteOrder(currentOrder.id, currentOrder.order_no)
+                        deleting = false
+                        showDeleteConfirm = false
+                        if (ok) onBack() else {
+                            // 删除失败提示
+                            showDeleteConfirm = false
+                        }
+                    }
+                }) { Text(if (deleting) "删除中…" else "确定删除", color = DiningColors.Error, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("取消", color = DiningColors.TextMuted) } }
+        )
     }
 }
 
