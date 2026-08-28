@@ -1,7 +1,7 @@
 {
-  "versionCode": 38,
-  "versionName": "1.1.22",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.22/zhixiangshipu-app.apk",
-  "changelog": "- 结账弹窗重做：现金显示消费金额/客户给多少/自动算找零；DuitNow/TNG/支付宝显示二维码+拍收据\n- 移除手动交易号，改为收据图片 receipt_url\n- 结账后桌台自动释放为空闲",
+  "versionCode": 39,
+  "versionName": "1.1.23",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.23/zhixiangshipu-app.apk",
+  "changelog": "- 现金结账记录找零：消费金额/客户给多少/找零写入后端(收款单备注+操作日记audit_log)",
   "buildDate": "2026-08-28"
 }

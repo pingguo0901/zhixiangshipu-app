@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.painterResource
 import stellarelite.zxsp.generated.resources.*
+import stellarelite.zxsp.network.AuditLog
 import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.PaymentRecord
 import stellarelite.zxsp.network.SupabaseClient
@@ -307,6 +308,10 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                                 receiptUrl = SupabaseClient.uploadFile("receipts", path, bytes)
                             }
                         }
+                        val changeNote = if (method == "cash") {
+                            """{"total_amount":%.2f,"received_amount":%.2f,"change_amount":%.2f}"""
+                                .format(total, received, change)
+                        } else null
                         val p = PaymentRecord(
                             order_id = order.id,
                             pay_amount_myr = total,
@@ -314,11 +319,24 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Uni
                             transaction_ref = "",
                             receipt_attachment_url = receiptUrl,
                             received_by_staff_id = SupabaseClient.currentStaffId(),
-                            transaction_datetime = currentIso()
+                            transaction_datetime = currentIso(),
+                            notes = changeNote
                         )
                         val r = SupabaseClient.insertPayment(p)
                         saving = false
                         if (r != null) {
+                            if (method == "cash") {
+                                SupabaseClient.insertAuditLog(
+                                    AuditLog(
+                                        table_name = "payment_records",
+                                        record_id = r.id,
+                                        action = "cash_change",
+                                        new_data = changeNote,
+                                        operate_staff_id = SupabaseClient.currentStaffId(),
+                                        action_time = currentIso()
+                                    )
+                                )
+                            }
                             if (order.table_id != null) {
                                 SupabaseClient.setTableStatus(order.table_id!!, "free")
                             }

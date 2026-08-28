@@ -179,6 +179,7 @@ object SupabaseClient {
     suspend fun insertWarehouseItem(w: WarehouseItem): WarehouseItem? = insert("warehouse_items", w)
     suspend fun insertMenuItem(m: MenuItem): MenuItem? = insert("menu_items", m)
     suspend fun insertStaff(s: Staff): Staff? = insert("staff", s)
+    suspend fun insertAuditLog(a: AuditLog): AuditLog? = insert("audit_log", a)
 
     // ============ 通用更新 ============
     private suspend fun update(path: String, id: Long, body: Any): Boolean {
