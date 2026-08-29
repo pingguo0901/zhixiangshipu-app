@@ -867,14 +867,46 @@ private fun fmtMyTime(iso: String): String {
     return "${fmtMyDate(datePart)} $timePart".trim()
 }
 
+// 物品中英文映射（费用项 + 食材项），确保日账/月账英文打印全英文
+private val ITEM_EN_MAP = mapOf(
+    // 费用项（业务开销）
+    "员工" to "Staff Salary",
+    "租金" to "Shop Rental",
+    "卫生纸" to "Toilet Paper",
+    "厨具 电器" to "Kitchen Utensils & Appliances",
+    "打印纸" to "Printing Paper",
+    "杂货" to "Groceries",
+    "外卖纸" to "Takeaway Paper",
+    // 食材项（进货成本）
+    "五花肉" to "Pork Belly",
+    "孜然粉" to "Cumin Powder",
+    "生抽" to "Light Soy Sauce",
+    "烧烤酱" to "BBQ Sauce",
+    "牛上脑" to "Beef Chuck",
+    "食用油" to "Cooking Oil",
+    "羊肩肉" to "Lamb Shoulder",
+    "糖" to "Sugar",
+    "烧烤撒料（孜然味）" to "BBQ Seasoning (Cumin)",
+    "烧烤撒料（香辣味）" to "BBQ Seasoning (Spicy)",
+    "辣椒粉" to "Chili Powder",
+    "花雕酒" to "Hua Diao Wine",
+    "生姜" to "Ginger",
+    "蚝油" to "Oyster Sauce",
+    "鸡腿肉" to "Chicken Thigh",
+    "盐" to "Salt",
+    "白胡椒粉" to "White Pepper Powder",
+    "炭火" to "Charcoal",
+)
+
+// 食材项集合（进货成本），用于月账开销分类
+private val FOOD_ITEM_NAMES = setOf(
+    "五花肉", "孜然粉", "生抽", "烧烤酱", "牛上脑", "食用油", "羊肩肉", "糖",
+    "烧烤撒料（孜然味）", "烧烤撒料（香辣味）", "辣椒粉", "花雕酒", "生姜", "蚝油",
+    "鸡腿肉", "盐", "白胡椒粉", "炭火"
+)
+
 // 支出类型英文映射
-private fun expenseLabelEn(type: String): String = when (type) {
-    "员工" -> "Staff Salary"
-    "租金" -> "Shop Rental"
-    "炭火" -> "Charcoal"
-    "炭火耗材" -> "Charcoal & Consumables"
-    else -> type
-}
+private fun expenseLabelEn(type: String): String = ITEM_EN_MAP[type] ?: type
 
 // 生成报表打印文本（日账/月账，中/英），report 为 get_daily_report 返回的 JSON
 private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: JsonElement, start: String): String {
@@ -1064,9 +1096,9 @@ private fun buildMonthlyReportZh(report: JsonElement, start: String): String {
     }
     r.add("")
 
-    // 月度总开销（按 5 大类聚合）
+    // 月度总开销（按大类聚合）
     r.add("【月度总开销】")
-    val catOrder = listOf("店租合计", "员工薪资合计", "炭火耗材合计", "采购食材成本", "其他杂项")
+    val catOrder = listOf("店租合计", "员工薪资合计", "耗材杂费", "采购食材成本", "其他杂项")
     val catMap = linkedMapOf<String, Double>()
     if (expenseObj != null && expenseObj.isNotEmpty()) {
         expenseObj.forEach { (type, amt) ->
@@ -1103,13 +1135,13 @@ private fun buildMonthlyReportZh(report: JsonElement, start: String): String {
     return r.joinToString("\n")
 }
 
-// 月账开销分类：把 expense_type 归入 5 大类
+// 月账开销分类：把 expense_type 归入大类
 private fun monthlyExpenseCategory(type: String): String {
     return when {
         type.contains("租") -> "店租合计"
         type.contains("员工") || type.contains("薪") -> "员工薪资合计"
-        type.contains("炭") || type.contains("耗材") -> "炭火耗材合计"
-        else -> "采购食材成本"
+        type in FOOD_ITEM_NAMES -> "采购食材成本"
+        else -> "耗材杂费"
     }
 }
 
@@ -1117,8 +1149,9 @@ private fun monthlyExpenseCategory(type: String): String {
 private fun monthlyExpenseCategoryEn(type: String): String = when (type) {
     "店租合计" -> "Total Shop Rental"
     "员工薪资合计" -> "Total Staff Salary"
-    "炭火耗材合计" -> "Charcoal & Consumables"
+    "耗材杂费" -> "Consumables & Supplies"
     "采购食材成本" -> "Ingredients Procurement"
+    "其他杂项" -> "Other Miscellaneous"
     else -> "Other Miscellaneous"
 }
 
@@ -1198,7 +1231,7 @@ private fun buildMonthlyReportEn(report: JsonElement, start: String): String {
 
     // Monthly Total Expenses
     r.add("[MONTHLY TOTAL EXPENSES]")
-    val catOrder = listOf("店租合计", "员工薪资合计", "炭火耗材合计", "采购食材成本", "其他杂项")
+    val catOrder = listOf("店租合计", "员工薪资合计", "耗材杂费", "采购食材成本", "其他杂项")
     val catMap = linkedMapOf<String, Double>()
     if (expenseObj != null && expenseObj.isNotEmpty()) {
         expenseObj.forEach { (type, amt) ->

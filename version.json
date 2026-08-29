@@ -1,7 +1,7 @@
 {
-  "versionCode": 104,
-  "versionName": "1.1.88",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.88/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔耗材杂费新增外卖纸（算业务开销）",
+  "versionCode": 105,
+  "versionName": "1.1.89",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.89/zhixiangshipu-app.apk",
+  "changelog": "- 记一笔物品选项补全英文名，日账/月账英文打印全英文",
   "buildDate": "2026-08-30"
 }
