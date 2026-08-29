@@ -95,4 +95,12 @@ object ReceiptFormatter {
         val rightPart = padLeft(value, 10)
         return "$leftPart$midPart$rightPart"
     }
+
+    // 8. 英文报表数据对齐行（总宽 48 列，26 + 12 + 10）
+    fun generateEnglishReportRow(label: String, unit: String, value: String): String {
+        val leftPart = padRight(label, 26)
+        val midPart = padRight(unit, 12)
+        val rightPart = padLeft(value, 10)
+        return "$leftPart$midPart$rightPart"
+    }
 }
