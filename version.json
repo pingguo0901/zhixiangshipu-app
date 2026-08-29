@@ -1,7 +1,7 @@
 {
-  "versionCode": 89,
-  "versionName": "1.1.73",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.73/zhixiangshipu-app.apk",
-  "changelog": "- 开销记账列表物品名旁显示重量KG/G",
+  "versionCode": 90,
+  "versionName": "1.1.74",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.74/zhixiangshipu-app.apk",
+  "changelog": "- 仓库库存卡片点击查看进货记录/编辑",
   "buildDate": "2026-08-29"
 }

@@ -23,7 +23,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.network.StockInLog
+import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.WarehouseItem
 import stellarelite.zxsp.ui.theme.DiningColors
@@ -58,6 +64,8 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
     var error by remember { mutableStateOf<String?>(null) }
     var showAdd by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<WarehouseItem?>(null) }
+    var actionItem by remember { mutableStateOf<WarehouseItem?>(null) }
+    var viewingHistory by remember { mutableStateOf<WarehouseItem?>(null) }
 
     fun load() {
         scope.launch {
@@ -127,7 +135,7 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
                     val low = item.stock_qty < item.warning_qty
                     Card(
                         modifier = Modifier.fillMaxWidth()
-                            .clickable(enabled = SessionManager.isAdmin) { editing = item },
+                            .clickable { actionItem = item },
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (low) DiningColors.Error.copy(alpha = 0.06f) else DiningColors.Surface
@@ -164,6 +172,17 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
     editing?.let { item ->
         EditMaterialDialog(item = item, onDismiss = { editing = null }, onDone = { editing = null; load() })
     }
+    actionItem?.let { item ->
+        MaterialActionDialog(
+            item = item,
+            onViewHistory = { actionItem = null; viewingHistory = item },
+            onEdit = { actionItem = null; editing = item },
+            onDismiss = { actionItem = null }
+        )
+    }
+    viewingHistory?.let { item ->
+        StockInHistoryDialog(item = item, onDismiss = { viewingHistory = null })
+    }
 }
 
 @Composable
@@ -182,6 +201,99 @@ private fun QuickBtn(icon: ImageVector, label: String, modifier: Modifier = Modi
             Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
         }
     }
+}
+
+@Composable
+private fun MaterialActionDialog(
+    item: WarehouseItem,
+    onViewHistory: () -> Unit,
+    onEdit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text(item.item_name, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onViewHistory, modifier = Modifier.fillMaxWidth()) {
+                    Text("查看进货记录", color = DiningColors.Primary)
+                }
+                if (SessionManager.isAdmin) {
+                    OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+                        Text("编辑", color = DiningColors.Primary)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
+}
+
+@Composable
+private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
+    var logs by remember { mutableStateOf<List<StockInLog>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        runCatching { SupabaseClient.fetchStockInLogs() }.onSuccess { logs = it }
+        loading = false
+    }
+
+    val records = logs.mapNotNull { log ->
+        val el = log.in_items.jsonArray.firstOrNull {
+            it.jsonObject["warehouse_item_id"]?.jsonPrimitive?.content?.toLongOrNull() == item.id
+        } ?: return@mapNotNull null
+        val qty = el.jsonObject["qty"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+        val price = el.jsonObject["unit_price"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+        Triple(log, qty, price)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("进货记录 · ${item.item_name}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            when {
+                loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = DiningColors.Primary)
+                }
+                records.isEmpty() -> Text("暂无进货记录", color = DiningColors.TextMuted, fontSize = 14.sp)
+                else -> LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                    items(records) { (log, qty, price) ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Text(fmtDate(log.transaction_datetime ?: ""), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                                Text("单号 ${log.stock_in_no.ifBlank { "—" }} · ${payMethodLabel(log.pay_method)}", fontSize = 12.sp, color = DiningColors.TextMuted)
+                                Text(
+                                    "数量 $qty ${item.unit} · 单价 RM%.2f · 小计 RM%.2f".format(price, qty * price),
+                                    fontSize = 12.sp, color = DiningColors.TextSecondary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("关闭", color = DiningColors.TextMuted) } }
+    )
+}
+
+private fun fmtDate(iso: String): String {
+    val parts = iso.take(10).split("-")
+    return if (parts.size == 3) "${parts[2]}/${parts[1]}/${parts[0]}" else iso.take(10)
+}
+
+private fun payMethodLabel(m: String): String = when (m) {
+    "cash" -> "现金"; "duitnow" -> "DuitNow"; "tng_ewallet" -> "TNG"; "alipay" -> "支付宝"; else -> m
 }
 
 @Composable
