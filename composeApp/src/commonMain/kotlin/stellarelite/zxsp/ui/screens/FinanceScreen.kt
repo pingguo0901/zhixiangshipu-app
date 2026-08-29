@@ -589,7 +589,12 @@ private fun ReportScreen(onBack: () -> Unit) {
                     scope.launch {
                         val report = SupabaseClient.fetchDailyReport(start, end)
                         if (report != null) {
-                            printReceiptText(buildReportText(printMode == "monthly", printLang == "en", report, start))
+                            val text = if (printMode == "monthly" && printLang == "zh") {
+                                buildMonthlyReportZh(report, start)
+                            } else {
+                                buildReportText(printMode == "monthly", printLang == "en", report, start)
+                            }
+                            printReceiptText(text)
                         }
                         showPrintDialog = false
                     }
@@ -747,4 +752,129 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
     r.add("\n\n\n")
 
     return r.joinToString("\n")
+}
+
+// 生成月账中文版打印文本（接真实数据库统计）
+private fun buildMonthlyReportZh(report: JsonElement, start: String): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+    val obj = report.jsonObject
+
+    val totalOrders = obj["total_orders"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+    val paidOrders = obj["paid_orders"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+    val cancelled = (totalOrders - paidOrders).coerceAtLeast(0)
+    val totalSales = obj["total_sales"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val totalDiscount = obj["total_discount"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val actualRevenue = totalSales - totalDiscount
+    val cash = obj["cash"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val duitnow = obj["duitnow"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val tng = obj["tng"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val alipay = obj["alipay"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val totalExpense = obj["total_expense"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val netProfit = actualRevenue - totalExpense
+    val skewersArr = obj["skewers"]?.jsonArray
+    val expenseObj = obj["expense_breakdown"]?.jsonObject
+
+    fun money(v: Double) = "%.2f".format(v)
+    fun row(label: String, unit: String, value: String) = ReceiptFormatter.generateReportRow(label, unit, value)
+
+    // 月份 "YYYY-MM" -> "MM/YYYY"
+    val monthLabel = if (start.length >= 7) "${start.substring(5, 7)}/${start.substring(0, 4)}" else start
+
+    // 头部
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("MONTHLY BUSINESS REPORT", W))
+    r.add(ReceiptFormatter.padCenter("月度营业报表", W))
+    r.add("")
+    r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
+    r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
+    r.add(ReceiptFormatter.padCenter("SSM BRN: 【填写BRN】", W))
+    r.add(ReceiptFormatter.padRight("统计月份: $monthLabel", W))
+    r.add("=".repeat(W))
+
+    // 订单汇总
+    r.add("【订单汇总】")
+    r.add(row("本月总开单:", "单", totalOrders.toString()))
+    r.add(row("成交有效单:", "单", paidOrders.toString()))
+    r.add(row("作废取消单:", "单", cancelled.toString()))
+    r.add("")
+
+    // 营收汇总
+    r.add("【营收汇总】")
+    r.add(row("销售总金额:", "RM", money(totalSales)))
+    r.add(row("总折扣金额:", "RM", money(totalDiscount)))
+    r.add(row("本月实际营收:", "RM", money(actualRevenue)))
+    r.add("")
+
+    // 各付款方式合计
+    r.add("【各付款方式合计】")
+    r.add(row("CASH现金:", "RM", money(cash)))
+    r.add(row("DUITNOW:", "RM", money(duitnow)))
+    r.add(row("TNG E-Wallet:", "RM", money(tng)))
+    r.add(row("ALIPAY:", "RM", money(alipay)))
+    r.add("")
+
+    // 商品月度销量
+    r.add("【商品月度销量】")
+    if (skewersArr != null && skewersArr.isNotEmpty()) {
+        skewersArr.forEach { el ->
+            val o = el.jsonObject
+            val name = o["name"]?.jsonPrimitive?.content ?: ""
+            val q = o["qty"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+            r.add(row("$name:", "串", q.toString()))
+        }
+    } else {
+        r.add(row("（无）", "", ""))
+    }
+    r.add("")
+
+    // 月度总开销（按 5 大类聚合）
+    r.add("【月度总开销】")
+    val catOrder = listOf("店租合计", "员工薪资合计", "炭火耗材合计", "采购食材成本", "其他杂项")
+    val catMap = linkedMapOf<String, Double>()
+    if (expenseObj != null && expenseObj.isNotEmpty()) {
+        expenseObj.forEach { (type, amt) ->
+            val a = amt.jsonPrimitive.content.toDoubleOrNull() ?: 0.0
+            val cat = monthlyExpenseCategory(type)
+            catMap[cat] = (catMap[cat] ?: 0.0) + a
+        }
+    }
+    var printedAny = false
+    catOrder.forEach { cat ->
+        val v = catMap[cat] ?: 0.0
+        if (v > 0.0) {
+            r.add(row("$cat:", "RM", money(v)))
+            printedAny = true
+        }
+    }
+    if (!printedAny) r.add(row("（无）", "", ""))
+    r.add("-".repeat(W))
+    r.add(row("月度总支出:", "RM", money(totalExpense)))
+    r.add("")
+
+    // 月度粗算利润
+    r.add("【月度粗算利润】")
+    r.add(row("月度结余:", "RM", money(netProfit)))
+    r.add("=".repeat(W))
+
+    // 尾部
+    r.add(ReceiptFormatter.padRight("打印时间: ${fmtMyTime(currentIso())}", W))
+    r.add(ReceiptFormatter.padCenter("*完整明细请导出Excel存档", W))
+    r.add(ReceiptFormatter.padCenter("LHDN要求记录保存7年", W))
+    r.add("=".repeat(W))
+    r.add("\n\n\n")
+
+    return r.joinToString("\n")
+}
+
+// 月账开销分类：把 expense_type 归入 5 大类
+private fun monthlyExpenseCategory(type: String): String {
+    val opt = EXPENSE_ITEM_OPTIONS.firstOrNull { it.name == type }
+    return when {
+        type.contains("租") -> "店租合计"
+        type.contains("员工") || type.contains("薪") -> "员工薪资合计"
+        type.contains("炭") || type.contains("耗材") -> "炭火耗材合计"
+        opt?.isStock == true -> "采购食材成本"
+        else -> "其他杂项"
+    }
 }
