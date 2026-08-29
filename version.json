@@ -1,7 +1,7 @@
 {
-  "versionCode": 76,
-  "versionName": "1.1.60",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.60/zhixiangshipu-app.apk",
-  "changelog": "- 新增月账中文版打印（接真实数据库统计）",
+  "versionCode": 77,
+  "versionName": "1.1.61",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.61/zhixiangshipu-app.apk",
+  "changelog": "- 新增月账英文版打印（ALIPAY，接真实数据库统计）",
   "buildDate": "2026-08-29"
 }

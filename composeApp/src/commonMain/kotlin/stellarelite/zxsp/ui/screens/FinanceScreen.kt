@@ -589,10 +589,10 @@ private fun ReportScreen(onBack: () -> Unit) {
                     scope.launch {
                         val report = SupabaseClient.fetchDailyReport(start, end)
                         if (report != null) {
-                            val text = if (printMode == "monthly" && printLang == "zh") {
-                                buildMonthlyReportZh(report, start)
-                            } else {
-                                buildReportText(printMode == "monthly", printLang == "en", report, start)
+                            val text = when {
+                                printMode == "monthly" && printLang == "zh" -> buildMonthlyReportZh(report, start)
+                                printMode == "monthly" && printLang == "en" -> buildMonthlyReportEn(report, start)
+                                else -> buildReportText(false, printLang == "en", report, start)
                             }
                             printReceiptText(text)
                         }
@@ -877,4 +877,126 @@ private fun monthlyExpenseCategory(type: String): String {
         opt?.isStock == true -> "采购食材成本"
         else -> "其他杂项"
     }
+}
+
+// 月账开销分类英文标签
+private fun monthlyExpenseCategoryEn(type: String): String = when (type) {
+    "店租合计" -> "Total Shop Rental"
+    "员工薪资合计" -> "Total Staff Salary"
+    "炭火耗材合计" -> "Charcoal & Consumables"
+    "采购食材成本" -> "Ingredients Procurement"
+    else -> "Other Miscellaneous"
+}
+
+// 生成月账英文版打印文本（接真实数据库统计）
+private fun buildMonthlyReportEn(report: JsonElement, start: String): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+    val obj = report.jsonObject
+
+    val totalOrders = obj["total_orders"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+    val paidOrders = obj["paid_orders"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+    val cancelled = (totalOrders - paidOrders).coerceAtLeast(0)
+    val totalSales = obj["total_sales"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val totalDiscount = obj["total_discount"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val actualRevenue = totalSales - totalDiscount
+    val cash = obj["cash"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val duitnow = obj["duitnow"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val tng = obj["tng"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val alipay = obj["alipay"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val totalExpense = obj["total_expense"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val netProfit = actualRevenue - totalExpense
+    val skewersArr = obj["skewers"]?.jsonArray
+    val expenseObj = obj["expense_breakdown"]?.jsonObject
+
+    fun money(v: Double) = "%.2f".format(v)
+    fun row(label: String, unit: String, value: String) = ReceiptFormatter.generateEnglishReportRow(label, unit, value)
+
+    // 月份 "YYYY-MM" -> "MM/YYYY"
+    val monthLabel = if (start.length >= 7) "${start.substring(5, 7)}/${start.substring(0, 4)}" else start
+
+    // Header
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("MONTHLY BUSINESS REPORT", W))
+    r.add("")
+    r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
+    r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
+    r.add(ReceiptFormatter.padCenter("SSM BRN: [ENTER BRN NUMBER]", W))
+    r.add(ReceiptFormatter.padRight("Report Month: $monthLabel", W))
+    r.add("=".repeat(W))
+
+    // Order Summary
+    r.add("[ORDER SUMMARY]")
+    r.add(row("Total Monthly Orders:", "Bills", totalOrders.toString()))
+    r.add(row("Total Completed Orders:", "Bills", paidOrders.toString()))
+    r.add(row("Total Void/Cancelled:", "Bills", cancelled.toString()))
+    r.add("")
+
+    // Revenue Summary
+    r.add("[REVENUE SUMMARY]")
+    r.add(row("Total Sales Amount:", "RM", money(totalSales)))
+    r.add(row("Total Discount Amount:", "RM", money(totalDiscount)))
+    r.add(row("Actual Net Revenue:", "RM", money(actualRevenue)))
+    r.add("")
+
+    // Payment Mode Total
+    r.add("[PAYMENT MODE TOTAL]")
+    r.add(row("CASH:", "RM", money(cash)))
+    r.add(row("DUITNOW:", "RM", money(duitnow)))
+    r.add(row("TNG E-Wallet:", "RM", money(tng)))
+    r.add(row("ALIPAY:", "RM", money(alipay)))
+    r.add("")
+
+    // Monthly Product Sales
+    r.add("[MONTHLY PRODUCT SALES]")
+    if (skewersArr != null && skewersArr.isNotEmpty()) {
+        skewersArr.forEach { el ->
+            val o = el.jsonObject
+            val nameEn = o["name_en"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() }
+                ?: o["name"]?.jsonPrimitive?.content ?: ""
+            val q = o["qty"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+            r.add(row("$nameEn:", "Pcs", q.toString()))
+        }
+    } else {
+        r.add(row("(none)", "", ""))
+    }
+    r.add("")
+
+    // Monthly Total Expenses
+    r.add("[MONTHLY TOTAL EXPENSES]")
+    val catOrder = listOf("店租合计", "员工薪资合计", "炭火耗材合计", "采购食材成本", "其他杂项")
+    val catMap = linkedMapOf<String, Double>()
+    if (expenseObj != null && expenseObj.isNotEmpty()) {
+        expenseObj.forEach { (type, amt) ->
+            val a = amt.jsonPrimitive.content.toDoubleOrNull() ?: 0.0
+            val cat = monthlyExpenseCategory(type)
+            catMap[cat] = (catMap[cat] ?: 0.0) + a
+        }
+    }
+    var printedAny = false
+    catOrder.forEach { cat ->
+        val v = catMap[cat] ?: 0.0
+        if (v > 0.0) {
+            r.add(row("${monthlyExpenseCategoryEn(cat)}:", "RM", money(v)))
+            printedAny = true
+        }
+    }
+    if (!printedAny) r.add(row("(none)", "", ""))
+    r.add("-".repeat(W))
+    r.add(row("Total Monthly Expenses:", "RM", money(totalExpense)))
+    r.add("")
+
+    // Monthly Estimated Profit
+    r.add("[MONTHLY ESTIMATED PROFIT]")
+    r.add(row("Monthly Balance / Profit:", "RM", money(netProfit)))
+    r.add("=".repeat(W))
+
+    // Footer
+    r.add(ReceiptFormatter.padRight("Print Time: ${fmtMyTime(currentIso())}", W))
+    r.add(ReceiptFormatter.padCenter("* Please export Excel for full details", W))
+    r.add(ReceiptFormatter.padCenter("LHDN Requirement: Keep records for 7 years", W))
+    r.add("=".repeat(W))
+    r.add("\n\n\n")
+
+    return r.joinToString("\n")
 }
