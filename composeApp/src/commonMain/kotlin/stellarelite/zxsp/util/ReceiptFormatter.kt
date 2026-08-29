@@ -103,4 +103,14 @@ object ReceiptFormatter {
         val rightPart = padLeft(value, 10)
         return "$leftPart$midPart$rightPart"
     }
+
+    // 9. 厨房出单数据对齐行（总宽 48 列：QTY 6 + ITEM 22 + REMARK 20）
+    // 数量前固定留 2 个空格，左对齐更醒目
+    fun generateKitchenRow(qty: String, item: String, remark: String): String {
+        val qtyFormatted = " $qty"
+        val col1 = padRight(qtyFormatted, 6) // 数量列占 6 格
+        val col2 = padRight(item, 22)        // 菜品列占 22 格
+        val col3 = padRight(remark, 20)      // 备注列占 20 格
+        return "$col1$col2$col3"
+    }
 }

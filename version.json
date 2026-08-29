@@ -1,7 +1,7 @@
 {
-  "versionCode": 94,
-  "versionName": "1.1.78",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.78/zhixiangshipu-app.apk",
-  "changelog": "- 报表打印日账改为点击日期卡片弹窗预览打印",
-  "buildDate": "2026-08-29"
+  "versionCode": 95,
+  "versionName": "1.1.79",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.79/zhixiangshipu-app.apk",
+  "changelog": "- 新增厨房出单打印",
+  "buildDate": "2026-08-30"
 }

@@ -202,6 +202,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     var showFullImage by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
+    var showKitchen by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentOrder.table_id, currentOrder.order_no) {
         tableNo = currentOrder.table_id?.let { id ->
@@ -306,6 +307,19 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(12.dp))
         }
 
+        // 打印厨房单
+        OutlinedButton(
+            onClick = { showKitchen = true },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("打印厨房单", color = DiningColors.Primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         // 打印收据两个按钮
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
@@ -397,6 +411,27 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             data = receiptData!!,
             onPrint = { printReceiptText(receiptData!!.toReceiptText()) },
             onDone = { showReceipt = false; onBack() }
+        )
+    }
+
+    // 厨房单预览
+    if (showKitchen) {
+        val kitchenText = remember(currentOrder, tableNo) {
+            buildKitchenOrder(
+                orderNo = currentOrder.order_no,
+                tableNo = tableNo ?: "外卖",
+                time = formatDateTimeMy(currentOrder.order_datetime ?: ""),
+                items = lines.map { line ->
+                    val (item, remark) = splitItemName(line.name)
+                    KitchenLine(line.qty, item, remark)
+                },
+                note = currentOrder.notes
+            )
+        }
+        KitchenOrderDialog(
+            text = kitchenText,
+            onPrint = { printReceiptText(kitchenText) },
+            onDone = { showKitchen = false }
         )
     }
 
@@ -889,6 +924,92 @@ data class ReceiptLine(
     val unitPrice: Double,
     val amount: Double
 )
+
+// 厨房单明细行
+private data class KitchenLine(
+    val qty: Int,
+    val item: String,
+    val remark: String
+)
+
+// 把菜品名拆成「菜品」+「口味备注」，如「五花肉串（香辣）」→ 五花肉串 + 香辣
+private fun splitItemName(name: String): Pair<String, String> {
+    val idx = name.indexOf('（')
+    if (idx > 0) {
+        val item = name.substring(0, idx)
+        val remark = name.substring(idx + 1).removeSuffix("）")
+        return item to remark
+    }
+    return name to ""
+}
+
+// 生成厨房出单文本（48 列）
+private fun buildKitchenOrder(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("KITCHEN ORDER", W))
+    r.add(ReceiptFormatter.padCenter("厨房出单", W))
+    r.add("")
+    r.add(ReceiptFormatter.padRight("Order No: $orderNo", W))
+    r.add(ReceiptFormatter.padRight("Table No: $tableNo", W))
+    r.add(ReceiptFormatter.padRight("Time: $time", W))
+    r.add("=".repeat(W))
+
+    r.add(ReceiptFormatter.padRight("QTY", 6) + ReceiptFormatter.padRight("ITEM", 22) + ReceiptFormatter.padRight("REMARK", 20))
+    r.add("-".repeat(W))
+
+    items.forEach { line ->
+        r.add(ReceiptFormatter.generateKitchenRow(line.qty.toString(), line.item, line.remark))
+    }
+    r.add("-".repeat(W))
+
+    r.add("【特殊指令】")
+    r.add(note?.takeIf { it.isNotBlank() } ?: "无")
+    r.add("=".repeat(W))
+
+    r.add(ReceiptFormatter.padRight("份数：1份", W))
+    r.add(ReceiptFormatter.padRight("打印:$time", W))
+    r.add("=".repeat(W))
+    r.add("\n\n\n")
+
+    return r.joinToString("\n")
+}
+
+@Composable
+private fun KitchenOrderDialog(text: String, onPrint: () -> Unit, onDone: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDone,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(16.dp),
+        title = { Text("厨房出单", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text,
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = DiningColors.TextPrimary,
+                    lineHeight = 15.sp
+                )
+            }
+        },
+        confirmButton = {
+            Row {
+                OutlinedButton(onClick = onPrint) {
+                    Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("打印厨房单", color = DiningColors.Primary)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }
+        }
+    )
+}
 
 data class ReceiptData(
     val receiptNo: String,
