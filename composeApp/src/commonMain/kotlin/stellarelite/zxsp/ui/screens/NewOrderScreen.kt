@@ -27,6 +27,7 @@ import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
+import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.ui.theme.DiningColors
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -48,6 +49,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     val quantities = remember { mutableStateMapOf<Long, Int>() }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var kitchenOrder by remember { mutableStateOf<CustomerOrder?>(null) }
+    var showKitchen by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         runCatching {
@@ -250,7 +253,12 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                                 )
                                 val r = SupabaseClient.insertOrder(order)
                                 saving = false
-                                if (r != null) onBack() else error = "下单失败：" + (SupabaseClient.lastError ?: "")
+                                if (r != null) {
+                                    kitchenOrder = r
+                                    showKitchen = true
+                                } else {
+                                    error = "下单失败：" + (SupabaseClient.lastError ?: "")
+                                }
                             }
                         },
                         enabled = totalCount > 0 && !saving,
@@ -289,6 +297,41 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    // 下单成功后弹厨房单
+    if (showKitchen && kitchenOrder != null) {
+        val ko = kitchenOrder!!
+        val tno = tables.firstOrNull { it.id == ko.table_id }?.table_no ?: "外卖"
+        val time = formatDateTimeMy(ko.order_datetime ?: "")
+        val lines = parseOrderLines(ko.order_items)
+        val kitchenZh = buildKitchenOrder(
+            orderNo = ko.order_no,
+            tableNo = tno,
+            time = time,
+            items = lines.map { line ->
+                val (item, remark) = splitItemName(line.name)
+                KitchenLine(line.qty, item, remark)
+            },
+            note = ko.notes
+        )
+        val kitchenEn = buildKitchenOrderEnglish(
+            orderNo = ko.order_no,
+            tableNo = if (tno == "外卖") "Takeaway" else tno,
+            time = time,
+            items = lines.map { line ->
+                val en = line.nameEn.ifBlank { line.name }
+                val (item, remark) = splitItemNameEn(en)
+                KitchenLine(line.qty, item, remark)
+            },
+            note = ko.notes
+        )
+        KitchenOrderDialog(
+            textZh = kitchenZh,
+            textEn = kitchenEn,
+            onPrint = { text -> printReceiptText(text) },
+            onDone = { showKitchen = false; kitchenOrder = null; onBack() }
+        )
     }
 }
 

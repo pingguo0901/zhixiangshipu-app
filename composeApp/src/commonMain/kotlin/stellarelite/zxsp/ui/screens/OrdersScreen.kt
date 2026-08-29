@@ -940,14 +940,14 @@ data class ReceiptLine(
 )
 
 // 厨房单明细行
-private data class KitchenLine(
+internal data class KitchenLine(
     val qty: Int,
     val item: String,
     val remark: String
 )
 
 // 把菜品名拆成「菜品」+「口味备注」，如「五花肉串（香辣）」→ 五花肉串 + 香辣
-private fun splitItemName(name: String): Pair<String, String> {
+internal fun splitItemName(name: String): Pair<String, String> {
     val idx = name.indexOf('（')
     if (idx > 0) {
         val item = name.substring(0, idx)
@@ -958,7 +958,7 @@ private fun splitItemName(name: String): Pair<String, String> {
 }
 
 // 英文名拆「菜品」+「口味」，如 "Pork Belly Skewer (Spicy)" → Pork Belly Skewer + Spicy
-private fun splitItemNameEn(nameEn: String): Pair<String, String> {
+internal fun splitItemNameEn(nameEn: String): Pair<String, String> {
     val idx = nameEn.indexOf('(')
     if (idx > 0) {
         val item = nameEn.substring(0, idx).trim()
@@ -969,7 +969,7 @@ private fun splitItemNameEn(nameEn: String): Pair<String, String> {
 }
 
 // 生成厨房出单文本（48 列）
-private fun buildKitchenOrder(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
+internal fun buildKitchenOrder(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
     val W = ReceiptFormatter.TOTAL_WIDTH
     val r = mutableListOf<String>()
 
@@ -1003,7 +1003,7 @@ private fun buildKitchenOrder(orderNo: String, tableNo: String, time: String, it
 }
 
 // 生成厨房出单英文版文本（48 列）
-private fun buildKitchenOrderEnglish(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
+internal fun buildKitchenOrderEnglish(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
     val W = ReceiptFormatter.TOTAL_WIDTH
     val r = mutableListOf<String>()
 
@@ -1036,7 +1036,7 @@ private fun buildKitchenOrderEnglish(orderNo: String, tableNo: String, time: Str
 }
 
 @Composable
-private fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
+internal fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
     var lang by remember { mutableStateOf("zh") }
     val text = if (lang == "zh") textZh else textEn
     AlertDialog(
@@ -1146,7 +1146,7 @@ data class ReceiptData(
 }
 
 // 日期转马来西亚格式 dd/MM/yyyy HH:mm
-private fun formatDateTimeMy(iso: String): String {
+internal fun formatDateTimeMy(iso: String): String {
     val datePart = iso.take(10)
     val timePart = if (iso.length >= 16) iso.substring(11, 16) else ""
     val parts = datePart.split("-")
@@ -1161,7 +1161,7 @@ private fun mapPayMode(method: String): String = when (method) {
     else -> "CASH"
 }
 
-private fun parseOrderLines(items: JsonElement): List<ReceiptLine> {
+internal fun parseOrderLines(items: JsonElement): List<ReceiptLine> {
     return items.jsonArray.mapNotNull { el ->
         val obj = el.jsonObject
         val name = obj["item_name"]?.jsonPrimitive?.content ?: return@mapNotNull null
