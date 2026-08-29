@@ -7,10 +7,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AcUnit
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.MoveToInbox
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -71,9 +78,11 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("📦 仓库库存", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Icon(Icons.Outlined.Inventory2, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("仓库库存", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { load() }) { Text("🔄", fontSize = 18.sp) }
+            IconButton(onClick = { load() }) { Icon(Icons.Outlined.Refresh, contentDescription = "刷新", tint = DiningColors.Primary) }
             Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
                 Text("＋ 新增物料", color = DiningColors.Surface)
@@ -85,9 +94,9 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuickBtn("📥", "进货入库", Modifier.weight(1f), onStockIn)
-            QuickBtn("❄️", "冰箱操作", Modifier.weight(1f), onFridge)
-            QuickBtn("🍖", "肉品加工", Modifier.weight(1f), onMeat)
+            QuickBtn(Icons.Outlined.MoveToInbox, "进货入库", Modifier.weight(1f), onStockIn)
+            QuickBtn(Icons.Outlined.AcUnit, "冰箱操作", Modifier.weight(1f), onFridge)
+            QuickBtn(Icons.Outlined.Restaurant, "肉品加工", Modifier.weight(1f), onMeat)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -158,7 +167,7 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
 }
 
 @Composable
-private fun QuickBtn(emoji: String, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun QuickBtn(icon: ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Card(
         modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
@@ -168,7 +177,7 @@ private fun QuickBtn(emoji: String, label: String, modifier: Modifier = Modifier
             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(emoji, fontSize = 22.sp)
+            Icon(icon, contentDescription = label, tint = DiningColors.Primary, modifier = Modifier.size(22.dp))
             Spacer(modifier = Modifier.height(4.dp))
             Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
         }

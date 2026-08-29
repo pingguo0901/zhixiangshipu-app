@@ -1,7 +1,7 @@
 {
-  "versionCode": 80,
-  "versionName": "1.1.64",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.64/zhixiangshipu-app.apk",
-  "changelog": "- 订单管理页面emoji替换为Material线条图标",
+  "versionCode": 81,
+  "versionName": "1.1.65",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.65/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情/仓库/开销记账/更多页emoji替换为Material线条图标",
   "buildDate": "2026-08-29"
 }

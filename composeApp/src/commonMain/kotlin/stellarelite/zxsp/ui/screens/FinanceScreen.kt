@@ -10,6 +10,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -91,10 +95,16 @@ private fun ExpenseListView(onReport: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("💸 开销记账", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("开销记账", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
             if (SessionManager.isAdmin) {
-                TextButton(onClick = onReport) { Text("📈 报表", color = DiningColors.Primary) }
+                TextButton(onClick = onReport) {
+                    Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("报表", color = DiningColors.Primary)
+                }
             }
             Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
@@ -453,7 +463,9 @@ private fun ReportScreen(onBack: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
             Spacer(modifier = Modifier.weight(1f))
-            Text("📈 报表统计", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("报表统计", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
         }
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -480,14 +492,18 @@ private fun ReportScreen(onBack: () -> Unit) {
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("🖨 打印日账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("打印日账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
             OutlinedButton(
                 onClick = { printMode = "monthly"; showPrintDialog = true },
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("🖨 打印月账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("打印月账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
 
