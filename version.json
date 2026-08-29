@@ -1,7 +1,7 @@
 {
-  "versionCode": 77,
-  "versionName": "1.1.61",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.61/zhixiangshipu-app.apk",
-  "changelog": "- 新增月账英文版打印（ALIPAY，接真实数据库统计）",
+  "versionCode": 78,
+  "versionName": "1.1.62",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.62/zhixiangshipu-app.apk",
+  "changelog": "- 新建订单标题居中并去除emoji",
   "buildDate": "2026-08-29"
 }

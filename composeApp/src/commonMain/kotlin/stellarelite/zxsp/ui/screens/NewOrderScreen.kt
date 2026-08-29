@@ -71,13 +71,17 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("📝 新建订单", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                Text("‹ 返回", color = DiningColors.Primary)
+            }
+            Text(
+                "新建订单",
+                modifier = Modifier.align(Alignment.Center),
+                fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary
+            )
         }
 
         if (loading) {
