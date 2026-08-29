@@ -416,7 +416,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
 
     // 厨房单预览
     if (showKitchen) {
-        val kitchenText = remember(currentOrder, tableNo) {
+        val kitchenZh = remember(currentOrder, tableNo) {
             buildKitchenOrder(
                 orderNo = currentOrder.order_no,
                 tableNo = tableNo ?: "外卖",
@@ -428,9 +428,23 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 note = currentOrder.notes
             )
         }
+        val kitchenEn = remember(currentOrder, tableNo) {
+            buildKitchenOrderEnglish(
+                orderNo = currentOrder.order_no,
+                tableNo = tableNo ?: "Takeaway",
+                time = formatDateTimeMy(currentOrder.order_datetime ?: ""),
+                items = lines.map { line ->
+                    val en = line.nameEn.ifBlank { line.name }
+                    val (item, remark) = splitItemNameEn(en)
+                    KitchenLine(line.qty, item, remark)
+                },
+                note = currentOrder.notes
+            )
+        }
         KitchenOrderDialog(
-            text = kitchenText,
-            onPrint = { printReceiptText(kitchenText) },
+            textZh = kitchenZh,
+            textEn = kitchenEn,
+            onPrint = { text -> printReceiptText(text) },
             onDone = { showKitchen = false }
         )
     }
@@ -943,6 +957,17 @@ private fun splitItemName(name: String): Pair<String, String> {
     return name to ""
 }
 
+// 英文名拆「菜品」+「口味」，如 "Pork Belly Skewer (Spicy)" → Pork Belly Skewer + Spicy
+private fun splitItemNameEn(nameEn: String): Pair<String, String> {
+    val idx = nameEn.indexOf('(')
+    if (idx > 0) {
+        val item = nameEn.substring(0, idx).trim()
+        val remark = nameEn.substring(idx + 1).removeSuffix(")").trim()
+        return item to remark
+    }
+    return nameEn.trim() to ""
+}
+
 // 生成厨房出单文本（48 列）
 private fun buildKitchenOrder(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
     val W = ReceiptFormatter.TOTAL_WIDTH
@@ -977,17 +1002,57 @@ private fun buildKitchenOrder(orderNo: String, tableNo: String, time: String, it
     return r.joinToString("\n")
 }
 
+// 生成厨房出单英文版文本（48 列）
+private fun buildKitchenOrderEnglish(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("KITCHEN ORDER", W))
+    r.add("")
+    r.add(ReceiptFormatter.padRight("Order No: $orderNo", W))
+    r.add(ReceiptFormatter.padRight("Table No: $tableNo", W))
+    r.add(ReceiptFormatter.padRight("Time: $time", W))
+    r.add("=".repeat(W))
+
+    r.add(ReceiptFormatter.padRight("QTY", 6) + ReceiptFormatter.padRight("ITEM", 22) + ReceiptFormatter.padRight("REMARK", 20))
+    r.add("-".repeat(W))
+
+    items.forEach { line ->
+        r.add(ReceiptFormatter.generateKitchenRow(line.qty.toString(), line.item, line.remark))
+    }
+    r.add("-".repeat(W))
+
+    r.add("[SPECIAL INSTRUCTIONS]")
+    r.add(note?.takeIf { it.isNotBlank() } ?: "N/A")
+    r.add("=".repeat(W))
+
+    r.add(ReceiptFormatter.padRight("Copies: 1 of 1", W))
+    r.add(ReceiptFormatter.padRight("Printed: $time", W))
+    r.add("=".repeat(W))
+    r.add("\n\n\n")
+
+    return r.joinToString("\n")
+}
+
 @Composable
-private fun KitchenOrderDialog(text: String, onPrint: () -> Unit, onDone: () -> Unit) {
+private fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
+    var lang by remember { mutableStateOf("zh") }
+    val text = if (lang == "zh") textZh else textEn
     AlertDialog(
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(16.dp),
-        title = { Text("厨房出单", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(if (lang == "zh") "厨房出单" else "Kitchen Order", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
             ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text("中文版") })
+                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text("英文版") })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text,
                     fontSize = 11.sp,
@@ -999,13 +1064,13 @@ private fun KitchenOrderDialog(text: String, onPrint: () -> Unit, onDone: () -> 
         },
         confirmButton = {
             Row {
-                OutlinedButton(onClick = onPrint) {
+                OutlinedButton(onClick = { onPrint(text) }) {
                     Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("打印厨房单", color = DiningColors.Primary)
+                    Text(if (lang == "zh") "打印厨房单" else "Print", color = DiningColors.Primary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onDone) { Text(if (lang == "zh") "完成" else "Done", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             }
         }
     )
