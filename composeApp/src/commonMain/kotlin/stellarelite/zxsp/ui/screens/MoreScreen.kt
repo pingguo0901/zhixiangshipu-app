@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.MoreHoriz
@@ -389,6 +390,8 @@ private fun SupplierManageScreen(onBack: () -> Unit) {
     }
     LaunchedEffect(Unit) { load() }
 
+    var editing by remember { mutableStateOf<Supplier?>(null) }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
             TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
@@ -410,10 +413,16 @@ private fun SupplierManageScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(suppliers, key = { it.id }) { s ->
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable { editing = s },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
+                    ) {
                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(s.supplier_name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(s.supplier_name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.weight(1f))
+                                Icon(Icons.Outlined.Edit, contentDescription = "编辑", tint = DiningColors.TextMuted, modifier = Modifier.size(16.dp))
+                            }
                             s.contact_person?.takeIf { it.isNotBlank() }?.let { Text("对接人：$it", fontSize = 12.sp, color = DiningColors.TextSecondary) }
                             s.phone?.takeIf { it.isNotBlank() }?.let { Text("电话：$it", fontSize = 12.sp, color = DiningColors.TextSecondary) }
                             s.supplier_brn?.takeIf { it.isNotBlank() }?.let { Text("BRN：$it", fontSize = 12.sp, color = DiningColors.TextMuted) }
@@ -428,24 +437,27 @@ private fun SupplierManageScreen(onBack: () -> Unit) {
     if (showAdd) {
         SupplierAddDialog(onDismiss = { showAdd = false }, onDone = { showAdd = false; load() })
     }
+    editing?.let { s ->
+        SupplierAddDialog(initial = s, onDismiss = { editing = null }, onDone = { editing = null; load() })
+    }
 }
 
 @Composable
-private fun SupplierAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
+private fun SupplierAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial: Supplier? = null) {
     val scope = rememberCoroutineScope()
-    var name by remember { mutableStateOf("") }
-    var contact by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var brn by remember { mutableStateOf("") }
-    var tin by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
+    var name by remember(initial) { mutableStateOf(initial?.supplier_name ?: "") }
+    var contact by remember(initial) { mutableStateOf(initial?.contact_person ?: "") }
+    var phone by remember(initial) { mutableStateOf(initial?.phone ?: "") }
+    var brn by remember(initial) { mutableStateOf(initial?.supplier_brn ?: "") }
+    var tin by remember(initial) { mutableStateOf(initial?.supplier_tin ?: "") }
+    var notes by remember(initial) { mutableStateOf(initial?.notes ?: "") }
     var saving by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("新增供应商", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(if (initial == null) "新增供应商" else "编辑供应商", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("批发商名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -461,17 +473,37 @@ private fun SupplierAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
             TextButton(enabled = name.isNotBlank() && !saving, onClick = {
                 scope.launch {
                     saving = true
-                    val r = SupabaseClient.insertSupplier(Supplier(
-                        supplier_name = name.trim(), contact_person = contact.trim().ifBlank { null },
-                        phone = phone.trim().ifBlank { null }, supplier_brn = brn.trim().ifBlank { null },
-                        supplier_tin = tin.trim().ifBlank { null }, notes = notes.trim().ifBlank { null }
-                    ))
+                    val ok = if (initial == null) {
+                        SupabaseClient.insertSupplier(Supplier(
+                            supplier_name = name.trim(), contact_person = contact.trim().ifBlank { null },
+                            phone = phone.trim().ifBlank { null }, supplier_brn = brn.trim().ifBlank { null },
+                            supplier_tin = tin.trim().ifBlank { null }, notes = notes.trim().ifBlank { null }
+                        )) != null
+                    } else {
+                        SupabaseClient.updateSupplier(initial.id, Supplier(
+                            id = initial.id, supplier_name = name.trim(), contact_person = contact.trim().ifBlank { null },
+                            phone = phone.trim().ifBlank { null }, supplier_brn = brn.trim().ifBlank { null },
+                            supplier_tin = tin.trim().ifBlank { null }, notes = notes.trim().ifBlank { null }
+                        ))
+                    }
                     saving = false
-                    if (r != null) onDone()
+                    if (ok) onDone()
                 }
             }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (initial != null) {
+                    TextButton(onClick = {
+                        scope.launch {
+                            val ok = SupabaseClient.deleteSupplier(initial.id)
+                            if (ok) onDone()
+                        }
+                    }) { Text("删除", color = DiningColors.Error) }
+                }
+                TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+            }
+        }
     )
 }
 

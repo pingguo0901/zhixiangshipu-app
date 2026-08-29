@@ -1,7 +1,7 @@
 {
-  "versionCode": 83,
-  "versionName": "1.1.67",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.67/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔/新建订单增加原生日历框（临时选日期录入历史数据）",
+  "versionCode": 84,
+  "versionName": "1.1.68",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.68/zhixiangshipu-app.apk",
+  "changelog": "- 供应商管理支持点击编辑/删除",
   "buildDate": "2026-08-29"
 }
