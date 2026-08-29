@@ -246,12 +246,12 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
     val amt = amount.toDoubleOrNull()
     val selectedItem = EXPENSE_ITEM_OPTIONS.firstOrNull { it.name == itemName }
     val weightVal = weight.toDoubleOrNull() ?: 0.0
-    val needReceipts = method != "cash"
+    val needTransferReceipt = method != "cash"
     // 编辑模式：已有收据不强制重拍
     val hasExistingReceipts = initial != null && initial.attachment_url != null
     val canSave = itemName.isNotBlank() && supplierId != null && amt != null && amt > 0 &&
         (selectedItem?.isStock != true || weightVal > 0) &&
-        (!needReceipts || hasExistingReceipts || (receipt1 != null && receipt2 != null)) && !saving
+        (hasExistingReceipts || (if (needTransferReceipt) receipt1 != null && receipt2 != null else receipt2 != null)) && !saving
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -333,7 +333,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     }
                 }
 
-                if (needReceipts) {
+                if (needTransferReceipt) {
                     Text("收据1（转账收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
                     OutlinedButton(onClick = { takePhoto1() }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (receipt1 == null) "📷 拍照上传" else "📷 重拍", color = DiningColors.Primary)
@@ -341,13 +341,13 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     receipt1?.let {
                         Image(it, contentDescription = "转账收据", modifier = Modifier.fillMaxWidth().height(120.dp))
                     }
-                    Text("收据2（批发商收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
-                    OutlinedButton(onClick = { takePhoto2() }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (receipt2 == null) "📷 拍照上传" else "📷 重拍", color = DiningColors.Primary)
-                    }
-                    receipt2?.let {
-                        Image(it, contentDescription = "批发商收据", modifier = Modifier.fillMaxWidth().height(120.dp))
-                    }
+                }
+                Text("收据2（批发商收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                OutlinedButton(onClick = { takePhoto2() }, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (receipt2 == null) "📷 拍照上传" else "📷 重拍", color = DiningColors.Primary)
+                }
+                receipt2?.let {
+                    Image(it, contentDescription = "批发商收据", modifier = Modifier.fillMaxWidth().height(120.dp))
                 }
 
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
@@ -360,16 +360,14 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     saving = true; error = null
                     var url1: String? = initial?.attachment_url
                     var url2: String? = initial?.receipt_invoice_no
-                    if (needReceipts) {
-                        if (receipt1 != null) {
-                            url1 = receipt1!!.toJpegBytes()?.let { bytes ->
-                                SupabaseClient.uploadFile("receipts", "expense_transfer_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
-                            }
+                    if (needTransferReceipt && receipt1 != null) {
+                        url1 = receipt1!!.toJpegBytes()?.let { bytes ->
+                            SupabaseClient.uploadFile("receipts", "expense_transfer_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
                         }
-                        if (receipt2 != null) {
-                            url2 = receipt2!!.toJpegBytes()?.let { bytes ->
-                                SupabaseClient.uploadFile("receipts", "expense_supplier_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
-                            }
+                    }
+                    if (receipt2 != null) {
+                        url2 = receipt2!!.toJpegBytes()?.let { bytes ->
+                            SupabaseClient.uploadFile("receipts", "expense_supplier_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
                         }
                     }
                     val supplierName = suppliers.firstOrNull { it.id == supplierId }?.supplier_name ?: ""
