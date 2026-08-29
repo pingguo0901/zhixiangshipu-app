@@ -230,7 +230,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     val lines = remember(currentOrder.order_items) { parseOrderLines(currentOrder.order_items) }
     val isTakeaway = currentOrder.table_id == null
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         // 标题居中，返回在左，编辑按钮（仅 Admin）在右上角
         Box(modifier = Modifier.fillMaxWidth()) {
             TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
