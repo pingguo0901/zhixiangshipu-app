@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -583,6 +584,7 @@ private fun ReportScreen(onBack: () -> Unit) {
     var showPrintDialog by remember { mutableStateOf(false) }
     var printMode by remember { mutableStateOf("daily") } // daily / monthly
     var printLang by remember { mutableStateOf("zh") } // zh / en
+    var dailyPrintDate by remember { mutableStateOf<String?>(null) }
 
     fun load() {
         scope.launch {
@@ -621,17 +623,8 @@ private fun ReportScreen(onBack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 打印日账 / 打印月账
+        // 打印月账（保持原位）
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(
-                onClick = { printMode = "daily"; showPrintDialog = true },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("打印日账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            }
             OutlinedButton(
                 onClick = { printMode = "monthly"; showPrintDialog = true },
                 modifier = Modifier.weight(1f).height(48.dp),
@@ -671,7 +664,7 @@ private fun ReportScreen(onBack: () -> Unit) {
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(rows, key = { it.period_date }) { r ->
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                    Card(modifier = Modifier.fillMaxWidth().clickable { dailyPrintDate = r.period_date }, shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(r.period_date, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
@@ -760,6 +753,63 @@ private fun ReportScreen(onBack: () -> Unit) {
             }
         )
     }
+
+    dailyPrintDate?.let { d ->
+        DailyPrintDialog(
+            date = d,
+            onPrint = { text -> printReceiptText(text); dailyPrintDate = null },
+            onDone = { dailyPrintDate = null }
+        )
+    }
+}
+
+@Composable
+private fun DailyPrintDialog(date: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
+    var lang by remember { mutableStateOf("zh") }
+    var reportText by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(date, lang) {
+        val report = SupabaseClient.fetchDailyReport(date, date)
+        reportText = report?.let { buildReportText(false, lang == "en", it, date) }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDone,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("打印日账 · ${fmtMyDate(date)}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text("中文版") })
+                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text("英文版") })
+                }
+                val t = reportText
+                if (t == null) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = DiningColors.Primary)
+                    }
+                } else {
+                    Text(
+                        t,
+                        modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 14.sp,
+                        color = DiningColors.TextPrimary
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { reportText?.let { onPrint(it) } }) {
+                Text("打印日账", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary) }
+        }
+    )
 }
 
 @Composable
