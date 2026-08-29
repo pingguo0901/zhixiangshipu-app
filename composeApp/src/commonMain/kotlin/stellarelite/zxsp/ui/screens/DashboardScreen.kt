@@ -344,7 +344,8 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
     var error by remember { mutableStateOf<String?>(null) }
     val quantities = remember { mutableStateMapOf<Long, Int>() }
     val origQuantities = remember { mutableStateMapOf<Long, Int>() }
-    var addOnText by remember { mutableStateOf<String?>(null) }
+    var addOnTextZh by remember { mutableStateOf<String?>(null) }
+    var addOnTextEn by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         runCatching {
@@ -431,12 +432,31 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                                 KitchenLine(diff, name, remark)
                             } else null
                         }
+                        val addedLinesEn = menuItems.mapNotNull { item ->
+                            val newQty = quantities[item.id] ?: 0
+                            val oldQty = origQuantities[item.id] ?: 0
+                            val diff = newQty - oldQty
+                            if (diff > 0) {
+                                val en = item.name_en?.takeIf { it.isNotBlank() } ?: item.item_name
+                                val (name, remark) = splitItemNameEn(en)
+                                KitchenLine(diff, name, remark)
+                            } else null
+                        }
                         if (addedLines.isNotEmpty()) {
-                            addOnText = buildKitchenAddOnOrder(
+                            val time = formatDateTimeMy(currentIso())
+                            val tblZh = tableNo ?: "外卖"
+                            val tblEn = if (tableNo == null || tableNo == "外卖") "Takeaway" else tableNo
+                            addOnTextZh = buildKitchenAddOnOrder(
                                 orderNo = order.order_no,
-                                tableNo = tableNo ?: "外卖",
-                                time = formatDateTimeMy(currentIso()),
+                                tableNo = tblZh,
+                                time = time,
                                 items = addedLines
+                            )
+                            addOnTextEn = buildKitchenAddOnOrderEnglish(
+                                orderNo = order.order_no,
+                                tableNo = tblEn,
+                                time = time,
+                                items = addedLinesEn
                             )
                         } else {
                             onDone()
@@ -449,11 +469,12 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
     )
 
     // 加单成功后弹厨房追加单
-    addOnText?.let { text ->
+    addOnTextZh?.let { zh ->
         KitchenAddOnDialog(
-            text = text,
-            onPrint = { printReceiptText(text) },
-            onDone = { addOnText = null; onDone() }
+            textZh = zh,
+            textEn = addOnTextEn ?: zh,
+            onPrint = { printReceiptText(it) },
+            onDone = { addOnTextZh = null; addOnTextEn = null; onDone() }
         )
     }
 }

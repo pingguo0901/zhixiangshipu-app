@@ -1098,17 +1098,46 @@ internal fun buildKitchenAddOnOrder(orderNo: String, tableNo: String, time: Stri
     return r.joinToString("\n")
 }
 
+// 生成厨房追加单英文版文本（48 列，只含新增菜品）
+internal fun buildKitchenAddOnOrderEnglish(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("KITCHEN ORDER [ADD-ON]", W))
+    r.add("")
+    r.add(ReceiptFormatter.padRight("Parent Order No: $orderNo", W))
+    r.add(ReceiptFormatter.padRight("Table No: $tableNo", W))
+    r.add(ReceiptFormatter.padRight("Time: $time", W))
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padRight("QTY", 6) + ReceiptFormatter.padRight("ITEM", 22) + ReceiptFormatter.padRight("REMARK", 20))
+    r.add("-".repeat(W))
+    items.forEach { line ->
+        r.add(ReceiptFormatter.generateKitchenRow(line.qty.toString(), line.item, line.remark))
+    }
+    r.add("-".repeat(W))
+    r.add("=".repeat(W))
+    r.add("\n\n\n")
+    return r.joinToString("\n")
+}
+
 @Composable
-internal fun KitchenAddOnDialog(text: String, onPrint: () -> Unit, onDone: () -> Unit) {
+internal fun KitchenAddOnDialog(textZh: String, textEn: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
+    var lang by remember { mutableStateOf("zh") }
+    val text = if (lang == "zh") textZh else textEn
     AlertDialog(
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(16.dp),
-        title = { Text("厨房追加单", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(if (lang == "zh") "厨房追加单" else "Kitchen Add-On", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
             ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text("中文版") })
+                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text("英文版") })
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text,
                     fontSize = 11.sp,
@@ -1120,13 +1149,13 @@ internal fun KitchenAddOnDialog(text: String, onPrint: () -> Unit, onDone: () ->
         },
         confirmButton = {
             Row {
-                OutlinedButton(onClick = onPrint) {
+                OutlinedButton(onClick = { onPrint(text) }) {
                     Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("打印追加单", color = DiningColors.Primary)
+                    Text(if (lang == "zh") "打印追加单" else "Print", color = DiningColors.Primary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onDone) { Text(if (lang == "zh") "完成" else "Done", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             }
         }
     )

@@ -1,7 +1,7 @@
 {
-  "versionCode": 98,
-  "versionName": "1.1.82",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.82/zhixiangshipu-app.apk",
-  "changelog": "- 加单成功后自动弹厨房追加单",
+  "versionCode": 99,
+  "versionName": "1.1.83",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.83/zhixiangshipu-app.apk",
+  "changelog": "- 厨房追加单新增英文版（中英文切换）",
   "buildDate": "2026-08-30"
 }
