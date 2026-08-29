@@ -1,7 +1,7 @@
 {
-  "versionCode": 105,
-  "versionName": "1.1.89",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.89/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔物品选项补全英文名，日账/月账英文打印全英文",
+  "versionCode": 106,
+  "versionName": "1.1.90",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.90/zhixiangshipu-app.apk",
+  "changelog": "- 修复记账时间时区错误（当前时间补 +08:00 标记，避免被当 UTC 存导致日期跨天）",
   "buildDate": "2026-08-30"
 }
