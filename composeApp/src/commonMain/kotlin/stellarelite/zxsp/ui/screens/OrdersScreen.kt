@@ -10,6 +10,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Print
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -96,9 +102,11 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("🧾 订单管理", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Icon(Icons.Outlined.ReceiptLong, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("订单管理", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { load() }) { Text("🔄", fontSize = 18.sp) }
+            IconButton(onClick = { load() }) { Icon(Icons.Outlined.Refresh, contentDescription = "刷新", tint = DiningColors.Primary) }
             Button(onClick = onNew, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
                 Text("＋ 新建", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
@@ -232,7 +240,11 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 modifier = Modifier.align(Alignment.Center)
             )
             if (SessionManager.isAdmin) {
-                TextButton(onClick = { showEdit = true }, modifier = Modifier.align(Alignment.CenterEnd)) { Text("✏️ 编辑", color = DiningColors.Primary) }
+                TextButton(onClick = { showEdit = true }, modifier = Modifier.align(Alignment.CenterEnd)) {
+                    Icon(Icons.Outlined.Edit, contentDescription = "编辑", tint = DiningColors.Primary, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("编辑", color = DiningColors.Primary)
+                }
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -300,14 +312,24 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("🖨 打印收据\n（未付款）", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("打印收据", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text("（未付款）", color = DiningColors.Primary, fontSize = 11.sp)
+                }
             }
             OutlinedButton(
                 onClick = { printReceiptText(buildPaidReceipt(currentOrder, receipt).toReceiptText()) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("🖨 打印收据\n（已付款）", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("打印收据", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text("（已付款）", color = DiningColors.Primary, fontSize = 11.sp)
+                }
             }
         }
 
@@ -319,7 +341,9 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("🗑 删除订单", color = DiningColors.Error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Icon(Icons.Outlined.Delete, contentDescription = null, tint = DiningColors.Error, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("删除订单", color = DiningColors.Error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -981,7 +1005,11 @@ fun ReceiptDialog(data: ReceiptData, onPrint: () -> Unit, onDone: () -> Unit) {
         },
         confirmButton = {
             Row {
-                OutlinedButton(onClick = onPrint) { Text("🖨 打印收据", color = DiningColors.Primary) }
+                OutlinedButton(onClick = onPrint) {
+                    Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("打印收据", color = DiningColors.Primary)
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             }
