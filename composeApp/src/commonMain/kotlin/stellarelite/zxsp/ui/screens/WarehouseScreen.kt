@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.MoveToInbox
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.*
@@ -36,7 +35,6 @@ import stellarelite.zxsp.ui.theme.DiningColors
 
 private sealed class WarehouseNav {
     object Stock : WarehouseNav()
-    object StockIn : WarehouseNav()
     object Fridge : WarehouseNav()
     object MeatProcess : WarehouseNav()
 }
@@ -46,18 +44,16 @@ fun WarehouseScreen() {
     var nav by remember { mutableStateOf<WarehouseNav>(WarehouseNav.Stock) }
     when (val n = nav) {
         is WarehouseNav.Stock -> StockListView(
-            onStockIn = { nav = WarehouseNav.StockIn },
             onFridge = { nav = WarehouseNav.Fridge },
             onMeat = { nav = WarehouseNav.MeatProcess }
         )
-        is WarehouseNav.StockIn -> StockInScreen(onBack = { nav = WarehouseNav.Stock })
         is WarehouseNav.Fridge -> FridgeScreen(onBack = { nav = WarehouseNav.Stock })
         is WarehouseNav.MeatProcess -> MeatProcessScreen(onBack = { nav = WarehouseNav.Stock })
     }
 }
 
 @Composable
-private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: () -> Unit) {
+private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
     val scope = rememberCoroutineScope()
     var items by remember { mutableStateOf<List<WarehouseItem>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -97,12 +93,11 @@ private fun StockListView(onStockIn: () -> Unit, onFridge: () -> Unit, onMeat: (
             }
         }
 
-        // 快捷入口
+        // 快捷入口（进货入库已取消，统一走「记一笔」食材采购自动入库）
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuickBtn(Icons.Outlined.MoveToInbox, "进货入库", Modifier.weight(1f), onStockIn)
             QuickBtn(Icons.Outlined.AcUnit, "冰箱操作", Modifier.weight(1f), onFridge)
             QuickBtn(Icons.Outlined.Restaurant, "肉品加工", Modifier.weight(1f), onMeat)
         }
