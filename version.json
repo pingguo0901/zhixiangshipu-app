@@ -1,7 +1,7 @@
 {
-  "versionCode": 90,
-  "versionName": "1.1.74",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.74/zhixiangshipu-app.apk",
-  "changelog": "- 仓库库存卡片点击查看进货记录/编辑",
+  "versionCode": 91,
+  "versionName": "1.1.75",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.75/zhixiangshipu-app.apk",
+  "changelog": "- 开销记账卡片点击查看详情/编辑",
   "buildDate": "2026-08-29"
 }

@@ -42,6 +42,7 @@ import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.WarehouseItem
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.printReceiptText
+import stellarelite.zxsp.platform.toImageBitmap
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
 import stellarelite.zxsp.util.ReceiptFormatter
@@ -78,6 +79,8 @@ private fun ExpenseListView(onReport: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var showAdd by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<ExpenseRecord?>(null) }
+    var actionRecord by remember { mutableStateOf<ExpenseRecord?>(null) }
+    var viewingDetail by remember { mutableStateOf<ExpenseRecord?>(null) }
 
     fun load() {
         scope.launch {
@@ -154,7 +157,7 @@ private fun ExpenseListView(onReport: () -> Unit) {
                         }
                         items(list, key = { it.id }) { e ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().clickable(enabled = SessionManager.isAdmin) { editing = e },
+                                modifier = Modifier.fillMaxWidth().clickable { actionRecord = e },
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
                             ) {
@@ -192,10 +195,109 @@ private fun ExpenseListView(onReport: () -> Unit) {
             onDone = { editing = null; load() }
         )
     }
+    actionRecord?.let { e ->
+        ExpenseActionDialog(
+            record = e,
+            onViewDetail = { actionRecord = null; viewingDetail = e },
+            onEdit = { actionRecord = null; editing = e },
+            onDismiss = { actionRecord = null }
+        )
+    }
+    viewingDetail?.let { e ->
+        ExpenseDetailDialog(record = e, onDismiss = { viewingDetail = null })
+    }
 }
 
 private fun expenseTypeLabel(t: String): String = when (t) {
     "stock" -> "进货"; "utility" -> "杂费"; "logistics" -> "运费"; "maintenance" -> "维修"; else -> t
+}
+
+private fun payMethodLabel(m: String): String = when (m) {
+    "cash" -> "现金"; "duitnow" -> "DuitNow"; "tng_ewallet" -> "TNG"; "alipay" -> "支付宝"; else -> m
+}
+
+@Composable
+private fun ExpenseActionDialog(
+    record: ExpenseRecord,
+    onViewDetail: () -> Unit,
+    onEdit: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text(expenseTypeLabel(record.expense_type), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onViewDetail, modifier = Modifier.fillMaxWidth()) {
+                    Text("查看开销详情", color = DiningColors.Primary)
+                }
+                if (SessionManager.isAdmin) {
+                    OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
+                        Text("编辑", color = DiningColors.Primary)
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+    )
+}
+
+@Composable
+private fun ExpenseDetailDialog(record: ExpenseRecord, onDismiss: () -> Unit) {
+    var transferBmp by remember { mutableStateOf<ImageBitmap?>(null) }
+    var supplierBmp by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(record) {
+        record.attachment_url?.let { url ->
+            runCatching { SupabaseClient.downloadFile(url)?.toImageBitmap() }
+                .onSuccess { transferBmp = it }
+        }
+        record.receipt_invoice_no?.let { url ->
+            runCatching { SupabaseClient.downloadFile(url)?.toImageBitmap() }
+                .onSuccess { supplierBmp = it }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("开销详情", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()).heightIn(max = 480.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                DetailLine("物品", expenseTypeLabel(record.expense_type))
+                DetailLine("批发商", record.expense_title.ifBlank { "—" })
+                record.notes?.takeIf { it.isNotBlank() }?.let { DetailLine("重量", it) }
+                DetailLine("金额", "RM%.2f".format(record.amount_myr))
+                DetailLine("付款方式", payMethodLabel(record.pay_method))
+                DetailLine("日期", fmtMyTime(record.transaction_datetime ?: ""))
+                if (transferBmp != null) {
+                    Text("转账收据", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Image(transferBmp!!, contentDescription = "转账收据", modifier = Modifier.fillMaxWidth().height(140.dp))
+                }
+                if (supplierBmp != null) {
+                    Text("批发商收据", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Image(supplierBmp!!, contentDescription = "批发商收据", modifier = Modifier.fillMaxWidth().height(140.dp))
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("关闭", color = DiningColors.TextMuted) } }
+    )
+}
+
+@Composable
+private fun DetailLine(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, fontSize = 13.sp, color = DiningColors.TextSecondary)
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+    }
 }
 
 // 开销物品：费用项固定（员工、租金不入库），食材项动态从仓库读取
