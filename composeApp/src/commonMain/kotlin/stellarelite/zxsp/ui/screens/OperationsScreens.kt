@@ -296,7 +296,7 @@ private fun AddStockItemDialog(items: List<WarehouseItem>, onAdd: (StockInEntry)
                             Text("▾", color = DiningColors.TextMuted)
                         }
                     }
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
                         items.forEach { item ->
                             DropdownMenuItem(
                                 text = { Text(item.item_name) },

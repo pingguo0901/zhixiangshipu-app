@@ -1,7 +1,7 @@
 {
-  "versionCode": 84,
-  "versionName": "1.1.68",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.68/zhixiangshipu-app.apk",
-  "changelog": "- 供应商管理支持点击编辑/删除",
+  "versionCode": 85,
+  "versionName": "1.1.69",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.69/zhixiangshipu-app.apk",
+  "changelog": "- 所有弹出式选择框加最大高度限制，超出可上下滑动",
   "buildDate": "2026-08-29"
 }

@@ -542,7 +542,7 @@ private fun OrderEditDialog(
                                     Text("▾", color = DiningColors.TextMuted)
                                 }
                             }
-                            DropdownMenu(expanded = tableExpanded, onDismissRequest = { tableExpanded = false }) {
+                            DropdownMenu(expanded = tableExpanded, onDismissRequest = { tableExpanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
                                 tables.forEach { t ->
                                     DropdownMenuItem(
                                         text = { Text(t.table_no) },

@@ -277,7 +277,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                             Text("▾", color = DiningColors.TextMuted)
                         }
                     }
-                    DropdownMenu(expanded = itemExpanded, onDismissRequest = { itemExpanded = false }) {
+                    DropdownMenu(expanded = itemExpanded, onDismissRequest = { itemExpanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
                         EXPENSE_ITEM_OPTIONS.forEach { opt ->
                             DropdownMenuItem(
                                 text = { Text(opt.name) },
@@ -314,7 +314,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                             Text("▾", color = DiningColors.TextMuted)
                         }
                     }
-                    DropdownMenu(expanded = supplierExpanded, onDismissRequest = { supplierExpanded = false }) {
+                    DropdownMenu(expanded = supplierExpanded, onDismissRequest = { supplierExpanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
                         suppliers.forEach { s ->
                             DropdownMenuItem(
                                 text = { Text(s.supplier_name) },
