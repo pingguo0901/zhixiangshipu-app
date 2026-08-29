@@ -480,54 +480,67 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                         }
                     }
                     val supplierName = suppliers.firstOrNull { it.id == supplierId }?.supplier_name ?: ""
-                    val rec = ExpenseRecord(
-                        expense_title = supplierName,
-                        expense_type = itemName,
-                        amount_myr = amt!!,
-                        pay_method = method,
-                        transaction_ref = "",
-                        receipt_invoice_no = url2,
-                        attachment_url = url1,
-                        is_personal = false,
-                        notes = if (weightVal > 0) "${weight.trim()} $weightUnit" else null,
-                        operate_staff_id = SupabaseClient.currentStaffId(),
-                        transaction_datetime = "${date}T${currentIso().substringAfter('T')}"
-                    )
-                    val ok = if (initial == null) {
-                        SupabaseClient.insertExpense(rec) != null
-                    } else {
-                        SupabaseClient.updateExpense(initial.id, rec)
-                    }
-                    if (!ok) {
-                        saving = false
-                        error = "保存失败"
-                        return@launch
-                    }
+                    val transTime = "${date}T${currentIso().substringAfter('T')}"
 
-                    // 食材类：仓库自动入库（仅新增时入库，编辑不重复入库）
-                    if (initial == null && isStockItem && weightVal > 0) {
+                    // 方案A：食材采购只写进货入库 stock_in_log（进货成本），不重复写 expense_records（业务开销）
+                    if (isStockItem && initial == null) {
                         val wh = warehouseItems.firstOrNull { it.item_name == itemName }
-                        if (wh != null) {
-                            // 存原始值 + 原始单位，库存累加由触发器按 unit 换算（G → KG）
-                            val inItemsJson = buildJsonArray {
-                                add(buildJsonObject {
-                                    put("warehouse_item_id", JsonPrimitive(wh.id))
-                                    put("qty", JsonPrimitive(weightVal))
-                                    put("unit", JsonPrimitive(weightUnit))
-                                    put("total_price", JsonPrimitive(amt))
-                                })
-                            }
-                            SupabaseClient.insertStockIn(
-                                StockInLog(
-                                    supplier_id = supplierId ?: 0,
-                                    in_items = inItemsJson,
-                                    total_cost_myr = amt,
-                                    pay_method = method,
-                                    transaction_ref = "",
-                                    operate_staff_id = SupabaseClient.currentStaffId(),
-                                    transaction_datetime = "${date}T${currentIso().substringAfter('T')}"
-                                )
+                        if (wh == null) {
+                            saving = false
+                            error = "未找到对应仓库物品"
+                            return@launch
+                        }
+                        // 存原始值 + 原始单位，库存累加由触发器按 unit 换算（G → KG）
+                        val inItemsJson = buildJsonArray {
+                            add(buildJsonObject {
+                                put("warehouse_item_id", JsonPrimitive(wh.id))
+                                put("qty", JsonPrimitive(weightVal))
+                                put("unit", JsonPrimitive(weightUnit))
+                                put("total_price", JsonPrimitive(amt))
+                            })
+                        }
+                        val ok = SupabaseClient.insertStockIn(
+                            StockInLog(
+                                supplier_id = supplierId ?: 0,
+                                in_items = inItemsJson,
+                                total_cost_myr = amt!!,
+                                pay_method = method,
+                                transaction_ref = "",
+                                transfer_attachment_url = url1,
+                                supplier_invoice_attachment_url = url2,
+                                operate_staff_id = SupabaseClient.currentStaffId(),
+                                transaction_datetime = transTime
                             )
+                        ) != null
+                        if (!ok) {
+                            saving = false
+                            error = "保存失败"
+                            return@launch
+                        }
+                    } else {
+                        // 非食材（员工/租金等）或编辑历史记录：写 expense_records（业务开销）
+                        val rec = ExpenseRecord(
+                            expense_title = supplierName,
+                            expense_type = itemName,
+                            amount_myr = amt!!,
+                            pay_method = method,
+                            transaction_ref = "",
+                            receipt_invoice_no = url2,
+                            attachment_url = url1,
+                            is_personal = false,
+                            notes = if (weightVal > 0) "${weight.trim()} $weightUnit" else null,
+                            operate_staff_id = SupabaseClient.currentStaffId(),
+                            transaction_datetime = transTime
+                        )
+                        val ok = if (initial == null) {
+                            SupabaseClient.insertExpense(rec) != null
+                        } else {
+                            SupabaseClient.updateExpense(initial.id, rec)
+                        }
+                        if (!ok) {
+                            saving = false
+                            error = "保存失败"
+                            return@launch
                         }
                     }
                     saving = false

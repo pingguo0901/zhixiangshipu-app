@@ -1,7 +1,7 @@
 {
-  "versionCode": 100,
-  "versionName": "1.1.84",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.84/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情页支持上下滑动查看完整内容",
+  "versionCode": 101,
+  "versionName": "1.1.85",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.85/zhixiangshipu-app.apk",
+  "changelog": "- 修复报表进货成本与业务开销重复记账（食材采购只记进货成本）",
   "buildDate": "2026-08-30"
 }
