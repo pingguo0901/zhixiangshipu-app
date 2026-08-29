@@ -87,4 +87,12 @@ object ReceiptFormatter {
         val rightPart = padLeft(amount, 10) // 金额数字绝对右对齐（10格），完美对齐上方的数字
         return "$leftPart$midPart$rightPart"
     }
+
+    // 7. 报表通用数据对齐行（总宽 48 列，24 + 14 + 10）
+    fun generateReportRow(label: String, unit: String, value: String): String {
+        val leftPart = padRight(label, 24)
+        val midPart = padRight(unit, 14)
+        val rightPart = padLeft(value, 10)
+        return "$leftPart$midPart$rightPart"
+    }
 }

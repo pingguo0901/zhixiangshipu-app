@@ -21,9 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.DailySales
 import stellarelite.zxsp.network.ExpenseRecord
@@ -573,7 +576,13 @@ private fun ReportScreen(onBack: () -> Unit) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    printReceiptText(buildReportText(printMode == "monthly", printLang == "en", rows, start, end))
+                    scope.launch {
+                        val report = SupabaseClient.fetchDailyReport(start, end)
+                        if (report != null) {
+                            printReceiptText(buildReportText(printMode == "monthly", printLang == "en", report, start))
+                        }
+                        showPrintDialog = false
+                    }
                 }) { Text("打印", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = {
@@ -594,55 +603,118 @@ private fun ReportRow(label: String, value: String) {
     }
 }
 
-// 生成报表打印文本（日账/月账，中/英）
-private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, rows: List<DailySales>, start: String, end: String): String {
+// 日期 "YYYY-MM-DD" -> "DD/MM/YYYY"
+private fun fmtMyDate(date: String): String {
+    val parts = date.take(10).split("-")
+    return if (parts.size == 3) "${parts[2]}/${parts[1]}/${parts[0]}" else date
+}
+
+// ISO "YYYY-MM-DDTHH:MM:SS" -> "DD/MM/YYYY HH:MM"
+private fun fmtMyTime(iso: String): String {
+    val datePart = iso.take(10)
+    val timePart = if (iso.length >= 16) iso.substring(11, 16) else ""
+    return "${fmtMyDate(datePart)} $timePart".trim()
+}
+
+// 生成报表打印文本（日账/月账，中/英），report 为 get_daily_report 返回的 JSON
+private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: JsonElement, start: String): String {
     val W = ReceiptFormatter.TOTAL_WIDTH
     val r = mutableListOf<String>()
-    val totalSales = rows.sumOf { it.total_sales_myr }
-    val totalCost = rows.sumOf { it.total_stock_cost_myr }
-    val totalExpense = rows.sumOf { it.total_expense_myr }
-    val totalProfit = rows.sumOf { it.gross_profit_myr }
+    val obj = report.jsonObject
 
-    fun row(label: String, value: Double): String {
-        return ReceiptFormatter.padRight(label, 20) + ReceiptFormatter.padLeft("RM %.2f".format(value), W - 20)
-    }
+    val totalOrders = obj["total_orders"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+    val paidOrders = obj["paid_orders"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+    val cancelled = (totalOrders - paidOrders).coerceAtLeast(0)
+    val totalSales = obj["total_sales"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val totalDiscount = obj["total_discount"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val actualRevenue = totalSales - totalDiscount
+    val cash = obj["cash"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val duitnow = obj["duitnow"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val tng = obj["tng"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val alipay = obj["alipay"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val totalExpense = obj["total_expense"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val grossProfit = actualRevenue - totalExpense
+    val skewersObj = obj["skewers"]?.jsonObject
+    val expenseObj = obj["expense_breakdown"]?.jsonObject
 
+    fun money(v: Double) = "%.2f".format(v)
+    fun en(zh: String, e: String) = if (isEnglish) e else zh
+
+    // 头部
     r.add("=".repeat(W))
-    if (isEnglish) {
-        r.add(ReceiptFormatter.padCenter(if (isMonthly) "MONTHLY SALES REPORT" else "DAILY SALES REPORT", W))
-        r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
-    } else {
-        r.add(ReceiptFormatter.padCenter(if (isMonthly) "月 报 表" else "日 报 表", W))
-        r.add(ReceiptFormatter.padCenter("炙巷食铺", W))
-    }
+    r.add(ReceiptFormatter.padCenter(en(
+        if (isMonthly) "月营业报表" else "日营业报表",
+        if (isMonthly) "MONTHLY BUSINESS REPORT" else "DAILY BUSINESS REPORT"
+    ), W))
+    r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
+    r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
+    r.add(ReceiptFormatter.padCenter("SSM BRN: 【填写BRN】", W))
+    r.add(ReceiptFormatter.padRight(en(
+        (if (isMonthly) "统计月份: " else "统计日期: ") + (if (isMonthly) start.substring(0, 7) else fmtMyDate(start)),
+        (if (isMonthly) "Period: " else "Date: ") + (if (isMonthly) start.substring(0, 7) else fmtMyDate(start))
+    ), W))
     r.add("=".repeat(W))
-    r.add(ReceiptFormatter.padRight(if (isEnglish) "Period: $start ~ $end" else "期间：$start ~ $end", W))
+
+    // 订单统计
+    r.add(en("【订单统计】", "[Order Summary]"))
+    r.add(ReceiptFormatter.generateReportRow(en("总开单数量:", "Total Orders:"), en("单", "ord"), totalOrders.toString()))
+    r.add(ReceiptFormatter.generateReportRow(en("有效成交单:", "Completed:"), en("单", "ord"), paidOrders.toString()))
+    r.add(ReceiptFormatter.generateReportRow(en("作废/取消单:", "Cancelled:"), en("单", "ord"), cancelled.toString()))
+    r.add("")
+
+    // 营业额汇总
+    r.add(en("【营业额汇总】", "[Revenue]"))
+    r.add(ReceiptFormatter.generateReportRow(en("总销售金额:", "Gross Sales:"), "RM", money(totalSales)))
+    r.add(ReceiptFormatter.generateReportRow(en("总折扣金额:", "Discount:"), "RM", money(totalDiscount)))
+    r.add(ReceiptFormatter.generateReportRow(en("实际营收:", "Net Revenue:"), "RM", money(actualRevenue)))
+    r.add("")
+
+    // 付款方式统计
+    r.add(en("【付款方式统计】", "[Payment Method]"))
+    r.add(ReceiptFormatter.generateReportRow(en("CASH现金:", "CASH:"), "RM", money(cash)))
+    r.add(ReceiptFormatter.generateReportRow("DUITNOW:", "RM", money(duitnow)))
+    r.add(ReceiptFormatter.generateReportRow(en("TNG E-Wallet:", "TNG E-Wallet:"), "RM", money(tng)))
+    r.add(ReceiptFormatter.generateReportRow("ALIPAY:", "RM", money(alipay)))
     r.add("-".repeat(W))
+    r.add(ReceiptFormatter.generateReportRow(en("收款合计:", "Total Received:"), "RM", money(cash + duitnow + tng + alipay)))
+    r.add("")
 
-    // 日账：逐日明细
-    if (!isMonthly) {
-        rows.forEach { d ->
-            r.add(ReceiptFormatter.padRight(d.period_date, 18) + ReceiptFormatter.padLeft("RM %.2f".format(d.total_sales_myr), W - 18))
+    // 实物销售串数
+    r.add(en("【实物销售-串数统计】", "[Skewers Sold]"))
+    if (skewersObj != null && skewersObj.isNotEmpty()) {
+        skewersObj.forEach { (name, qty) ->
+            val q = qty.jsonPrimitive.content.toIntOrNull() ?: 0
+            r.add(ReceiptFormatter.generateReportRow("$name:", en("串", "skw"), q.toString()))
         }
-        r.add("-".repeat(W))
-    }
-
-    if (isEnglish) {
-        r.add(row("Total Sales", totalSales))
-        r.add(row("Total Cost", totalCost))
-        r.add(row("Total Expense", totalExpense))
     } else {
-        r.add(row("营业收入", totalSales))
-        r.add(row("进货成本", totalCost))
-        r.add(row("业务开销", totalExpense))
+        r.add(ReceiptFormatter.generateReportRow(en("（无）", "(none)"), "", ""))
+    }
+    r.add("")
+
+    // 当日支出
+    r.add(en("【当日支出】", "[Expenses]"))
+    if (expenseObj != null && expenseObj.isNotEmpty()) {
+        expenseObj.forEach { (type, amt) ->
+            val a = amt.jsonPrimitive.content.toDoubleOrNull() ?: 0.0
+            r.add(ReceiptFormatter.generateReportRow("$type:", "RM", money(a)))
+        }
+    } else {
+        r.add(ReceiptFormatter.generateReportRow(en("（无）", "(none)"), "", ""))
     }
     r.add("-".repeat(W))
-    if (isEnglish) {
-        r.add(row("Gross Profit", totalProfit))
-    } else {
-        r.add(row("毛利", totalProfit))
-    }
+    r.add(ReceiptFormatter.generateReportRow(en("当日总支出:", "Total Expense:"), "RM", money(totalExpense)))
+    r.add("")
+
+    // 毛利
+    r.add(en("【当日毛利粗算】", "[Gross Profit]"))
+    r.add(ReceiptFormatter.generateReportRow(en("当日毛利:", "Gross Profit:"), "RM", money(grossProfit)))
+    r.add("=".repeat(W))
+
+    // 尾部
+    r.add(ReceiptFormatter.padRight(en("操作员: ", "Operator: ") + SessionManager.staffName, W))
+    r.add(ReceiptFormatter.padRight(en("打印时间: ", "Print Time: ") + fmtMyTime(currentIso()), W))
     r.add("=".repeat(W))
     r.add("\n\n\n")
+
     return r.joinToString("\n")
 }

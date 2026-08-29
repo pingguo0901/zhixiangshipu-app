@@ -349,6 +349,18 @@ object SupabaseClient {
         } else emptyList()
     }
 
+    // 日账/月账详细统计（订单数、营业额、付款方式、串数、支出）
+    suspend fun fetchDailyReport(start: String, end: String): JsonElement? {
+        val resp: HttpResponse = client.post("$BASE/rest/v1/rpc/get_daily_report") {
+            applyAuth()
+            contentType(ContentType.Application.Json)
+            setBody("""{"p_start":"$start","p_end":"$end"}""")
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<JsonElement>() }.getOrNull()
+        } else null
+    }
+
     // ============ Storage 上传 ============
     suspend fun uploadFile(bucket: String, path: String, bytes: ByteArray): String? {
         val resp: HttpResponse = client.post("$BASE/storage/v1/object/$bucket/$path") {
