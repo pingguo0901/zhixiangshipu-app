@@ -1,7 +1,7 @@
 {
-  "versionCode": 86,
-  "versionName": "1.1.70",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.70/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔现金也需拍照上传批发商收据",
+  "versionCode": 87,
+  "versionName": "1.1.71",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.71/zhixiangshipu-app.apk",
+  "changelog": "- 记一笔物品选项动态读取仓库物品",
   "buildDate": "2026-08-29"
 }

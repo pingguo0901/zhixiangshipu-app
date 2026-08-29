@@ -173,29 +173,8 @@ private fun expenseTypeLabel(t: String): String = when (t) {
     "stock" -> "进货"; "utility" -> "杂费"; "logistics" -> "运费"; "maintenance" -> "维修"; else -> t
 }
 
-// 开销物品固定清单（员工、租金为费用项不入库；其余为食材，保存后自动入库）
-private data class ExpenseItemOption(val name: String, val isStock: Boolean)
-
-private val EXPENSE_ITEM_OPTIONS = listOf(
-    ExpenseItemOption("员工", false),
-    ExpenseItemOption("租金", false),
-    ExpenseItemOption("五花肉", true),
-    ExpenseItemOption("鸡腿肉", true),
-    ExpenseItemOption("牛上脑", true),
-    ExpenseItemOption("羊肩肉", true),
-    ExpenseItemOption("生抽", true),
-    ExpenseItemOption("蚝油", true),
-    ExpenseItemOption("花雕酒", true),
-    ExpenseItemOption("糖", true),
-    ExpenseItemOption("白胡椒粉", true),
-    ExpenseItemOption("孜然粉", true),
-    ExpenseItemOption("生姜", true),
-    ExpenseItemOption("食用油", true),
-    ExpenseItemOption("烧烤酱", true),
-    ExpenseItemOption("辣椒粉", true),
-    ExpenseItemOption("烧烤撒料（孜然味）", true),
-    ExpenseItemOption("烧烤撒料（香辣味）", true),
-)
+// 开销物品：费用项固定（员工、租金不入库），食材项动态从仓库读取
+private val EXPENSE_FEE_OPTIONS = listOf("员工", "租金")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -244,13 +223,15 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
     }
 
     val amt = amount.toDoubleOrNull()
-    val selectedItem = EXPENSE_ITEM_OPTIONS.firstOrNull { it.name == itemName }
+    // 物品选项 = 费用项（员工/租金）+ 仓库食材（动态）
+    val itemOptions = remember(warehouseItems) { EXPENSE_FEE_OPTIONS + warehouseItems.map { it.item_name } }
+    val isStockItem = itemName.isNotBlank() && itemName !in EXPENSE_FEE_OPTIONS
     val weightVal = weight.toDoubleOrNull() ?: 0.0
     val needTransferReceipt = method != "cash"
     // 编辑模式：已有收据不强制重拍
     val hasExistingReceipts = initial != null && initial.attachment_url != null
     val canSave = itemName.isNotBlank() && supplierId != null && amt != null && amt > 0 &&
-        (selectedItem?.isStock != true || weightVal > 0) &&
+        (!isStockItem || weightVal > 0) &&
         (hasExistingReceipts || (if (needTransferReceipt) receipt1 != null && receipt2 != null else receipt2 != null)) && !saving
 
     AlertDialog(
@@ -278,10 +259,10 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                         }
                     }
                     DropdownMenu(expanded = itemExpanded, onDismissRequest = { itemExpanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
-                        EXPENSE_ITEM_OPTIONS.forEach { opt ->
+                        itemOptions.forEach { name ->
                             DropdownMenuItem(
-                                text = { Text(opt.name) },
-                                onClick = { itemName = opt.name; itemExpanded = false }
+                                text = { Text(name) },
+                                onClick = { itemName = name; itemExpanded = false }
                             )
                         }
                     }
@@ -396,7 +377,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     }
 
                     // 食材类：仓库自动入库（仅新增时入库，编辑不重复入库）
-                    if (initial == null && selectedItem?.isStock == true && weightVal > 0) {
+                    if (initial == null && isStockItem && weightVal > 0) {
                         val wh = warehouseItems.firstOrNull { it.item_name == itemName }
                         if (wh != null) {
                             // G 换算成 KG（仓库单位为 KG）
@@ -913,13 +894,11 @@ private fun buildMonthlyReportZh(report: JsonElement, start: String): String {
 
 // 月账开销分类：把 expense_type 归入 5 大类
 private fun monthlyExpenseCategory(type: String): String {
-    val opt = EXPENSE_ITEM_OPTIONS.firstOrNull { it.name == type }
     return when {
         type.contains("租") -> "店租合计"
         type.contains("员工") || type.contains("薪") -> "员工薪资合计"
         type.contains("炭") || type.contains("耗材") -> "炭火耗材合计"
-        opt?.isStock == true -> "采购食材成本"
-        else -> "其他杂项"
+        else -> "采购食材成本"
     }
 }
 
