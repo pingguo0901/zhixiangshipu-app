@@ -236,7 +236,8 @@ private data class StockInLine(
     val log: StockInLog,
     val qty: Double,
     val unit: String,
-    val price: Double
+    val unitPrice: Double?,
+    val totalPrice: Double?
 )
 
 @Composable
@@ -255,8 +256,9 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
         } ?: return@mapNotNull null
         val qty = el.jsonObject["qty"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
         val unit = el.jsonObject["unit"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: item.unit
-        val price = el.jsonObject["unit_price"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
-        StockInLine(log, qty, unit, price)
+        val unitPrice = el.jsonObject["unit_price"]?.jsonPrimitive?.content?.toDoubleOrNull()
+        val totalPrice = el.jsonObject["total_price"]?.jsonPrimitive?.content?.toDoubleOrNull()
+        StockInLine(log, qty, unit, unitPrice, totalPrice)
     }
 
     AlertDialog(
@@ -281,7 +283,14 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
                                 Text(fmtDate(line.log.transaction_datetime ?: ""), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                                 Text("单号 ${line.log.stock_in_no.ifBlank { "—" }} · ${payMethodLabel(line.log.pay_method)}", fontSize = 12.sp, color = DiningColors.TextMuted)
                                 Text(
-                                    "数量 ${line.qty} ${line.unit} · 单价 RM%.2f · 小计 RM%.2f".format(line.price, line.qty * line.price),
+                                    buildString {
+                                        append("数量 ${line.qty} ${line.unit}")
+                                        if (line.totalPrice != null) {
+                                            append(" · 金额 RM%.2f".format(line.totalPrice))
+                                        } else if (line.unitPrice != null) {
+                                            append(" · 单价 RM%.2f · 小计 RM%.2f".format(line.unitPrice, line.qty * line.unitPrice))
+                                        }
+                                    },
                                     fontSize = 12.sp, color = DiningColors.TextSecondary
                                 )
                             }

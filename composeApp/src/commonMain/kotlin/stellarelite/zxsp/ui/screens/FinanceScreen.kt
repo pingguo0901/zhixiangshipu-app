@@ -513,7 +513,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                                     put("warehouse_item_id", JsonPrimitive(wh.id))
                                     put("qty", JsonPrimitive(weightVal))
                                     put("unit", JsonPrimitive(weightUnit))
-                                    put("unit_price", JsonPrimitive(amt))
+                                    put("total_price", JsonPrimitive(amt))
                                 })
                             }
                             SupabaseClient.insertStockIn(

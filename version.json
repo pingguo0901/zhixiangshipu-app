@@ -1,7 +1,7 @@
 {
-  "versionCode": 92,
-  "versionName": "1.1.76",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.76/zhixiangshipu-app.apk",
-  "changelog": "- 修复记一笔G单位被换算成KG导致进货记录数据错误",
+  "versionCode": 93,
+  "versionName": "1.1.77",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.77/zhixiangshipu-app.apk",
+  "changelog": "- 记一笔金额改为总额不再算单价",
   "buildDate": "2026-08-29"
 }
