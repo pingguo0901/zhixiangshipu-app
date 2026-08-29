@@ -1076,6 +1076,62 @@ internal fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String
     )
 }
 
+// 生成厨房追加单文本（48 列，只含新增菜品）
+internal fun buildKitchenAddOnOrder(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("KITCHEN ORDER 【追加加单】", W))
+    r.add("")
+    r.add(ReceiptFormatter.padRight("Parent Order No: $orderNo", W))
+    r.add(ReceiptFormatter.padRight("Table No: $tableNo", W))
+    r.add(ReceiptFormatter.padRight("Time: $time", W))
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padRight("QTY", 6) + ReceiptFormatter.padRight("ITEM", 22) + ReceiptFormatter.padRight("REMARK", 20))
+    r.add("-".repeat(W))
+    items.forEach { line ->
+        r.add(ReceiptFormatter.generateKitchenRow(line.qty.toString(), line.item, line.remark))
+    }
+    r.add("-".repeat(W))
+    r.add("=".repeat(W))
+    r.add("\n\n\n")
+    return r.joinToString("\n")
+}
+
+@Composable
+internal fun KitchenAddOnDialog(text: String, onPrint: () -> Unit, onDone: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDone,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(16.dp),
+        title = { Text("厨房追加单", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text,
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = DiningColors.TextPrimary,
+                    lineHeight = 15.sp
+                )
+            }
+        },
+        confirmButton = {
+            Row {
+                OutlinedButton(onClick = onPrint) {
+                    Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("打印追加单", color = DiningColors.Primary)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }
+        }
+    )
+}
+
 data class ReceiptData(
     val receiptNo: String,
     val transDatetime: String,

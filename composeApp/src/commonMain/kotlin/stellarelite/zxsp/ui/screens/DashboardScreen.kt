@@ -312,7 +312,7 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
         )
     }
     if (showAddItems && order != null) {
-        AddItemsDialog(order = order!!, onDismiss = { showAddItems = false }, onDone = { showAddItems = false; loadOrder() })
+        AddItemsDialog(order = order!!, onDismiss = { showAddItems = false }, onDone = { showAddItems = false; loadOrder() }, tableNo = table.table_no)
     }
 }
 
@@ -336,13 +336,15 @@ private fun parseOrderItems(items: JsonElement): List<String> {
 
 // ============ 加单弹窗 ============
 @Composable
-internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit, title: String = "加单") {
+internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit, title: String = "加单", tableNo: String? = null) {
     val scope = rememberCoroutineScope()
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val quantities = remember { mutableStateMapOf<Long, Int>() }
+    val origQuantities = remember { mutableStateMapOf<Long, Int>() }
+    var addOnText by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         runCatching {
@@ -351,7 +353,10 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                 val obj = el.jsonObject
                 val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
                 val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull()
-                if (itemId != null && qty != null) quantities[itemId] = qty
+                if (itemId != null && qty != null) {
+                    quantities[itemId] = qty
+                    origQuantities[itemId] = qty
+                }
             }
         }
         loading = false
@@ -415,10 +420,40 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                     }
                     val ok = SupabaseClient.updateOrderItems(order.id, itemsJson, totalAmount)
                     saving = false
-                    if (ok) onDone() else error = "加单失败"
+                    if (ok) {
+                        // 计算新增菜品（本次加单 diff）
+                        val addedLines = menuItems.mapNotNull { item ->
+                            val newQty = quantities[item.id] ?: 0
+                            val oldQty = origQuantities[item.id] ?: 0
+                            val diff = newQty - oldQty
+                            if (diff > 0) {
+                                val (name, remark) = splitItemName(item.item_name)
+                                KitchenLine(diff, name, remark)
+                            } else null
+                        }
+                        if (addedLines.isNotEmpty()) {
+                            addOnText = buildKitchenAddOnOrder(
+                                orderNo = order.order_no,
+                                tableNo = tableNo ?: "外卖",
+                                time = formatDateTimeMy(currentIso()),
+                                items = addedLines
+                            )
+                        } else {
+                            onDone()
+                        }
+                    } else error = "加单失败"
                 }
             }) { Text("保存$title · RM %.2f".format(totalAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
     )
+
+    // 加单成功后弹厨房追加单
+    addOnText?.let { text ->
+        KitchenAddOnDialog(
+            text = text,
+            onPrint = { printReceiptText(text) },
+            onDone = { addOnText = null; onDone() }
+        )
+    }
 }
