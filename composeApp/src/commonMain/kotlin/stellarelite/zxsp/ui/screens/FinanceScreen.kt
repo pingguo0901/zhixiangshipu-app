@@ -40,6 +40,7 @@ import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
 import stellarelite.zxsp.util.ReceiptFormatter
+import stellarelite.zxsp.util.decodeJwtSub
 
 private sealed class FinanceNav {
     object Expense : FinanceNav()
@@ -49,6 +50,14 @@ private sealed class FinanceNav {
 @Composable
 fun FinanceScreen() {
     var nav by remember { mutableStateOf<FinanceNav>(FinanceNav.Expense) }
+    // 进入页面时刷新角色，修复旧会话 role 缓存导致 Admin 按钮消失
+    LaunchedEffect(Unit) {
+        val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
+        val staff = uid?.let { runCatching { SupabaseClient.fetchMyStaff(it) }.getOrNull() }
+        if (staff != null && staff.is_active) {
+            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+        }
+    }
     when (val n = nav) {
         is FinanceNav.Expense -> ExpenseListView(onReport = { nav = FinanceNav.Report })
         is FinanceNav.Report -> ReportScreen(onBack = { nav = FinanceNav.Expense })

@@ -1,7 +1,7 @@
 {
-  "versionCode": 74,
-  "versionName": "1.1.58",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.58/zhixiangshipu-app.apk",
-  "changelog": "- 日账英文版打印：英文标签+26/12/10对齐，串数用英文名",
+  "versionCode": 75,
+  "versionName": "1.1.59",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.59/zhixiangshipu-app.apk",
+  "changelog": "- 修复更多页/开销页进入时角色未刷新导致Admin按钮消失",
   "buildDate": "2026-08-29"
 }

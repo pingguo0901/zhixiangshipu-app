@@ -23,6 +23,7 @@ import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.ui.theme.DiningColors
+import stellarelite.zxsp.util.decodeJwtSub
 
 private sealed class MoreNav {
     object Menu : MoreNav()
@@ -35,6 +36,14 @@ private sealed class MoreNav {
 @Composable
 fun MoreScreen() {
     var nav by remember { mutableStateOf<MoreNav>(MoreNav.Menu) }
+    // 进入页面时刷新角色，修复旧会话 role 缓存导致 Admin 按钮消失
+    LaunchedEffect(Unit) {
+        val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
+        val staff = uid?.let { runCatching { SupabaseClient.fetchMyStaff(it) }.getOrNull() }
+        if (staff != null && staff.is_active) {
+            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+        }
+    }
     when (val n = nav) {
         is MoreNav.Menu -> MoreMenuView(
             onMenu = { nav = MoreNav.MenuManage },
