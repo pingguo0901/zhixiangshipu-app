@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -196,6 +197,7 @@ private val EXPENSE_ITEM_OPTIONS = listOf(
     ExpenseItemOption("烧烤撒料（香辣味）", true),
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial: ExpenseRecord? = null) {
     val scope = rememberCoroutineScope()
@@ -222,6 +224,9 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
     var receipt2 by remember { mutableStateOf<ImageBitmap?>(null) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    // 日期（临时，录入历史数据用）
+    var date by remember(initial) { mutableStateOf(initial?.transaction_datetime?.take(10) ?: todayDate()) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val takePhoto1 = rememberCamera { bitmap -> receipt1 = bitmap }
     val takePhoto2 = rememberCamera { bitmap -> receipt2 = bitmap }
@@ -258,6 +263,12 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // 日期（临时，录入历史数据用）
+                OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("日期：$date", color = DiningColors.TextPrimary)
+                }
                 // 物品（单选弹出式）
                 Box {
                     OutlinedButton(onClick = { itemExpanded = true }, modifier = Modifier.fillMaxWidth()) {
@@ -373,7 +384,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                         is_personal = false,
                         notes = if (weightVal > 0) "${weight.trim()} $weightUnit" else null,
                         operate_staff_id = SupabaseClient.currentStaffId(),
-                        transaction_datetime = currentIso()
+                        transaction_datetime = "${date}T${currentIso().substringAfter('T')}"
                     )
                     val ok = if (initial == null) {
                         SupabaseClient.insertExpense(rec) != null
@@ -407,7 +418,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                                     pay_method = method,
                                     transaction_ref = "",
                                     operate_staff_id = SupabaseClient.currentStaffId(),
-                                    transaction_datetime = currentIso()
+                                    transaction_datetime = "${date}T${currentIso().substringAfter('T')}"
                                 )
                             )
                         }
@@ -431,6 +442,24 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
             }
         }
     )
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { date = millisToDate(it) }
+                    showDatePicker = false
+                }) { Text("确定", color = DiningColors.Primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("取消", color = DiningColors.TextMuted) }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 }
 
 // ============ 报表（仅老板） ============

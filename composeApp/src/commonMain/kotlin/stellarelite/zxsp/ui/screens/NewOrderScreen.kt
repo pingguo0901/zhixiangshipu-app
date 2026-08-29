@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +29,7 @@ import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.ui.theme.DiningColors
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     val scope = rememberCoroutineScope()
@@ -40,6 +42,9 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     var customerName by remember { mutableStateOf("") }
     var customerPhone by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+    // 日期（临时，录入历史数据用）
+    var orderDate by remember { mutableStateOf(todayDate()) }
+    var showDatePicker by remember { mutableStateOf(false) }
     val quantities = remember { mutableStateMapOf<Long, Int>() }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -164,6 +169,12 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
 
                 // 顾客信息
                 item {
+                    OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("日期：$orderDate", color = DiningColors.TextPrimary)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = customerName,
                         onValueChange = { customerName = it },
@@ -235,7 +246,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                                     total_amount_myr = totalAmount,
                                     notes = notes.trim().ifBlank { null },
                                     created_by_staff_id = SupabaseClient.currentStaffId(),
-                                    order_datetime = currentIso()
+                                    order_datetime = "${orderDate}T${currentIso().substringAfter('T')}"
                                 )
                                 val r = SupabaseClient.insertOrder(order)
                                 saving = false
@@ -259,6 +270,24 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { orderDate = millisToDate(it) }
+                    showDatePicker = false
+                }) { Text("确定", color = DiningColors.Primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("取消", color = DiningColors.TextMuted) }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
