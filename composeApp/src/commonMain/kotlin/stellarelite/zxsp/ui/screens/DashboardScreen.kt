@@ -6,10 +6,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Chair
+import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.TableRestaurant
+import androidx.compose.material.icons.outlined.DeliveryDining
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,7 +101,7 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("🏠 工作台", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                Text("工作台", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
                 Text("你好，${SessionManager.staffName}", fontSize = 14.sp, color = DiningColors.TextSecondary)
             }
             Button(
@@ -117,10 +123,10 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 modifier = Modifier.fillMaxWidth().padding(20.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem("🪑", "$freeCount", "空闲桌")
-                StatItem("🍽️", "$occupiedCount", "占用中")
-                StatItem("🧾", "${dineInTables.size}", "总桌台")
-                StatItem("🛵", "${takeawayTables.size}", "外卖号")
+                StatItem(Icons.Outlined.Chair, "$freeCount", "空闲桌")
+                StatItem(Icons.Outlined.Restaurant, "$occupiedCount", "占用中")
+                StatItem(Icons.Outlined.TableRestaurant, "${dineInTables.size}", "总桌台")
+                StatItem(Icons.Outlined.DeliveryDining, "${takeawayTables.size}", "外卖号")
             }
         }
 
@@ -137,7 +143,7 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 }
             }
             else -> {
-                Text("🪑 堂食桌台（${dineInTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                Text("堂食桌台（${dineInTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 if (dineInTables.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
@@ -149,7 +155,7 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("🛵 外卖（${takeawayTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                Text("外卖（${takeawayTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 if (takeawayTables.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
@@ -164,9 +170,9 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 }
 
 @Composable
-private fun StatItem(emoji: String, value: String, label: String) {
+private fun StatItem(icon: ImageVector, value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(emoji, fontSize = 22.sp)
+        Icon(icon, contentDescription = label, tint = DiningColors.Surface, modifier = Modifier.size(22.dp))
         Spacer(modifier = Modifier.height(2.dp))
         Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.Surface)
         Text(label, fontSize = 11.sp, color = DiningColors.Surface.copy(alpha = 0.75f))

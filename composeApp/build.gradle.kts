@@ -33,6 +33,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.animation)
@@ -65,8 +66,8 @@ android {
         applicationId = "stellarelite.zxsp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 78
-        versionName = "1.1.62"
+        versionCode = 79
+        versionName = "1.1.63"
     }
 
     compileOptions {
