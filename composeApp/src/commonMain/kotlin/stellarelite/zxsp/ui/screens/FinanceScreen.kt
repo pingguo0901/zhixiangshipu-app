@@ -460,12 +460,13 @@ private fun ReportScreen(onBack: () -> Unit) {
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("报表统计", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            Row(modifier = Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("报表统计", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            }
         }
         Spacer(modifier = Modifier.height(12.dp))
 

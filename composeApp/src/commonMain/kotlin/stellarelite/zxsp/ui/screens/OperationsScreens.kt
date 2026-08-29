@@ -1,5 +1,6 @@
 package stellarelite.zxsp.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,15 +8,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AcUnit
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.MoveToInbox
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
@@ -27,6 +36,8 @@ import stellarelite.zxsp.network.StockInLog
 import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.WarehouseItem
+import stellarelite.zxsp.platform.rememberCamera
+import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
 
 // ============ 进货入库 ============
@@ -39,13 +50,17 @@ fun StockInScreen(onBack: () -> Unit) {
     var supplierId by remember { mutableStateOf<Long?>(null) }
     val entries = remember { mutableStateListOf<StockInEntry>() }
     var payMethod by remember { mutableStateOf("cash") }
-    var ref by remember { mutableStateOf("") }
+    var receipt1 by remember { mutableStateOf<ImageBitmap?>(null) }
+    var receipt2 by remember { mutableStateOf<ImageBitmap?>(null) }
     var date by remember { mutableStateOf(todayDate()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showAddItem by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
+
+    val takePhoto1 = rememberCamera { bitmap -> receipt1 = bitmap }
+    val takePhoto2 = rememberCamera { bitmap -> receipt2 = bitmap }
 
     LaunchedEffect(Unit) {
         runCatching {
@@ -60,13 +75,13 @@ fun StockInScreen(onBack: () -> Unit) {
     val hasItems = entries.isNotEmpty()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("📥 进货入库", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            Row(modifier = Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.MoveToInbox, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("进货入库", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            }
         }
 
         if (loading) {
@@ -94,7 +109,9 @@ fun StockInScreen(onBack: () -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(12.dp)) {
-                        Text("📅 $date", color = DiningColors.TextPrimary, fontWeight = FontWeight.Medium)
+                        Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("$date", color = DiningColors.TextPrimary, fontWeight = FontWeight.Medium)
                     }
                 }
 
@@ -130,19 +147,37 @@ fun StockInScreen(onBack: () -> Unit) {
                 }
 
                 item {
+                    Text("付款方式", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("cash" to "现金", "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to "支付宝").forEach { (v, l) ->
                             FilterChip(selected = payMethod == v, onClick = { payMethod = v }, label = { Text(l) })
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = ref,
-                        onValueChange = { ref = it },
-                        label = { Text(if (payMethod == "cash") "现金编号 CASH-PAY-日期-序号" else "交易号") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (payMethod != "cash") {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("收据1（转账收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(onClick = { takePhoto1() }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (receipt1 == null) "拍照上传" else "重拍", color = DiningColors.Primary)
+                        }
+                        receipt1?.let {
+                            Image(it, contentDescription = "转账收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("收据2（批发商收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedButton(onClick = { takePhoto2() }, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(if (receipt2 == null) "拍照上传" else "重拍", color = DiningColors.Primary)
+                        }
+                        receipt2?.let {
+                            Image(it, contentDescription = "批发商收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                        }
+                    }
                 }
 
                 if (error != null) item { Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp) }
@@ -153,13 +188,29 @@ fun StockInScreen(onBack: () -> Unit) {
                             scope.launch {
                                 saving = true
                                 error = null
+                                var transferUrl: String? = null
+                                var supplierUrl: String? = null
+                                if (payMethod != "cash") {
+                                    if (receipt1 != null) {
+                                        transferUrl = receipt1!!.toJpegBytes()?.let { bytes ->
+                                            SupabaseClient.uploadFile("receipts", "stockin_transfer_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
+                                        }
+                                    }
+                                    if (receipt2 != null) {
+                                        supplierUrl = receipt2!!.toJpegBytes()?.let { bytes ->
+                                            SupabaseClient.uploadFile("receipts", "stockin_supplier_${Clock.System.now().toEpochMilliseconds()}.jpg", bytes)
+                                        }
+                                    }
+                                }
                                 val inItemsJson = buildStockInJson(entries)
                                 val log = StockInLog(
                                     supplier_id = supplierId ?: 0,
                                     in_items = inItemsJson,
                                     total_cost_myr = totalCost,
                                     pay_method = payMethod,
-                                    transaction_ref = ref.trim(),
+                                    transaction_ref = "",
+                                    transfer_attachment_url = transferUrl,
+                                    supplier_invoice_attachment_url = supplierUrl,
                                     operate_staff_id = SupabaseClient.currentStaffId(),
                                     transaction_datetime = if (date.isNotBlank()) "${date.trim()}T${currentIso().substringAfter('T')}" else currentIso()
                                 )
@@ -168,7 +219,7 @@ fun StockInScreen(onBack: () -> Unit) {
                                 if (r != null) onBack() else error = "入库失败：" + (SupabaseClient.lastError ?: "")
                             }
                         },
-                        enabled = hasItems && supplierId != null && ref.isNotBlank() && !saving,
+                        enabled = hasItems && supplierId != null && (payMethod == "cash" || (receipt1 != null && receipt2 != null)) && !saving,
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -311,10 +362,13 @@ fun FridgeScreen(onBack: () -> Unit) {
     val used = take - ret
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
-            Spacer(modifier = Modifier.weight(1f))
-            Text("❄️ 冰箱操作", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            Row(modifier = Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.AcUnit, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("冰箱操作", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -336,19 +390,19 @@ fun FridgeScreen(onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
             value = takeQty, onValueChange = { takeQty = it },
-            label = { Text("取出数量") }, singleLine = true,
+            label = { Text("取出数量 (G)") }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = returnQty, onValueChange = { returnQty = it },
-            label = { Text("放回数量（没有则填 0）") }, singleLine = true,
+            label = { Text("放回数量 (G)（没有则填 0）") }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text("实际消耗：$used（后端自动计算）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+        Text("实际消耗：$used G（入库自动换算 KG）", fontSize = 13.sp, color = DiningColors.TextSecondary)
 
         if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
 
@@ -360,8 +414,8 @@ fun FridgeScreen(onBack: () -> Unit) {
                     error = null
                     val log = FridgeLog(
                         warehouse_item_id = itemId ?: 0,
-                        take_qty = take,
-                        return_qty = ret,
+                        take_qty = take / 1000.0,   // G → KG
+                        return_qty = ret / 1000.0,  // G → KG
                         used_qty = 0.0, // 后端计算
                         operate_staff_id = SupabaseClient.currentStaffId(),
                         log_time = currentIso()
@@ -412,7 +466,9 @@ fun MeatProcessScreen(onBack: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
             Spacer(modifier = Modifier.weight(1f))
-            Text("🍖 肉品加工", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Icon(Icons.Outlined.Restaurant, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("肉品加工", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -442,7 +498,7 @@ fun MeatProcessScreen(onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = qty, onValueChange = { qty = it },
-            label = { Text("处理数量") }, singleLine = true,
+            label = { Text("处理数量 (G)") }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
@@ -458,7 +514,7 @@ fun MeatProcessScreen(onBack: () -> Unit) {
                     val log = MeatProcessLog(
                         warehouse_item_id = itemId ?: 0,
                         process_status = status,
-                        process_qty = processQty,
+                        process_qty = processQty / 1000.0,  // G → KG
                         operate_staff_id = SupabaseClient.currentStaffId(),
                         process_time = currentIso()
                     )

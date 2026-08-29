@@ -167,6 +167,7 @@ data class StockInLog(
     val payment_status: String = "unpaid",
     val supplier_invoice_no: String? = null,
     val supplier_invoice_attachment_url: String? = null,
+    val transfer_attachment_url: String? = null,
     val operate_staff_id: Long = 0,
     val transaction_datetime: String? = null,
     val created_at: String? = null
