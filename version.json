@@ -1,7 +1,7 @@
 {
-  "versionCode": 103,
-  "versionName": "1.1.87",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.87/zhixiangshipu-app.apk",
-  "changelog": "- 仓库取消进货入库按钮，统一走记一笔食材采购自动入库\n- 记一笔费用项新增耗材杂费（卫生纸/厨具电器/打印纸/杂货）\n- 数据归类：食材算进货成本，耗材杂费算业务开销",
+  "versionCode": 104,
+  "versionName": "1.1.88",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.88/zhixiangshipu-app.apk",
+  "changelog": "- 记一笔耗材杂费新增外卖纸（算业务开销）",
   "buildDate": "2026-08-30"
 }
