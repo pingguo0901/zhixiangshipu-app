@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -778,13 +779,29 @@ private fun ReportScreen(onBack: () -> Unit) {
 
 @Composable
 private fun DailyPrintDialog(date: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
     var lang by remember { mutableStateOf("zh") }
     var reportText by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(date, lang) {
-        val report = SupabaseClient.fetchDailyReport(date, date)
-        reportText = report?.let { buildReportText(false, lang == "en", it, date) }
+    fun load() {
+        scope.launch {
+            loading = true; error = null
+            runCatching { SupabaseClient.fetchDailyReport(date, date) }
+                .onSuccess { report ->
+                    if (report == null) {
+                        error = "报表加载失败（无数据或权限不足）"
+                    } else {
+                        reportText = buildReportText(false, lang == "en", report, date)
+                    }
+                }
+                .onFailure { error = it.message ?: "加载失败" }
+            loading = false
+        }
     }
+
+    LaunchedEffect(date, lang) { load() }
 
     AlertDialog(
         onDismissRequest = onDone,
@@ -797,14 +814,17 @@ private fun DailyPrintDialog(date: String, onPrint: (String) -> Unit, onDone: ()
                     FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text("中文版") })
                     FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text("英文版") })
                 }
-                val t = reportText
-                if (t == null) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                when {
+                    loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = DiningColors.Primary)
                     }
-                } else {
-                    Text(
-                        t,
+                    error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp, textAlign = TextAlign.Center)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = { load() }) { Text("重试", color = DiningColors.Primary) }
+                    }
+                    else -> Text(
+                        reportText ?: "",
                         modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
