@@ -507,12 +507,12 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     if (initial == null && isStockItem && weightVal > 0) {
                         val wh = warehouseItems.firstOrNull { it.item_name == itemName }
                         if (wh != null) {
-                            // G 换算成 KG（仓库单位为 KG）
-                            val qtyKg = if (weightUnit == "G") weightVal / 1000.0 else weightVal
+                            // 存原始值 + 原始单位，库存累加由触发器按 unit 换算（G → KG）
                             val inItemsJson = buildJsonArray {
                                 add(buildJsonObject {
                                     put("warehouse_item_id", JsonPrimitive(wh.id))
-                                    put("qty", JsonPrimitive(qtyKg))
+                                    put("qty", JsonPrimitive(weightVal))
+                                    put("unit", JsonPrimitive(weightUnit))
                                     put("unit_price", JsonPrimitive(amt))
                                 })
                             }

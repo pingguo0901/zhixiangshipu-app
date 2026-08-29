@@ -232,6 +232,13 @@ private fun MaterialActionDialog(
     )
 }
 
+private data class StockInLine(
+    val log: StockInLog,
+    val qty: Double,
+    val unit: String,
+    val price: Double
+)
+
 @Composable
 private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
     var logs by remember { mutableStateOf<List<StockInLog>>(emptyList()) }
@@ -247,8 +254,9 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
             it.jsonObject["warehouse_item_id"]?.jsonPrimitive?.content?.toLongOrNull() == item.id
         } ?: return@mapNotNull null
         val qty = el.jsonObject["qty"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+        val unit = el.jsonObject["unit"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: item.unit
         val price = el.jsonObject["unit_price"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
-        Triple(log, qty, price)
+        StockInLine(log, qty, unit, price)
     }
 
     AlertDialog(
@@ -263,17 +271,17 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
                 }
                 records.isEmpty() -> Text("暂无进货记录", color = DiningColors.TextMuted, fontSize = 14.sp)
                 else -> LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
-                    items(records) { (log, qty, price) ->
+                    items(records, key = { it.log.id }) { line ->
                         Card(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             shape = RoundedCornerShape(10.dp),
                             colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
                         ) {
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                                Text(fmtDate(log.transaction_datetime ?: ""), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                                Text("单号 ${log.stock_in_no.ifBlank { "—" }} · ${payMethodLabel(log.pay_method)}", fontSize = 12.sp, color = DiningColors.TextMuted)
+                                Text(fmtDate(line.log.transaction_datetime ?: ""), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                                Text("单号 ${line.log.stock_in_no.ifBlank { "—" }} · ${payMethodLabel(line.log.pay_method)}", fontSize = 12.sp, color = DiningColors.TextMuted)
                                 Text(
-                                    "数量 $qty ${item.unit} · 单价 RM%.2f · 小计 RM%.2f".format(price, qty * price),
+                                    "数量 ${line.qty} ${line.unit} · 单价 RM%.2f · 小计 RM%.2f".format(line.price, line.qty * line.price),
                                     fontSize = 12.sp, color = DiningColors.TextSecondary
                                 )
                             }
