@@ -1,7 +1,7 @@
 {
-  "versionCode": 87,
-  "versionName": "1.1.71",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.71/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔物品选项动态读取仓库物品",
+  "versionCode": 88,
+  "versionName": "1.1.72",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.72/zhixiangshipu-app.apk",
+  "changelog": "- 开销记账列表按日期分段显示",
   "buildDate": "2026-08-29"
 }

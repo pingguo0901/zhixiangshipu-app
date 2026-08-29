@@ -126,30 +126,53 @@ private fun ExpenseListView(onReport: () -> Unit) {
             expenses.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("暂无开销记录", color = DiningColors.TextMuted, fontSize = 14.sp)
             }
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(expenses, key = { it.id }) { e ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth().clickable(enabled = SessionManager.isAdmin) { editing = e },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(e.expense_title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+            else -> {
+                val grouped = expenses.groupBy { it.transaction_datetime?.take(10) ?: "" }
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    grouped.forEach { (date, list) ->
+                        item(key = "date-$date") {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(top = 4.dp)
+                            ) {
+                                Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    "${expenseTypeLabel(e.expense_type)}${if (e.is_personal) " · 私人" else ""}",
-                                    fontSize = 12.sp, color = DiningColors.TextMuted
+                                    if (date.isBlank()) "未标注日期" else fmtMyDate(date),
+                                    fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                Text(
+                                    "RM%.2f".format(list.sumOf { it.amount_myr }),
+                                    fontSize = 14.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary
                                 )
                             }
-                            Text("RM%.2f".format(e.amount_myr), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Error)
+                        }
+                        items(list, key = { it.id }) { e ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().clickable(enabled = SessionManager.isAdmin) { editing = e },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text(e.expense_title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                        Text(
+                                            "${expenseTypeLabel(e.expense_type)}${if (e.is_personal) " · 私人" else ""}",
+                                            fontSize = 12.sp, color = DiningColors.TextMuted
+                                        )
+                                    }
+                                    Text("RM%.2f".format(e.amount_myr), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Error)
+                                }
+                            }
                         }
                     }
                 }
