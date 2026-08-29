@@ -82,6 +82,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
     var tableMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var filter by remember { mutableStateOf("all") } // all / paid / unpaid
 
     fun load() {
         scope.launch {
@@ -97,6 +98,13 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
     }
 
     LaunchedEffect(Unit) { load() }
+
+    val filtered = when (filter) {
+        "paid" -> orders.filter { it.payment_status == "paid" }
+        "unpaid" -> orders.filter { it.payment_status != "paid" }
+        else -> orders
+    }
+    val grouped = filtered.groupBy { it.order_datetime?.take(10) ?: "" }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -114,6 +122,18 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
             }
         }
 
+        // 筛选按钮：全部 / 已付款 / 未付款
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(selected = filter == "all", onClick = { filter = "all" }, label = { Text("全部") })
+            FilterChip(selected = filter == "paid", onClick = { filter = "paid" }, label = { Text("已付款") })
+            FilterChip(selected = filter == "unpaid", onClick = { filter = "unpaid" }, label = { Text("未付款") })
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
         when {
             loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = DiningColors.Primary)
@@ -125,7 +145,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
                     Button(onClick = { load() }) { Text("重试") }
                 }
             }
-            orders.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            filtered.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("暂无订单", color = DiningColors.TextMuted, fontSize = 14.sp)
             }
             else -> LazyColumn(
@@ -133,8 +153,23 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(orders, key = { it.id }) { order ->
-                    OrderCard(order, tableMap[order.table_id], onClick = { onDetail(order) })
+                grouped.forEach { (date, list) ->
+                    val dateLabel = if (date.isBlank()) "未标注日期" else {
+                        val p = date.split("-")
+                        if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else date
+                    }
+                    item(key = "date-$date") {
+                        Text(
+                            dateLabel,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DiningColors.TextPrimary,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    items(list, key = { it.id }) { order ->
+                        OrderCard(order, tableMap[order.table_id], onClick = { onDetail(order) })
+                    }
                 }
             }
         }
