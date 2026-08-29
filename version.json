@@ -1,7 +1,7 @@
 {
-  "versionCode": 106,
-  "versionName": "1.1.90",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.90/zhixiangshipu-app.apk",
-  "changelog": "- 修复记账时间时区错误（当前时间补 +08:00 标记，避免被当 UTC 存导致日期跨天）",
+  "versionCode": 107,
+  "versionName": "1.1.91",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.91/zhixiangshipu-app.apk",
+  "changelog": "- 日账/月账报表新增进货成本项，毛利改为营收-进货成本-业务开销",
   "buildDate": "2026-08-30"
 }

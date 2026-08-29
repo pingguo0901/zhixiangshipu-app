@@ -924,8 +924,9 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
     val duitnow = obj["duitnow"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val tng = obj["tng"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val alipay = obj["alipay"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val totalStockCost = obj["total_stock_cost"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val totalExpense = obj["total_expense"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
-    val grossProfit = actualRevenue - totalExpense
+    val grossProfit = actualRevenue - totalStockCost - totalExpense
     val skewersArr = obj["skewers"]?.jsonArray
     val expenseObj = obj["expense_breakdown"]?.jsonObject
 
@@ -994,6 +995,11 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
     }
     r.add("")
 
+    // 进货成本
+    r.add(if (isEnglish) "[PURCHASE COST]" else "【进货成本】")
+    r.add(row(if (isEnglish) "Total Purchase Cost:" else "进货成本合计:", "RM", money(totalStockCost)))
+    r.add("")
+
     // 当日支出
     r.add(if (isEnglish) "[DAILY EXPENSES]" else "【当日支出】")
     if (expenseObj != null && expenseObj.isNotEmpty()) {
@@ -1039,7 +1045,8 @@ private fun buildMonthlyReportZh(report: JsonElement, start: String): String {
     val tng = obj["tng"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val alipay = obj["alipay"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val totalExpense = obj["total_expense"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
-    val netProfit = actualRevenue - totalExpense
+    val totalStockCost = obj["total_stock_cost"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val netProfit = actualRevenue - totalStockCost - totalExpense
     val skewersArr = obj["skewers"]?.jsonArray
     val expenseObj = obj["expense_breakdown"]?.jsonObject
 
@@ -1094,6 +1101,11 @@ private fun buildMonthlyReportZh(report: JsonElement, start: String): String {
     } else {
         r.add(row("（无）", "", ""))
     }
+    r.add("")
+
+    // 进货成本
+    r.add("【进货成本】")
+    r.add(row("进货成本合计:", "RM", money(totalStockCost)))
     r.add("")
 
     // 月度总开销（按大类聚合）
@@ -1172,7 +1184,8 @@ private fun buildMonthlyReportEn(report: JsonElement, start: String): String {
     val tng = obj["tng"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val alipay = obj["alipay"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val totalExpense = obj["total_expense"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
-    val netProfit = actualRevenue - totalExpense
+    val totalStockCost = obj["total_stock_cost"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val netProfit = actualRevenue - totalStockCost - totalExpense
     val skewersArr = obj["skewers"]?.jsonArray
     val expenseObj = obj["expense_breakdown"]?.jsonObject
 
@@ -1227,6 +1240,11 @@ private fun buildMonthlyReportEn(report: JsonElement, start: String): String {
     } else {
         r.add(row("(none)", "", ""))
     }
+    r.add("")
+
+    // Purchase Cost
+    r.add("[PURCHASE COST]")
+    r.add(row("Total Purchase Cost:", "RM", money(totalStockCost)))
     r.add("")
 
     // Monthly Total Expenses
