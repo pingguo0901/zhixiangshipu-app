@@ -1,7 +1,7 @@
 {
-  "versionCode": 88,
-  "versionName": "1.1.72",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.72/zhixiangshipu-app.apk",
-  "changelog": "- 开销记账列表按日期分段显示",
+  "versionCode": 89,
+  "versionName": "1.1.73",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.73/zhixiangshipu-app.apk",
+  "changelog": "- 开销记账列表物品名旁显示重量KG/G",
   "buildDate": "2026-08-29"
 }

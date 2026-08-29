@@ -166,7 +166,9 @@ private fun ExpenseListView(onReport: () -> Unit) {
                                     Column {
                                         Text(e.expense_title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
                                         Text(
-                                            "${expenseTypeLabel(e.expense_type)}${if (e.is_personal) " · 私人" else ""}",
+                                            "${expenseTypeLabel(e.expense_type)}" +
+                                                (e.notes?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "") +
+                                                (if (e.is_personal) " · 私人" else ""),
                                             fontSize = 12.sp, color = DiningColors.TextMuted
                                         )
                                     }
