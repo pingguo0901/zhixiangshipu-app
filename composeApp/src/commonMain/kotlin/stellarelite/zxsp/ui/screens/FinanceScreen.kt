@@ -229,6 +229,10 @@ private fun payMethodLabel(m: String): String = when (m) {
     else -> m
 }
 
+// 记一笔物品选项显示（英文界面用 ITEM_EN_MAP 映射）
+private fun expenseItemLabel(name: String): String =
+    if (LanguageManager.isEnglish) ITEM_EN_MAP[name] ?: name else name
+
 @Composable
 private fun ExpenseActionDialog(
     record: ExpenseRecord,
@@ -379,7 +383,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text(if (initial == null) "记一笔开销" else "编辑开销", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(if (initial == null) t("记一笔开销", "Add Expense") else t("编辑开销", "Edit Expense"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -389,13 +393,13 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
                     Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("日期：$date", color = DiningColors.TextPrimary)
+                    Text(t("日期", "Date") + "：$date", color = DiningColors.TextPrimary)
                 }
                 // 物品（单选弹出式）
                 Box {
                     OutlinedButton(onClick = { itemExpanded = true }, modifier = Modifier.fillMaxWidth()) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            Text(itemName.ifBlank { "选择物品" }, modifier = Modifier.weight(1f), color = DiningColors.TextPrimary)
+                            Text(if (itemName.isBlank()) t("选择物品", "Select Item") else expenseItemLabel(itemName), modifier = Modifier.weight(1f), color = DiningColors.TextPrimary)
                             Text("▾", color = DiningColors.TextMuted)
                         }
                     }
@@ -414,7 +418,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     OutlinedTextField(
                         value = weight,
                         onValueChange = { weight = it },
-                        label = { Text("重量") },
+                        label = { Text(t("重量", "Weight")) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
@@ -429,7 +433,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     OutlinedButton(onClick = { supplierExpanded = true }, modifier = Modifier.fillMaxWidth()) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                suppliers.firstOrNull { it.id == supplierId }?.supplier_name ?: "选择批发商",
+                                suppliers.firstOrNull { it.id == supplierId }?.supplier_name ?: t("选择批发商", "Select Supplier"),
                                 modifier = Modifier.weight(1f),
                                 color = DiningColors.TextPrimary
                             )
@@ -446,30 +450,30 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     }
                 }
 
-                OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("金额 (RM)") }, singleLine = true,
+                OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text(t("金额 (RM)", "Amount (RM)")) }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("cash" to "现金", "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to "支付宝").forEach { (v, l) ->
-                        FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
+                    listOf("cash", "duitnow", "tng_ewallet", "alipay").forEach { v ->
+                        FilterChip(selected = method == v, onClick = { method = v }, label = { Text(payMethodLabel(v)) })
                     }
                 }
 
                 if (needTransferReceipt) {
-                    Text("收据1（转账收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    Text(t("收据1（转账收据）", "Receipt 1 (Transfer)"), fontSize = 13.sp, color = DiningColors.TextSecondary)
                     OutlinedButton(onClick = { takePhoto1() }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (receipt1 == null) "📷 拍照上传" else "📷 重拍", color = DiningColors.Primary)
+                        Text(if (receipt1 == null) t("📷 拍照上传", "📷 Take Photo") else t("📷 重拍", "📷 Retake"), color = DiningColors.Primary)
                     }
                     receipt1?.let {
-                        Image(it, contentDescription = "转账收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                        Image(it, contentDescription = t("转账收据", "Transfer Receipt"), modifier = Modifier.fillMaxWidth().height(120.dp))
                     }
                 }
-                Text("收据2（批发商收据）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                Text(t("收据2（批发商收据）", "Receipt 2 (Supplier)"), fontSize = 13.sp, color = DiningColors.TextSecondary)
                 OutlinedButton(onClick = { takePhoto2() }, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (receipt2 == null) "📷 拍照上传" else "📷 重拍", color = DiningColors.Primary)
+                    Text(if (receipt2 == null) t("📷 拍照上传", "📷 Take Photo") else t("📷 重拍", "📷 Retake"), color = DiningColors.Primary)
                 }
                 receipt2?.let {
-                    Image(it, contentDescription = "批发商收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                    Image(it, contentDescription = t("批发商收据", "Supplier Receipt"), modifier = Modifier.fillMaxWidth().height(120.dp))
                 }
 
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
@@ -500,7 +504,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                         val wh = warehouseItems.firstOrNull { it.item_name == itemName }
                         if (wh == null) {
                             saving = false
-                            error = "未找到对应仓库物品"
+                            error = t("未找到对应仓库物品", "Warehouse item not found")
                             return@launch
                         }
                         // 存原始值 + 原始单位，库存累加由触发器按 unit 换算（G → KG）
@@ -527,7 +531,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                         ) != null
                         if (!ok) {
                             saving = false
-                            error = "保存失败"
+                            error = t("保存失败", "Save failed")
                             return@launch
                         }
                     } else {
@@ -552,14 +556,14 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                         }
                         if (!ok) {
                             saving = false
-                            error = "保存失败"
+                            error = t("保存失败", "Save failed")
                             return@launch
                         }
                     }
                     saving = false
                     onDone()
                 }
-            }) { Text("保存", color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save"), color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -569,9 +573,9 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                             val ok = SupabaseClient.deleteExpense(initial.id)
                             if (ok) onDone()
                         }
-                    }) { Text("删除", color = DiningColors.Error) }
+                    }) { Text(t("删除", "Delete"), color = DiningColors.Error) }
                 }
-                TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+                TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) }
             }
         }
     )
@@ -584,10 +588,10 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { date = millisToDate(it) }
                     showDatePicker = false
-                }) { Text("确定", color = DiningColors.Primary) }
+                }) { Text(t("确定", "OK"), color = DiningColors.Primary) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("取消", color = DiningColors.TextMuted) }
+                TextButton(onClick = { showDatePicker = false }) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) }
             }
         ) {
             DatePicker(state = datePickerState)
