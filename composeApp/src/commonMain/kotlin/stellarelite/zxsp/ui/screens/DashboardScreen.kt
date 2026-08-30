@@ -334,9 +334,12 @@ private fun OrderInfoRow(label: String, value: String) {
 }
 
 private fun parseOrderItems(items: JsonElement): List<String> {
+    val english = LanguageManager.isEnglish
     return items.jsonArray.mapNotNull { el ->
         val obj = el.jsonObject
-        val name = obj["item_name"]?.jsonPrimitive?.content ?: return@mapNotNull null
+        val zh = obj["item_name"]?.jsonPrimitive?.content ?: return@mapNotNull null
+        val en = obj["name_en"]?.jsonPrimitive?.content ?: ""
+        val name = if (english) en.ifBlank { zh } else zh
         val qty = obj["quantity"]?.jsonPrimitive?.content ?: ""
         val price = obj["unit_price_myr"]?.jsonPrimitive?.content ?: ""
         "$name × $qty  RM$price"

@@ -1,7 +1,7 @@
 {
-  "versionCode": 139,
-  "versionName": "1.2.23",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.23/zhixiangshipu-app.apk",
-  "changelog": "- 所有打印内容展示页面全英文（报表统计页、打印日账/月账弹窗、进货日总汇单、厨房出单/追加单、收据）",
+  "versionCode": 140,
+  "versionName": "1.2.24",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.24/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情/桌台订单弹窗菜品名英文界面显示英文",
   "buildDate": "2026-08-31"
 }

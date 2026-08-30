@@ -312,7 +312,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(line.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                Text(if (LanguageManager.isEnglish) line.nameEn.ifBlank { line.name } else line.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
                                 Text("${line.qty} × RM%.2f".format(line.unitPrice), fontSize = 12.sp, color = DiningColors.TextMuted)
                             }
                             Text("RM%.2f".format(line.amount), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
