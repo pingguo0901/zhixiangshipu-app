@@ -26,7 +26,9 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.StockInLog
 import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
@@ -69,7 +71,7 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
             error = null
             runCatching { SupabaseClient.fetchWarehouseItems() }
                 .onSuccess { items = it }
-                .onFailure { error = it.message ?: "加载失败" }
+                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
             loading = false
         }
     }
@@ -84,12 +86,12 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
         ) {
             Icon(Icons.Outlined.Inventory2, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("仓库库存", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Text(t("仓库库存", "Warehouse Inventory"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { load() }) { Icon(Icons.Outlined.Refresh, contentDescription = "刷新", tint = DiningColors.Primary) }
+            IconButton(onClick = { load() }) { Icon(Icons.Outlined.Refresh, contentDescription = t("刷新", "Refresh"), tint = DiningColors.Primary) }
             Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
-                Text("＋ 新增物料", color = DiningColors.Surface)
+                Text(t("＋ 新增物料", "＋ New Material"), color = DiningColors.Surface)
             }
         }
 
@@ -98,12 +100,12 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            QuickBtn(Icons.Outlined.AcUnit, "冰箱操作", Modifier.weight(1f), onFridge)
-            QuickBtn(Icons.Outlined.Restaurant, "肉品加工", Modifier.weight(1f), onMeat)
+            QuickBtn(Icons.Outlined.AcUnit, t("冰箱操作", "Fridge Operation"), Modifier.weight(1f), onFridge)
+            QuickBtn(Icons.Outlined.Restaurant, t("肉品加工", "Meat Processing"), Modifier.weight(1f), onMeat)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        Text("⚠️ $lowCount 项低库存预警", modifier = Modifier.padding(horizontal = 16.dp),
+        Text(t("⚠️ $lowCount 项低库存预警", "⚠️ $lowCount low-stock alerts"), modifier = Modifier.padding(horizontal = 16.dp),
             fontSize = 13.sp, color = if (lowCount > 0) DiningColors.Error else DiningColors.Success)
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -115,11 +117,11 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
             error != null -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("⚠️ $error", color = DiningColors.Error, fontSize = 14.sp)
-                    Button(onClick = { load() }) { Text("重试") }
+                    Button(onClick = { load() }) { Text(t("重试", "Retry")) }
                 }
             }
             items.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("暂无物料", color = DiningColors.TextMuted, fontSize = 14.sp)
+                Text(t("暂无物料", "No materials"), color = DiningColors.TextMuted, fontSize = 14.sp)
             }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -143,7 +145,7 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
                         ) {
                             Column {
                                 Text(item.item_name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
-                                Text("预警值 ${item.warning_qty} ${item.unit}", fontSize = 12.sp, color = DiningColors.TextMuted)
+                                Text(t("预警值", "Warning") + " ${item.warning_qty} ${item.unit}", fontSize = 12.sp, color = DiningColors.TextMuted)
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
@@ -152,7 +154,7 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
                                     fontWeight = FontWeight.Bold,
                                     color = if (low) DiningColors.Error else DiningColors.TextPrimary
                                 )
-                                if (low) Text("需补货", fontSize = 11.sp, color = DiningColors.Error)
+                                if (low) Text(t("需补货", "Restock needed"), fontSize = 11.sp, color = DiningColors.Error)
                             }
                         }
                     }
@@ -213,17 +215,17 @@ private fun MaterialActionDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedButton(onClick = onViewHistory, modifier = Modifier.fillMaxWidth()) {
-                    Text("查看进货记录", color = DiningColors.Primary)
+                    Text(t("查看进货记录", "View Stock-in Records"), color = DiningColors.Primary)
                 }
                 if (SessionManager.isAdmin) {
                     OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
-                        Text("编辑", color = DiningColors.Primary)
+                        Text(t("编辑", "Edit"), color = DiningColors.Primary)
                     }
                 }
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 }
 
@@ -260,13 +262,13 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("进货记录 · ${item.item_name}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("进货记录", "Stock-in Records") + " · ${item.item_name}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             when {
                 loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = DiningColors.Primary)
                 }
-                records.isEmpty() -> Text("暂无进货记录", color = DiningColors.TextMuted, fontSize = 14.sp)
+                records.isEmpty() -> Text(t("暂无进货记录", "No stock-in records"), color = DiningColors.TextMuted, fontSize = 14.sp)
                 else -> LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
                     items(records, key = { it.log.id }) { line ->
                         Card(
@@ -276,14 +278,14 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
                         ) {
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Text(fmtDate(line.log.transaction_datetime ?: ""), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                                Text("单号 ${line.log.stock_in_no.ifBlank { "—" }} · ${payMethodLabel(line.log.pay_method)}", fontSize = 12.sp, color = DiningColors.TextMuted)
+                                Text("单号 ${line.log.stock_in_no.ifBlank { "—" }} · ${payMethodLabel(line.log.pay_method)}".let { if (LanguageManager.isEnglish) it.replace("单号", "No.") else it }, fontSize = 12.sp, color = DiningColors.TextMuted)
                                 Text(
                                     buildString {
-                                        append("数量 ${line.qty} ${line.unit}")
+                                        append((if (LanguageManager.isEnglish) "Qty " else "数量 ") + "${line.qty} ${line.unit}")
                                         if (line.totalPrice != null) {
-                                            append(" · 金额 RM%.2f".format(line.totalPrice))
+                                            append((if (LanguageManager.isEnglish) " · Amount " else " · 金额 ") + "RM%.2f".format(line.totalPrice))
                                         } else if (line.unitPrice != null) {
-                                            append(" · 单价 RM%.2f · 小计 RM%.2f".format(line.unitPrice, line.qty * line.unitPrice))
+                                            append((if (LanguageManager.isEnglish) " · Unit RM" else " · 单价 RM") + "%.2f · ".format(line.unitPrice) + (if (LanguageManager.isEnglish) "Subtotal RM" else "小计 RM") + "%.2f".format(line.qty * line.unitPrice))
                                         }
                                     },
                                     fontSize = 12.sp, color = DiningColors.TextSecondary
@@ -295,7 +297,7 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("关闭", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("关闭", "Close"), color = DiningColors.TextMuted) } }
     )
 }
 
@@ -305,7 +307,7 @@ private fun fmtDate(iso: String): String {
 }
 
 private fun payMethodLabel(m: String): String = when (m) {
-    "cash" -> "现金"; "duitnow" -> "DuitNow"; "tng_ewallet" -> "TNG"; "alipay" -> "支付宝"; else -> m
+    "cash" -> if (LanguageManager.isEnglish) "Cash" else "现金"; "duitnow" -> "DuitNow"; "tng_ewallet" -> "TNG"; "alipay" -> if (LanguageManager.isEnglish) "Alipay" else "支付宝"; else -> m
 }
 
 @Composable
@@ -322,14 +324,14 @@ private fun EditMaterialDialog(item: WarehouseItem, onDismiss: () -> Unit, onDon
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("编辑物料", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("编辑物料", "Edit Material"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("物料名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("单位（如：kg、串、瓶）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = warningQty, onValueChange = { warningQty = it }, label = { Text("预警库存值") }, singleLine = true,
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(t("物料名称", "Material Name")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text(t("单位（如：kg、串、瓶）", "Unit (e.g. kg, pc, bottle)")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = warningQty, onValueChange = { warningQty = it }, label = { Text(t("预警库存值", "Warning Stock Level")) }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（可选）") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(t("备注（可选）", "Note (optional)")) }, modifier = Modifier.fillMaxWidth())
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
             }
         },
@@ -343,9 +345,9 @@ private fun EditMaterialDialog(item: WarehouseItem, onDismiss: () -> Unit, onDon
                         warning_qty = wq, notes = notes.trim().ifBlank { null }
                     ))
                     saving = false
-                    if (ok) onDone() else error = "保存失败"
+                    if (ok) onDone() else error = t("保存失败", "Save failed")
                 }
-            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -355,9 +357,9 @@ private fun EditMaterialDialog(item: WarehouseItem, onDismiss: () -> Unit, onDon
                             val ok = SupabaseClient.deleteWarehouseItem(item.id)
                             if (ok) onDone()
                         }
-                    }) { Text("删除", color = DiningColors.Error) }
+                    }) { Text(t("删除", "Delete"), color = DiningColors.Error) }
                 }
-                TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+                TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) }
             }
         }
     )
@@ -377,14 +379,14 @@ private fun AddMaterialDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("新增物料", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("新增物料", "New Material"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("物料名称（如：五花肉、牛肉）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("单位（如：kg、串、瓶）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = warningQty, onValueChange = { warningQty = it }, label = { Text("预警库存值") }, singleLine = true,
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(t("物料名称（如：五花肉、牛肉）", "Material Name (e.g. Pork Belly, Beef)")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text(t("单位（如：kg、串、瓶）", "Unit (e.g. kg, pc, bottle)")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = warningQty, onValueChange = { warningQty = it }, label = { Text(t("预警库存值", "Warning Stock Level")) }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（可选）") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(t("备注（可选）", "Note (optional)")) }, modifier = Modifier.fillMaxWidth())
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
             }
         },
@@ -399,10 +401,10 @@ private fun AddMaterialDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
                         notes = notes.trim().ifBlank { null }
                     ))
                     saving = false
-                    if (r != null) onDone() else error = "保存失败"
+                    if (r != null) onDone() else error = t("保存失败", "Save failed")
                 }
-            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 }

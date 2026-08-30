@@ -1,7 +1,7 @@
 {
-  "versionCode": 126,
-  "versionName": "1.2.10",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.10/zhixiangshipu-app.apk",
-  "changelog": "- 订单管理页面全英文（列表、筛选、状态、卡片）",
+  "versionCode": 127,
+  "versionName": "1.2.11",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.11/zhixiangshipu-app.apk",
+  "changelog": "- 仓库库存页面全英文（列表、弹窗、进货记录）",
   "buildDate": "2026-08-31"
 }
