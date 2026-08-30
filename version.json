@@ -1,7 +1,7 @@
 {
-  "versionCode": 117,
-  "versionName": "1.2.1",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.1/zhixiangshipu-app.apk",
-  "changelog": "- 修复删除订单后桌台仍被占用的问题（删除时同步释放桌台）",
+  "versionCode": 118,
+  "versionName": "1.2.2",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.2/zhixiangshipu-app.apk",
+  "changelog": "- 记一笔费用项新增「老板薪资」（含英文映射 Boss Salary）",
   "buildDate": "2026-08-31"
 }

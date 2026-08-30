@@ -305,7 +305,7 @@ private fun DetailLine(label: String, value: String) {
 
 // 开销物品：费用项固定（员工、租金不入库），食材项动态从仓库读取
 // 费用项固定（不入库）：员工/租金 + 耗材杂费（卫生纸/厨具 电器/打印纸/杂货/外卖纸），这些算业务开销
-private val EXPENSE_FEE_OPTIONS = listOf("员工", "租金", "卫生纸", "厨具 电器", "打印纸", "杂货", "外卖纸")
+private val EXPENSE_FEE_OPTIONS = listOf("员工", "老板薪资", "租金", "卫生纸", "厨具 电器", "打印纸", "杂货", "外卖纸")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -954,6 +954,7 @@ private fun fmtMyTime(iso: String): String {
 private val ITEM_EN_MAP = mapOf(
     // 费用项（业务开销）
     "员工" to "Staff Salary",
+    "老板薪资" to "Boss Salary",
     "租金" to "Shop Rental",
     "卫生纸" to "Toilet Paper",
     "厨具 电器" to "Kitchenware & Appliances",
