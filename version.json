@@ -1,7 +1,7 @@
 {
-  "versionCode": 112,
-  "versionName": "1.1.96",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.96/zhixiangshipu-app.apk",
-  "changelog": "- 日账中文版标签对齐：总进货成本、当日其它支出、当日总其它支出",
+  "versionCode": 113,
+  "versionName": "1.1.97",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.97/zhixiangshipu-app.apk",
+  "changelog": "- 修复长文本打印底部被截断：切纸改为自动喂纸到切纸线的安全半切指令",
   "buildDate": "2026-08-30"
 }

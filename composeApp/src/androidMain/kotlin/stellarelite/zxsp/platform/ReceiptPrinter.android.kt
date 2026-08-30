@@ -84,8 +84,8 @@ private fun buildEscPos(text: String): ByteArray {
         out.write(line.toByteArray(gbk))
         out.write(0x0A)
     }
-    // 走纸 3 行 + 切纸
+    // 走纸 3 行 + 安全切纸（GS V m n：自动喂纸到切纸线再半切，避免长文本被截断）
     out.write(byteArrayOf(0x1B, 0x64, 0x03))
-    out.write(byteArrayOf(0x1D, 0x56, 0x00))
+    out.write(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
     return out.toByteArray()
 }
