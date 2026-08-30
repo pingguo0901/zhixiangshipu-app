@@ -873,7 +873,7 @@ private val ITEM_EN_MAP = mapOf(
     "员工" to "Staff Salary",
     "租金" to "Shop Rental",
     "卫生纸" to "Toilet Paper",
-    "厨具 电器" to "Kitchen Utensils & Appliances",
+    "厨具 电器" to "Kitchenware & Appliances",
     "打印纸" to "Printing Paper",
     "杂货" to "Groceries",
     "外卖纸" to "Takeaway Paper",

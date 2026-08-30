@@ -1,7 +1,7 @@
 {
-  "versionCode": 109,
-  "versionName": "1.1.93",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.93/zhixiangshipu-app.apk",
-  "changelog": "- 日账/月账进货成本新增明细（物品+数量KG）",
+  "versionCode": 110,
+  "versionName": "1.1.94",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.94/zhixiangshipu-app.apk",
+  "changelog": "- 修复厨具电器英文名过长导致打印换行（改短为 Kitchenware & Appliances）",
   "buildDate": "2026-08-30"
 }
