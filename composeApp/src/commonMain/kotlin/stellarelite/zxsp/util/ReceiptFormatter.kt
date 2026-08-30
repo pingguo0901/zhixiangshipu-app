@@ -113,4 +113,22 @@ object ReceiptFormatter {
         val col3 = padRight(remark, 20)      // 备注列占 20 格
         return "$col1$col2$col3"
     }
+
+    // 10. 进货日汇总单明细行（5 列：ITEM 16 + QTY 6 + UNIT 6 + UNIT$ 10 + SUB$ 10 = 48）
+    fun generatePurchaseItemRow(item: String, qty: String, unit: String, unitPrice: String, subTotal: String): String {
+        val col1 = padRight(item, 16)       // 物品名左对齐
+        val col2 = padLeft(qty, 6)          // 数量右对齐
+        val col3 = padRight(" $unit", 6)    // 单位（前导空格）左对齐
+        val col4 = padLeft(unitPrice, 10)   // 单价右对齐
+        val col5 = padLeft(subTotal, 10)    // 小计右对齐
+        return "$col1$col2$col3$col4$col5"
+    }
+
+    // 11. 进货日汇总单合计行（label 34 + currency 4 + amount 10 = 48，金额右对齐最右侧）
+    fun generatePurchaseTotalRow(label: String, currency: String, amount: String): String {
+        val leftPart = padRight(label, 34)
+        val midPart = padRight(currency, 4)
+        val rightPart = padLeft(amount, 10)
+        return "$leftPart$midPart$rightPart"
+    }
 }

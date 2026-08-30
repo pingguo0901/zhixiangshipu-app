@@ -1,7 +1,7 @@
 {
-  "versionCode": 114,
-  "versionName": "1.1.98",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.98/zhixiangshipu-app.apk",
-  "changelog": "- 切纸指令改回立即切纸",
+  "versionCode": 115,
+  "versionName": "1.1.99",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.99/zhixiangshipu-app.apk",
+  "changelog": "- 新增进货日总汇单（每日进货汇总，含明细/总计/付款方式/LHDN警示）",
   "buildDate": "2026-08-30"
 }

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -600,6 +601,7 @@ private fun ReportScreen(onBack: () -> Unit) {
     var printMode by remember { mutableStateOf("daily") } // daily / monthly
     var printLang by remember { mutableStateOf("zh") } // zh / en
     var dailyPrintDate by remember { mutableStateOf<String?>(null) }
+    var showPurchaseDialog by remember { mutableStateOf(false) }
 
     fun load() {
         scope.launch {
@@ -638,7 +640,7 @@ private fun ReportScreen(onBack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 打印月账（保持原位）
+        // 打印月账 / 进货日总汇单
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
                 onClick = { printMode = "monthly"; showPrintDialog = true },
@@ -648,6 +650,15 @@ private fun ReportScreen(onBack: () -> Unit) {
                 Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("打印月账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+            OutlinedButton(
+                onClick = { showPurchaseDialog = true },
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Outlined.Inventory2, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("进货日总汇单", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -776,6 +787,78 @@ private fun ReportScreen(onBack: () -> Unit) {
             onDone = { dailyPrintDate = null }
         )
     }
+
+    // 进货日总汇单预览弹窗
+    if (showPurchaseDialog) {
+        PurchaseSummaryDialog(
+            date = start,
+            onPrint = { text -> printReceiptText(text); showPurchaseDialog = false },
+            onDone = { showPurchaseDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun PurchaseSummaryDialog(date: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var reportText by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(true) }
+
+    fun load() {
+        scope.launch {
+            loading = true; error = null
+            runCatching { SupabaseClient.fetchDailyPurchaseSummary(date) }
+                .onSuccess { report ->
+                    if (report == null) {
+                        error = "进货汇总加载失败（无数据或权限不足）"
+                    } else {
+                        reportText = buildDailyPurchaseSummary(report)
+                    }
+                }
+                .onFailure { error = it.message ?: "加载失败" }
+            loading = false
+        }
+    }
+
+    LaunchedEffect(date) { load() }
+
+    AlertDialog(
+        onDismissRequest = onDone,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text("进货日总汇单 · ${fmtMyDate(date)}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                when {
+                    loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = DiningColors.Primary)
+                    }
+                    error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp, textAlign = TextAlign.Center)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = { load() }) { Text("重试", color = DiningColors.Primary) }
+                    }
+                    else -> Text(
+                        reportText ?: "",
+                        modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 14.sp,
+                        color = DiningColors.TextPrimary
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { reportText?.let { onPrint(it) } }) {
+                Text("打印", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary) }
+        }
+    )
 }
 
 @Composable
@@ -907,6 +990,87 @@ private val FOOD_ITEM_NAMES = setOf(
 
 // 支出类型英文映射
 private fun expenseLabelEn(type: String): String = ITEM_EN_MAP[type] ?: type
+
+// 付款方式英文大写标签（进货总汇单用）
+private fun payMethodLabelEn(m: String): String = when (m) {
+    "cash" -> "CASH"; "duitnow" -> "DUITNOW"; "tng_ewallet" -> "TNG"; "alipay" -> "ALIPAY"; else -> m.uppercase()
+}
+
+// 生成进货日总汇单打印文本（48 列），report 为 get_daily_purchase_summary 返回的 JSON
+private fun buildDailyPurchaseSummary(report: JsonElement): String {
+    val W = ReceiptFormatter.TOTAL_WIDTH
+    val r = mutableListOf<String>()
+    val obj = report.jsonObject
+
+    val dpNo = obj["dp_no"]?.jsonPrimitive?.content ?: ""
+    val date = obj["date"]?.jsonPrimitive?.content ?: ""
+    val total = obj["total"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+    val itemsArr = obj["items"]?.jsonArray
+    val paymentObj = obj["payment"]?.jsonObject
+
+    fun money(v: Double) = "%.2f".format(v)
+
+    // 头部
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("DAILY PURCHASE SUMMARY", W))
+    r.add(ReceiptFormatter.padCenter("每日进货汇总单", W))
+    r.add("")
+    r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
+    r.add(ReceiptFormatter.padCenter("2313, Jalan Dato Sulaiman,", W))
+    r.add(ReceiptFormatter.padCenter("Taman Abad, 80250 Johor Bahru,", W))
+    r.add(ReceiptFormatter.padCenter("Johor Darul Ta'zim", W))
+    r.add("")
+    r.add(ReceiptFormatter.padRight("DP-NO: $dpNo", W))
+    r.add(ReceiptFormatter.padRight("DATE: $date", W))
+    r.add("=".repeat(W))
+
+    // 5 列表头
+    r.add(ReceiptFormatter.padRight("ITEM", 16) + ReceiptFormatter.padLeft("QTY", 6) + ReceiptFormatter.padRight(" UNIT", 6) + ReceiptFormatter.padLeft("UNIT$", 10) + ReceiptFormatter.padLeft("SUB$", 10))
+    r.add("-".repeat(W))
+
+    // 进货明细
+    if (itemsArr != null && itemsArr.isNotEmpty()) {
+        itemsArr.forEach { el ->
+            val o = el.jsonObject
+            val name = o["name"]?.jsonPrimitive?.content ?: ""
+            val qty = o["qty"]?.jsonPrimitive?.content ?: "0"
+            val unit = o["unit"]?.jsonPrimitive?.content ?: "KG"
+            val unitPrice = o["unit_price"]?.jsonPrimitive?.content ?: "0.00"
+            val subTotal = o["sub_total"]?.jsonPrimitive?.content ?: "0.00"
+            r.add(ReceiptFormatter.generatePurchaseItemRow(name, qty, unit, unitPrice, subTotal))
+        }
+    } else {
+        r.add(ReceiptFormatter.padCenter("(none)", W))
+    }
+    r.add("-".repeat(W))
+
+    // 进货总计
+    r.add(ReceiptFormatter.generatePurchaseTotalRow("TOTAL PURCHASE", "RM", money(total)))
+    r.add("")
+
+    // 付款明细汇总
+    r.add("PAYMENT SUMMARY")
+    if (paymentObj != null && paymentObj.isNotEmpty()) {
+        paymentObj.forEach { (method, amt) ->
+            val a = amt.jsonPrimitive.content.toDoubleOrNull() ?: 0.0
+            r.add(ReceiptFormatter.generatePurchaseTotalRow(payMethodLabelEn(method), "RM", money(a)))
+        }
+    }
+    r.add(ReceiptFormatter.generatePurchaseTotalRow("TOTAL PAID", "RM", money(total)))
+    r.add("")
+
+    // 尾部 LHDN 审计合规警示
+    r.add("=".repeat(W))
+    r.add(ReceiptFormatter.padCenter("⚠️ INTERNAL DOCUMENT ONLY", W))
+    r.add(ReceiptFormatter.padCenter("内部自制单据｜需保留供应商原始小票备查", W))
+    r.add(ReceiptFormatter.padCenter("Keep supplier receipts for LHDN audit", W))
+    r.add("=".repeat(W))
+
+    // 留 4 行空白便于撕纸
+    r.add("\n\n\n\n")
+
+    return r.joinToString("\n")
+}
 
 // 生成报表打印文本（日账/月账，中/英），report 为 get_daily_report 返回的 JSON
 private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: JsonElement, start: String): String {

@@ -361,6 +361,18 @@ object SupabaseClient {
         } else null
     }
 
+    // 进货日总汇单（按日期汇总进货明细 + 付款方式）
+    suspend fun fetchDailyPurchaseSummary(date: String): JsonElement? {
+        val resp: HttpResponse = client.post("$BASE/rest/v1/rpc/get_daily_purchase_summary") {
+            applyAuth()
+            contentType(ContentType.Application.Json)
+            setBody("""{"p_date":"$date"}""")
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<JsonElement>() }.getOrNull()
+        } else null
+    }
+
     // ============ Storage 上传 ============
     suspend fun uploadFile(bucket: String, path: String, bytes: ByteArray): String? {
         val resp: HttpResponse = client.post("$BASE/storage/v1/object/$bucket/$path") {
