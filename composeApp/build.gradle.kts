@@ -66,8 +66,8 @@ android {
         applicationId = "stellarelite.zxsp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 140
-        versionName = "1.2.24"
+        versionCode = 141
+        versionName = "1.2.25"
     }
 
     compileOptions {

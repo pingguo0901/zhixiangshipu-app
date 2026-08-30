@@ -178,6 +178,10 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
     }
 }
 
+// 桌台号显示：英文界面「外卖XX」转「TA-XX」
+private fun displayTableNo(tableNo: String): String =
+    if (LanguageManager.isEnglish && tableNo.startsWith("外卖")) "TA-" + tableNo.removePrefix("外卖") else tableNo
+
 @Composable
 private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Unit) {
     val statusLabel = when (order.payment_status) {
@@ -190,9 +194,14 @@ private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Uni
         "partial" -> DiningColors.Warning
         else -> DiningColors.Error
     }
-    // 堂食/外卖判断：有桌台就是堂食，否则才是外卖
-    val orderType = if (order.table_id != null) t("堂食", "Dine-in") + " · " + t("桌", "Table") + " ${tableNo ?: order.table_id}" else t("外卖订单", "Takeaway Order")
-    val orderTypeColor = if (order.table_id != null) DiningColors.Primary else DiningColors.TextSecondary
+    // 堂食/外卖判断：桌台号以「外卖」开头为外卖，否则堂食
+    val isTakeaway = tableNo?.startsWith("外卖") == true
+    val orderType = when {
+        isTakeaway -> t("外卖订单", "Takeaway Order") + " · " + displayTableNo(tableNo!!)
+        order.table_id != null -> t("堂食", "Dine-in") + " · " + t("桌", "Table") + " ${tableNo ?: order.table_id}"
+        else -> t("外卖订单", "Takeaway Order")
+    }
+    val orderTypeColor = if (isTakeaway || order.table_id == null) DiningColors.TextSecondary else DiningColors.Primary
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
@@ -265,7 +274,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     }
 
     val lines = remember(currentOrder.order_items) { parseOrderLines(currentOrder.order_items) }
-    val isTakeaway = currentOrder.table_id == null
+    val isTakeaway = tableNo?.startsWith("外卖") == true
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         // 标题居中，返回在左，编辑按钮（仅 Admin）在右上角
@@ -296,7 +305,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 DetailRow(t("类型", "Type"), if (isTakeaway) t("外卖", "Takeaway") else t("堂食", "Dine-in"))
                 DetailRow(t("顾客", "Customer"), currentOrder.customer_name ?: "—")
                 DetailRow(t("电话", "Phone"), currentOrder.customer_phone ?: "—")
-                DetailRow(t("桌台", "Table"), if (isTakeaway) t("外卖", "Takeaway") else (tableNo ?: "${t("桌", "Table")} #${currentOrder.table_id}"))
+                DetailRow(t("桌台", "Table"), if (isTakeaway) (tableNo?.let { displayTableNo(it) } ?: t("外卖", "Takeaway")) else (tableNo ?: "${t("桌", "Table")} #${currentOrder.table_id}"))
                 DetailRow(t("状态", "Status"), when (currentOrder.payment_status) {
                     "paid" -> t("已付清", "Paid"); "partial" -> t("部分付", "Partial"); else -> t("未付", "Unpaid")
                 })
@@ -547,7 +556,7 @@ private fun OrderEditDialog(
     val quantities = remember { mutableStateMapOf<Long, Int>() }
 
     // 订单字段
-    var isTakeaway by remember { mutableStateOf(order.table_id == null) }
+    var isTakeaway by remember { mutableStateOf(false) }
     var tableId by remember { mutableStateOf(order.table_id) }
     var tableExpanded by remember { mutableStateOf(false) }
     var customerName by remember { mutableStateOf(order.customer_name ?: "") }
@@ -562,6 +571,7 @@ private fun OrderEditDialog(
     LaunchedEffect(Unit) {
         runCatching {
             tables = SupabaseClient.fetchTables()
+            tables.firstOrNull { it.id == order.table_id }?.let { isTakeaway = it.table_no.startsWith("外卖") }
             menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active }
             order.order_items.jsonArray.forEach { el ->
                 val obj = el.jsonObject
