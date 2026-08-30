@@ -43,6 +43,9 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     var customerName by remember { mutableStateOf("") }
     var customerPhone by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+    // 口味三选一（不辣/香辣/加辣）+ 外带勾选
+    var selectedFlavor by remember { mutableStateOf("香辣") }
+    var addTakeaway by remember { mutableStateOf(false) }
     // 日期（临时，录入历史数据用）
     var orderDate by remember { mutableStateOf(todayDate()) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -73,7 +76,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
         }
     }
 
-    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) }
+    val takeawayFee = if (addTakeaway) 1.0 else 0.0
+    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) } + takeawayFee
     val totalCount = quantities.values.sum()
     val dineInTables = tables.filter { !it.table_no.startsWith("外卖") }
     val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
@@ -220,6 +224,29 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     )
                 }
 
+                // 口味（三选一）+ 外带
+                item {
+                    Text("口味", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FLAVOR_OPTIONS.forEach { f ->
+                            FilterChip(
+                                selected = selectedFlavor == f,
+                                onClick = { selectedFlavor = f },
+                                label = { Text(f) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = addTakeaway,
+                            onCheckedChange = { addTakeaway = it }
+                        )
+                        Text("外带（+RM1）", fontSize = 14.sp, color = DiningColors.TextPrimary)
+                    }
+                }
+
                 // 备注
                 item {
                     OutlinedTextField(
@@ -240,7 +267,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                             scope.launch {
                                 saving = true
                                 error = null
-                                val itemsJson = buildOrderItemsJson(menuItems, quantities)
+                                val itemsJson = buildOrderItemsJson(menuItems, quantities, selectedFlavor, addTakeaway)
                                 val order = CustomerOrder(
                                     table_id = tableId,
                                     customer_name = customerName.trim().ifBlank { null },
@@ -335,20 +362,34 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     }
 }
 
-private fun buildOrderItemsJson(items: List<MenuItem>, quantities: Map<Long, Int>): JsonElement {
+private val FLAVOR_OPTIONS = listOf("不辣", "香辣", "加辣")
+private val FLAVOR_EN = mapOf("不辣" to "No Spicy", "香辣" to "Spicy", "加辣" to "Spicy+")
+
+private fun buildOrderItemsJson(items: List<MenuItem>, quantities: Map<Long, Int>, flavor: String, addTakeaway: Boolean): JsonElement {
+    val flavorEn = FLAVOR_EN[flavor] ?: ""
     return buildJsonArray {
         items.forEach { item ->
             val q = quantities[item.id] ?: 0
             if (q > 0) {
                 add(buildJsonObject {
                     put("item_id", JsonPrimitive(item.id))
-                    put("item_name", JsonPrimitive(item.item_name))
-                    put("name_en", JsonPrimitive(item.name_en ?: ""))
+                    put("item_name", JsonPrimitive("${item.item_name}（$flavor）"))
+                    put("name_en", JsonPrimitive("${item.name_en ?: item.item_name} ($flavorEn)"))
                     put("quantity", JsonPrimitive(q))
                     put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
                     put("unit", JsonPrimitive(item.unit))
                 })
             }
+        }
+        if (addTakeaway) {
+            add(buildJsonObject {
+                put("item_id", JsonPrimitive(0))
+                put("item_name", JsonPrimitive("外带"))
+                put("name_en", JsonPrimitive("Take away"))
+                put("quantity", JsonPrimitive(1))
+                put("unit_price_myr", JsonPrimitive(1.0))
+                put("unit", JsonPrimitive("份"))
+            })
         }
     }
 }

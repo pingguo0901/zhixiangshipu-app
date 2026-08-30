@@ -205,6 +205,9 @@ private fun MenuManageScreen(onBack: () -> Unit) {
     }
 }
 
+// 菜品规格选项（可多选）
+private val SPEC_OPTIONS = listOf("不辣", "香辣", "加辣", "外带")
+
 @Composable
 private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -213,7 +216,8 @@ private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () ->
     var category by remember { mutableStateOf(item?.category ?: "") }
     var unit by remember { mutableStateOf(item?.unit ?: "") }
     var price by remember { mutableStateOf(if (item != null && item.sell_price_myr > 0) item.sell_price_myr.toString() else "") }
-    var notes by remember { mutableStateOf(item?.notes ?: "") }
+    // 规格多选（不辣/香辣/加辣/外带），存 notes 字段（逗号分隔）
+    var specs by remember { mutableStateOf(item?.notes?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() }?.toSet() ?: emptySet()) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -232,7 +236,18 @@ private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () ->
                 OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("单位（如：串、份、瓶）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = price, onValueChange = { price = it }, label = { Text("售价 (RM)") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（辣度、规格）") }, modifier = Modifier.fillMaxWidth())
+                // 规格多选
+                Text("规格（可多选）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    SPEC_OPTIONS.forEach { s ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable {
+                            specs = if (s in specs) specs - s else specs + s
+                        }) {
+                            Checkbox(checked = s in specs, onCheckedChange = null)
+                            Text(s, fontSize = 14.sp, color = DiningColors.TextPrimary)
+                        }
+                    }
+                }
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
             }
         },
@@ -248,12 +263,12 @@ private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () ->
                     val ok = if (isEdit) {
                         SupabaseClient.updateMenuItem(item!!.id, item.copy(
                             item_name = name.trim(), name_en = nameEn.trim().ifBlank { null }, category = category.trim(), unit = unit.trim(),
-                            sell_price_myr = p, notes = notes.trim().ifBlank { null }
+                            sell_price_myr = p, notes = specs.joinToString(",").ifBlank { null }
                         ))
                     } else {
                         SupabaseClient.insertMenuItem(MenuItem(
                             item_name = name.trim(), name_en = nameEn.trim().ifBlank { null }, category = category.trim(), unit = unit.trim(),
-                            sell_price_myr = p, notes = notes.trim().ifBlank { null }, is_active = true
+                            sell_price_myr = p, notes = specs.joinToString(",").ifBlank { null }, is_active = true
                         )) != null
                     }
                     saving = false
