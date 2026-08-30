@@ -50,6 +50,7 @@ import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.toImageBitmap
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
+import stellarelite.zxsp.util.ItemNames
 import stellarelite.zxsp.util.ReceiptFormatter
 import stellarelite.zxsp.util.decodeJwtSub
 
@@ -1052,7 +1053,8 @@ private fun buildDailyPurchaseSummary(report: JsonElement): String {
     if (itemsArr != null && itemsArr.isNotEmpty()) {
         itemsArr.forEach { el ->
             val o = el.jsonObject
-            val name = o["name"]?.jsonPrimitive?.content ?: ""
+            val rawName = o["name"]?.jsonPrimitive?.content ?: ""
+            val name = ItemNames.EN_MAP[rawName] ?: rawName
             val qty = o["qty"]?.jsonPrimitive?.content ?: "0"
             val unit = o["unit"]?.jsonPrimitive?.content ?: "KG"
             val unitPrice = o["unit_price"]?.jsonPrimitive?.content ?: "0.00"
