@@ -270,9 +270,9 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         // 标题居中，返回在左，编辑按钮（仅 Admin）在右上角
         Box(modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
             Text(
-                "订单详情",
+                t("订单详情", "Order Details"),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = DiningColors.TextPrimary,
@@ -280,9 +280,9 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             )
             if (SessionManager.isAdmin) {
                 TextButton(onClick = { showEdit = true }, modifier = Modifier.align(Alignment.CenterEnd)) {
-                    Icon(Icons.Outlined.Edit, contentDescription = "编辑", tint = DiningColors.Primary, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.Edit, contentDescription = t("编辑", "Edit"), tint = DiningColors.Primary, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("编辑", color = DiningColors.Primary)
+                    Text(t("编辑", "Edit"), color = DiningColors.Primary)
                 }
             }
         }
@@ -291,20 +291,20 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
         Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailRow("订单号", currentOrder.order_no)
-                DetailRow("收据号", currentOrder.receipt_no.ifBlank { "—" })
-                DetailRow("类型", if (isTakeaway) "外卖" else "堂食")
-                DetailRow("顾客", currentOrder.customer_name ?: "—")
-                DetailRow("电话", currentOrder.customer_phone ?: "—")
-                DetailRow("桌台", if (isTakeaway) "外卖" else (tableNo ?: "桌 #${currentOrder.table_id}"))
-                DetailRow("状态", when (currentOrder.payment_status) {
-                    "paid" -> "已付清"; "partial" -> "部分付"; else -> "未付"
+                DetailRow(t("订单号", "Order No."), currentOrder.order_no)
+                DetailRow(t("收据号", "Receipt No."), currentOrder.receipt_no.ifBlank { "—" })
+                DetailRow(t("类型", "Type"), if (isTakeaway) t("外卖", "Takeaway") else t("堂食", "Dine-in"))
+                DetailRow(t("顾客", "Customer"), currentOrder.customer_name ?: "—")
+                DetailRow(t("电话", "Phone"), currentOrder.customer_phone ?: "—")
+                DetailRow(t("桌台", "Table"), if (isTakeaway) t("外卖", "Takeaway") else (tableNo ?: "${t("桌", "Table")} #${currentOrder.table_id}"))
+                DetailRow(t("状态", "Status"), when (currentOrder.payment_status) {
+                    "paid" -> t("已付清", "Paid"); "partial" -> t("部分付", "Partial"); else -> t("未付", "Unpaid")
                 })
 
                 // 菜品明细
                 if (lines.isNotEmpty()) {
                     HorizontalDivider(color = DiningColors.SurfaceVariant)
-                    Text("菜品明细", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+                    Text(t("菜品明细", "Items"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
                     lines.forEach { line ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -321,12 +321,12 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 }
 
                 HorizontalDivider(color = DiningColors.SurfaceVariant)
-                DetailRow("折扣", "RM%.2f".format(receipt?.discount ?: 0.0))
-                DetailRow("付款方式", receipt?.payment_mode?.ifBlank { "未付" } ?: "未付")
-                DetailRow("顾客给多少", "RM%.2f".format(receipt?.amount_received ?: 0.0))
-                DetailRow("找零", "RM%.2f".format(receipt?.change_given ?: 0.0))
-                DetailRow("总金额", "RM%.2f".format(currentOrder.total_amount_myr))
-                currentOrder.notes?.takeIf { it.isNotBlank() }?.let { DetailRow("备注", it) }
+                DetailRow(t("折扣", "Discount"), "RM%.2f".format(receipt?.discount ?: 0.0))
+                DetailRow(t("付款方式", "Payment Method"), receipt?.payment_mode?.ifBlank { t("未付", "Unpaid") } ?: t("未付", "Unpaid"))
+                DetailRow(t("顾客给多少", "Amount Received"), "RM%.2f".format(receipt?.amount_received ?: 0.0))
+                DetailRow(t("找零", "Change"), "RM%.2f".format(receipt?.change_given ?: 0.0))
+                DetailRow(t("总金额", "Total"), "RM%.2f".format(currentOrder.total_amount_myr))
+                currentOrder.notes?.takeIf { it.isNotBlank() }?.let { DetailRow(t("备注", "Note"), it) }
             }
         }
 
@@ -334,11 +334,11 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
 
         // 非现金付款：显示已上传的收据照片（点击放大）
         if (receiptPhoto != null) {
-            Text("已上传收据照片", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+            Text(t("已上传收据照片", "Uploaded Receipt Photo"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
             Spacer(modifier = Modifier.height(8.dp))
             Image(
                 bitmap = receiptPhoto!!,
-                contentDescription = "收据照片",
+                contentDescription = t("收据照片", "Receipt Photo"),
                 modifier = Modifier.fillMaxWidth().height(180.dp).clickable { showFullImage = true }
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -352,7 +352,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
         ) {
             Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(6.dp))
-            Text("打印厨房单", color = DiningColors.Primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(t("打印厨房单", "Print Kitchen Order"), color = DiningColors.Primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -367,8 +367,8 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("打印收据", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Text("（未付款）", color = DiningColors.Primary, fontSize = 11.sp)
+                    Text(t("打印收据", "Print Receipt"), color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(t("（未付款）", "(Unpaid)"), color = DiningColors.Primary, fontSize = 11.sp)
                 }
             }
             OutlinedButton(
@@ -379,8 +379,8 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("打印收据", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Text("（已付款）", color = DiningColors.Primary, fontSize = 11.sp)
+                    Text(t("打印收据", "Print Receipt"), color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(t("（已付款）", "(Paid)"), color = DiningColors.Primary, fontSize = 11.sp)
                 }
             }
         }
@@ -395,7 +395,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             ) {
                 Icon(Icons.Outlined.Delete, contentDescription = null, tint = DiningColors.Error, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("删除订单", color = DiningColors.Error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(t("删除订单", "Delete Order"), color = DiningColors.Error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -411,7 +411,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             ) {
                 Icon(Icons.Outlined.CreditCard, contentDescription = null, tint = DiningColors.Surface, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("录入收款", color = DiningColors.Surface, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(t("录入收款", "Record Payment"), color = DiningColors.Surface, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -508,8 +508,8 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             onDismissRequest = { showDeleteConfirm = false },
             containerColor = DiningColors.Surface,
             shape = RoundedCornerShape(16.dp),
-            title = { Text("删除订单", color = DiningColors.Error, fontWeight = FontWeight.SemiBold) },
-            text = { Text("确定要删除订单 ${currentOrder.order_no} 吗？此操作不可恢复，会连同付款记录、收据一起删除。", color = DiningColors.TextPrimary) },
+            title = { Text(t("删除订单", "Delete Order"), color = DiningColors.Error, fontWeight = FontWeight.SemiBold) },
+            text = { Text(t("确定要删除订单", "Confirm delete order") + " ${currentOrder.order_no} " + t("吗？此操作不可恢复，会连同付款记录、收据一起删除。", "? This cannot be undone and will also delete payment records and receipts."), color = DiningColors.TextPrimary) },
             confirmButton = {
                 TextButton(enabled = !deleting, onClick = {
                     scope.launch {
@@ -522,9 +522,9 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                             showDeleteConfirm = false
                         }
                     }
-                }) { Text(if (deleting) "删除中…" else "确定删除", color = DiningColors.Error, fontWeight = FontWeight.Bold) }
+                }) { Text(if (deleting) t("删除中…", "Deleting…") else t("确定删除", "Confirm Delete"), color = DiningColors.Error, fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("取消", color = DiningColors.TextMuted) } }
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
         )
     }
 }

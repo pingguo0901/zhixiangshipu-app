@@ -1,7 +1,7 @@
 {
-  "versionCode": 134,
-  "versionName": "1.2.18",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.18/zhixiangshipu-app.apk",
-  "changelog": "- 登录页面全英文",
+  "versionCode": 135,
+  "versionName": "1.2.19",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.19/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情页面全英文",
   "buildDate": "2026-08-31"
 }
