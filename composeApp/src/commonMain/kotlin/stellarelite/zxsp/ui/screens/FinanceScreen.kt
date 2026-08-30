@@ -1011,11 +1011,11 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
         r.add(row(if (isEnglish) "(none)" else "（无）", "", ""))
     }
     r.add("-".repeat(W))
-    r.add(row(if (isEnglish) "Total Purchase Cost:" else "进货成本合计:", "RM", money(totalStockCost)))
+    r.add(row(if (isEnglish) "Total Purchase Cost:" else "总进货成本:", "RM", money(totalStockCost)))
     r.add("")
 
-    // 当日支出
-    r.add(if (isEnglish) "[DAILY EXPENSES]" else "【当日支出】")
+    // 当日其它支出
+    r.add(if (isEnglish) "[DAILY EXPENSES]" else "【当日其它支出】")
     if (expenseObj != null && expenseObj.isNotEmpty()) {
         expenseObj.forEach { (type, amt) ->
             val a = amt.jsonPrimitive.content.toDoubleOrNull() ?: 0.0
@@ -1025,7 +1025,7 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
         r.add(row(if (isEnglish) "(none)" else "（无）", "", ""))
     }
     r.add("-".repeat(W))
-    r.add(row(if (isEnglish) "Total Daily Expenses:" else "当日总支出:", "RM", money(totalExpense)))
+    r.add(row(if (isEnglish) "Total Daily Expenses:" else "当日总其它支出:", "RM", money(totalExpense)))
     r.add("")
 
     // 毛利

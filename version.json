@@ -1,7 +1,7 @@
 {
-  "versionCode": 111,
-  "versionName": "1.1.95",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.95/zhixiangshipu-app.apk",
-  "changelog": "- 日账英文版进货明细改为「物品+KG+数量」格式\n- 打印底部换行喂纸增加到6行，避免底部被切纸刀截断",
+  "versionCode": 112,
+  "versionName": "1.1.96",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.96/zhixiangshipu-app.apk",
+  "changelog": "- 日账中文版标签对齐：总进货成本、当日其它支出、当日总其它支出",
   "buildDate": "2026-08-30"
 }
