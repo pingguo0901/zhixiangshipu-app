@@ -1,7 +1,7 @@
 {
-  "versionCode": 138,
-  "versionName": "1.2.22",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.22/zhixiangshipu-app.apk",
-  "changelog": "- 员工角色记账页直接进入报表统计页面，权限仅限搜索日期/查看报表/打印日账/月账",
+  "versionCode": 139,
+  "versionName": "1.2.23",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.23/zhixiangshipu-app.apk",
+  "changelog": "- 所有打印内容展示页面全英文（报表统计页、打印日账/月账弹窗、进货日总汇单、厨房出单/追加单、收据）",
   "buildDate": "2026-08-31"
 }

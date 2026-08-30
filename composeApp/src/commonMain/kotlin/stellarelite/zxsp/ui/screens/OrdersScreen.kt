@@ -1080,14 +1080,14 @@ internal fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(16.dp),
-        title = { Text(if (lang == "zh") "厨房出单" else "Kitchen Order", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("厨房出单", "Kitchen Order"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text("中文版") })
-                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text("英文版") })
+                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text(t("中文版", "Chinese")) })
+                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text(t("英文版", "English")) })
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -1104,10 +1104,10 @@ internal fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String
                 OutlinedButton(onClick = { onPrint(text) }) {
                     Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (lang == "zh") "打印厨房单" else "Print", color = DiningColors.Primary)
+                    Text(t("打印厨房单", "Print Kitchen Order"), color = DiningColors.Primary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onDone) { Text(if (lang == "zh") "完成" else "Done", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onDone) { Text(t("完成", "Done"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             }
         }
     )
@@ -1165,14 +1165,14 @@ internal fun KitchenAddOnDialog(textZh: String, textEn: String, onPrint: (String
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(16.dp),
-        title = { Text(if (lang == "zh") "厨房追加单" else "Kitchen Add-On", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("厨房追加单", "Kitchen Add-On"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text("中文版") })
-                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text("英文版") })
+                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text(t("中文版", "Chinese")) })
+                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text(t("英文版", "English")) })
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -1189,10 +1189,10 @@ internal fun KitchenAddOnDialog(textZh: String, textEn: String, onPrint: (String
                 OutlinedButton(onClick = { onPrint(text) }) {
                     Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (lang == "zh") "打印追加单" else "Print", color = DiningColors.Primary)
+                    Text(t("打印追加单", "Print Add-On"), color = DiningColors.Primary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onDone) { Text(if (lang == "zh") "完成" else "Done", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onDone) { Text(t("完成", "Done"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             }
         }
     )
@@ -1300,7 +1300,7 @@ fun ReceiptDialog(data: ReceiptData, onPrint: () -> Unit, onDone: () -> Unit) {
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(16.dp),
-        title = { Text("收据", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("收据", "Receipt"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
@@ -1319,10 +1319,10 @@ fun ReceiptDialog(data: ReceiptData, onPrint: () -> Unit, onDone: () -> Unit) {
                 OutlinedButton(onClick = onPrint) {
                     Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("打印收据", color = DiningColors.Primary)
+                    Text(t("打印收据", "Print Receipt"), color = DiningColors.Primary)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                TextButton(onClick = onDone) { Text(t("完成", "Done"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             }
         }
     )

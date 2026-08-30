@@ -631,12 +631,12 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Box(modifier = Modifier.fillMaxWidth()) {
             if (!isStaff) {
-                TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+                TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
             }
             Row(modifier = Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("报表统计", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                Text(t("报表统计", "Report Statistics"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -652,7 +652,7 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(8.dp))
         Button(onClick = { load() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
-            Text("查询", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            Text(t("查询", "Search"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -666,7 +666,7 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
             ) {
                 Icon(Icons.Outlined.Print, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("打印月账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(t("打印月账", "Print Monthly Report"), color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
             if (!isStaff) {
                 OutlinedButton(
@@ -676,7 +676,7 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
                 ) {
                     Icon(Icons.Outlined.Inventory2, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("进货日总汇单", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(t("进货日总汇单", "Daily Purchase Summary"), color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -697,11 +697,11 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = DiningColors.Primary)) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    ReportRow("总收入", "RM %.2f".format(totalSales))
-                    ReportRow("进货成本", "RM %.2f".format(totalCost))
-                    ReportRow("业务开销", "RM %.2f".format(totalExpense))
+                    ReportRow(t("总收入", "Total Sales"), "RM %.2f".format(totalSales))
+                    ReportRow(t("进货成本", "Purchase Cost"), "RM %.2f".format(totalCost))
+                    ReportRow(t("业务开销", "Expenses"), "RM %.2f".format(totalExpense))
                     HorizontalDivider(color = DiningColors.Surface.copy(alpha = 0.3f))
-                    ReportRow("毛利", "RM %.2f".format(totalProfit))
+                    ReportRow(t("毛利", "Gross Profit"), "RM %.2f".format(totalProfit))
                 }
             }
 
@@ -713,8 +713,8 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
                         colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(r.period_date, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                            Text("营收 RM%.2f · 成本 RM%.2f · 开销 RM%.2f".format(r.total_sales_myr, r.total_stock_cost_myr, r.total_expense_myr), fontSize = 12.sp, color = DiningColors.TextSecondary)
-                            Text("毛利 RM%.2f".format(r.gross_profit_myr), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                            Text(if (LanguageManager.isEnglish) "Sales RM%.2f · Cost RM%.2f · Expense RM%.2f".format(r.total_sales_myr, r.total_stock_cost_myr, r.total_expense_myr) else "营收 RM%.2f · 成本 RM%.2f · 开销 RM%.2f".format(r.total_sales_myr, r.total_stock_cost_myr, r.total_expense_myr), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                            Text((if (LanguageManager.isEnglish) "Gross Profit " else "毛利 ") + "RM%.2f".format(r.gross_profit_myr), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
                         }
                     }
                 }
@@ -764,13 +764,13 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
             onDismissRequest = { showPrintDialog = false },
             containerColor = DiningColors.Surface,
             shape = RoundedCornerShape(20.dp),
-            title = { Text(if (printMode == "daily") "打印日账" else "打印月账", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+            title = { Text(if (printMode == "daily") t("打印日账", "Print Daily Report") else t("打印月账", "Print Monthly Report"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("选择版本", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Text(t("选择版本", "Select Version"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(selected = printLang == "zh", onClick = { printLang = "zh" }, label = { Text("中文版") })
-                        FilterChip(selected = printLang == "en", onClick = { printLang = "en" }, label = { Text("英文版") })
+                        FilterChip(selected = printLang == "zh", onClick = { printLang = "zh" }, label = { Text(t("中文版", "Chinese")) })
+                        FilterChip(selected = printLang == "en", onClick = { printLang = "en" }, label = { Text(t("英文版", "English")) })
                     }
                 }
             },
@@ -788,12 +788,12 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
                         }
                         showPrintDialog = false
                     }
-                }) { Text("打印", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                }) { Text(t("打印", "Print"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { showPrintDialog = false }) { Text("取消", color = DiningColors.TextMuted) }
-                    TextButton(onClick = { showPrintDialog = false }) { Text("完成", color = DiningColors.Primary) }
+                    TextButton(onClick = { showPrintDialog = false }) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) }
+                    TextButton(onClick = { showPrintDialog = false }) { Text(t("完成", "Done"), color = DiningColors.Primary) }
                 }
             }
         )
@@ -830,7 +830,7 @@ private fun PurchaseSummaryDialog(date: String, onPrint: (String) -> Unit, onDon
             runCatching { SupabaseClient.fetchDailyPurchaseSummary(date) }
                 .onSuccess { report ->
                     if (report == null) {
-                        error = "进货汇总加载失败（无数据或权限不足）"
+                        error = t("进货汇总加载失败（无数据或权限不足）", "Purchase summary load failed")
                     } else {
                         reportText = buildDailyPurchaseSummary(report)
                     }
@@ -846,7 +846,7 @@ private fun PurchaseSummaryDialog(date: String, onPrint: (String) -> Unit, onDon
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("进货日总汇单 · ${fmtMyDate(date)}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("进货日总汇单", "Daily Purchase Summary") + " · ${fmtMyDate(date)}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 when {
@@ -856,7 +856,7 @@ private fun PurchaseSummaryDialog(date: String, onPrint: (String) -> Unit, onDon
                     error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                         Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp, textAlign = TextAlign.Center)
                         Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { load() }) { Text("重试", color = DiningColors.Primary) }
+                        TextButton(onClick = { load() }) { Text(t("重试", "Retry"), color = DiningColors.Primary) }
                     }
                     else -> Text(
                         reportText ?: "",
@@ -871,11 +871,11 @@ private fun PurchaseSummaryDialog(date: String, onPrint: (String) -> Unit, onDon
         },
         confirmButton = {
             TextButton(onClick = { reportText?.let { onPrint(it) } }) {
-                Text("打印", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+                Text(t("打印", "Print"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary) }
+            TextButton(onClick = onDone) { Text(t("完成", "Done"), color = DiningColors.Primary) }
         }
     )
 }
@@ -894,7 +894,7 @@ private fun DailyPrintDialog(date: String, onPrint: (String) -> Unit, onDone: ()
             runCatching { SupabaseClient.fetchDailyReport(date, date) }
                 .onSuccess { report ->
                     if (report == null) {
-                        error = "报表加载失败（无数据或权限不足）"
+                        error = t("报表加载失败（无数据或权限不足）", "Report load failed")
                     } else {
                         reportText = buildReportText(false, lang == "en", report, date)
                     }
@@ -910,12 +910,12 @@ private fun DailyPrintDialog(date: String, onPrint: (String) -> Unit, onDone: ()
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("打印日账 · ${fmtMyDate(date)}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("打印日账", "Print Daily Report") + " · ${fmtMyDate(date)}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text("中文版") })
-                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text("英文版") })
+                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text(t("中文版", "Chinese")) })
+                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text(t("英文版", "English")) })
                 }
                 when {
                     loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -924,7 +924,7 @@ private fun DailyPrintDialog(date: String, onPrint: (String) -> Unit, onDone: ()
                     error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                         Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp, textAlign = TextAlign.Center)
                         Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = { load() }) { Text("重试", color = DiningColors.Primary) }
+                        TextButton(onClick = { load() }) { Text(t("重试", "Retry"), color = DiningColors.Primary) }
                     }
                     else -> Text(
                         reportText ?: "",
@@ -939,11 +939,11 @@ private fun DailyPrintDialog(date: String, onPrint: (String) -> Unit, onDone: ()
         },
         confirmButton = {
             TextButton(onClick = { reportText?.let { onPrint(it) } }) {
-                Text("打印日账", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+                Text(t("打印日账", "Print Daily Report"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDone) { Text("完成", color = DiningColors.Primary) }
+            TextButton(onClick = onDone) { Text(t("完成", "Done"), color = DiningColors.Primary) }
         }
     )
 }
