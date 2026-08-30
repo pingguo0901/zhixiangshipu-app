@@ -29,7 +29,9 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.FridgeLog
 import stellarelite.zxsp.network.MeatProcessLog
 import stellarelite.zxsp.network.StockInLog
@@ -363,16 +365,16 @@ fun FridgeScreen(onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
             Row(modifier = Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.AcUnit, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("冰箱操作", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                Text(t("冰箱操作", "Fridge Operation"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("选择物料", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+        Text(t("选择物料", "Select Material"), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -382,7 +384,7 @@ fun FridgeScreen(onBack: () -> Unit) {
                 FilterChip(
                     selected = itemId == item.id,
                     onClick = { itemId = item.id },
-                    label = { Text("${item.item_name}（库存 ${item.stock_qty} ${item.unit}）") }
+                    label = { Text("${item.item_name}（${if (LanguageManager.isEnglish) "Stock" else "库存"} ${item.stock_qty} ${item.unit}）") }
                 )
             }
         }
@@ -390,19 +392,19 @@ fun FridgeScreen(onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         OutlinedTextField(
             value = takeQty, onValueChange = { takeQty = it },
-            label = { Text("取出数量 (G)") }, singleLine = true,
+            label = { Text(t("取出数量 (G)", "Take Out Qty (G)")) }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = returnQty, onValueChange = { returnQty = it },
-            label = { Text("放回数量 (G)（没有则填 0）") }, singleLine = true,
+            label = { Text(t("放回数量 (G)（没有则填 0）", "Return Qty (G) (0 if none)")) }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text("实际消耗：$used G（入库自动换算 KG）", fontSize = 13.sp, color = DiningColors.TextSecondary)
+        Text(t("实际消耗：", "Actual Used: ") + "$used G" + t("（入库自动换算 KG）", " (auto-converted to KG)"), fontSize = 13.sp, color = DiningColors.TextSecondary)
 
         if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
 
@@ -422,7 +424,7 @@ fun FridgeScreen(onBack: () -> Unit) {
                     )
                     val r = SupabaseClient.insertFridgeLog(log)
                     saving = false
-                    if (r != null) onBack() else error = "保存失败"
+                    if (r != null) onBack() else error = t("保存失败", "Save failed")
                 }
             },
             enabled = itemId != null && take > 0 && !saving,
@@ -433,7 +435,7 @@ fun FridgeScreen(onBack: () -> Unit) {
                 disabledContainerColor = DiningColors.TextMuted.copy(alpha = 0.3f)
             )
         ) {
-            Text(if (saving) "保存中…" else "保存日志", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            Text(if (saving) t("保存中…", "Saving…") else t("保存日志", "Save Log"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
         }
     }
 }

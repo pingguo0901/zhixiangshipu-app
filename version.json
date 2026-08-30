@@ -1,7 +1,7 @@
 {
-  "versionCode": 127,
-  "versionName": "1.2.11",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.11/zhixiangshipu-app.apk",
-  "changelog": "- 仓库库存页面全英文（列表、弹窗、进货记录）",
+  "versionCode": 128,
+  "versionName": "1.2.12",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.12/zhixiangshipu-app.apk",
+  "changelog": "- 冰箱操作页面全英文",
   "buildDate": "2026-08-31"
 }
