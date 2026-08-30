@@ -1,7 +1,7 @@
 {
-  "versionCode": 110,
-  "versionName": "1.1.94",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.94/zhixiangshipu-app.apk",
-  "changelog": "- 修复厨具电器英文名过长导致打印换行（改短为 Kitchenware & Appliances）",
+  "versionCode": 111,
+  "versionName": "1.1.95",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.95/zhixiangshipu-app.apk",
+  "changelog": "- 日账英文版进货明细改为「物品+KG+数量」格式\n- 打印底部换行喂纸增加到6行，避免底部被切纸刀截断",
   "buildDate": "2026-08-30"
 }

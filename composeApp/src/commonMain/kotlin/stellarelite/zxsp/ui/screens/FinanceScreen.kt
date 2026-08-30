@@ -1005,7 +1005,7 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
             val q = o["qty"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
             val unit = o["unit"]?.jsonPrimitive?.content ?: "KG"
             val qtyStr = if (q == q.toLong().toDouble()) q.toLong().toString() else "%.2f".format(q)
-            r.add(row("${if (isEnglish) expenseLabelEn(name) else name}:", qtyStr, unit))
+            r.add(row("${if (isEnglish) expenseLabelEn(name) else name}:", unit, qtyStr))
         }
     } else {
         r.add(row(if (isEnglish) "(none)" else "（无）", "", ""))
@@ -1037,7 +1037,7 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
     r.add(ReceiptFormatter.padRight((if (isEnglish) "Operator: " else "操作员: ") + SessionManager.staffName, W))
     r.add(ReceiptFormatter.padRight((if (isEnglish) "Print Time: " else "打印时间: ") + fmtMyTime(currentIso()), W))
     r.add("=".repeat(W))
-    r.add("\n\n\n")
+    r.add("\n\n\n\n\n\n")
 
     return r.joinToString("\n")
 }
