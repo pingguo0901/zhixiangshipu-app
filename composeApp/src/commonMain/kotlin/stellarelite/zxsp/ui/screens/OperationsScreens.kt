@@ -466,15 +466,15 @@ fun MeatProcessScreen(onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹ 返回", color = DiningColors.Primary) }
+            TextButton(onClick = onBack) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
             Spacer(modifier = Modifier.weight(1f))
             Icon(Icons.Outlined.Restaurant, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
             Spacer(modifier = Modifier.width(6.dp))
-            Text("肉品加工", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Text(t("肉品加工", "Meat Processing"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("选择物料", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+        Text(t("选择物料", "Select Material"), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -490,17 +490,22 @@ fun MeatProcessScreen(onBack: () -> Unit) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text("加工状态", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+        Text(t("加工状态", "Processing Status"), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("raw" to "未腌制", "marinated" to "已腌制", "unskewered" to "未串好", "skewered" to "已串好").forEach { (v, l) ->
+            listOf(
+                "raw" to t("未腌制", "Not Marinated"),
+                "marinated" to t("已腌制", "Marinated"),
+                "unskewered" to t("未串好", "Not Skewered"),
+                "skewered" to t("已串好", "Skewered")
+            ).forEach { (v, l) ->
                 FilterChip(selected = status == v, onClick = { status = v }, label = { Text(l) })
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = qty, onValueChange = { qty = it },
-            label = { Text("处理数量 (G)") }, singleLine = true,
+            label = { Text(t("处理数量 (G)", "Process Qty (G)")) }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
@@ -522,7 +527,7 @@ fun MeatProcessScreen(onBack: () -> Unit) {
                     )
                     val r = SupabaseClient.insertMeatProcessLog(log)
                     saving = false
-                    if (r != null) onBack() else error = "保存失败"
+                    if (r != null) onBack() else error = t("保存失败", "Save failed")
                 }
             },
             enabled = itemId != null && processQty > 0 && !saving,
@@ -533,7 +538,7 @@ fun MeatProcessScreen(onBack: () -> Unit) {
                 disabledContainerColor = DiningColors.TextMuted.copy(alpha = 0.3f)
             )
         ) {
-            Text(if (saving) "保存中…" else "保存日志", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            Text(if (saving) t("保存中…", "Saving…") else t("保存日志", "Save Log"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
         }
     }
 }
