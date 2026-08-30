@@ -41,6 +41,7 @@ import stellarelite.zxsp.network.WarehouseItem
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.toJpegBytes
 import stellarelite.zxsp.ui.theme.DiningColors
+import stellarelite.zxsp.util.ItemNames
 
 // ============ 进货入库 ============
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -384,7 +385,7 @@ fun FridgeScreen(onBack: () -> Unit) {
                 FilterChip(
                     selected = itemId == item.id,
                     onClick = { itemId = item.id },
-                    label = { Text("${item.item_name}（${if (LanguageManager.isEnglish) "Stock" else "库存"} ${item.stock_qty} ${item.unit}）") }
+                    label = { Text("${ItemNames.display(item.item_name)}（${if (LanguageManager.isEnglish) "Stock" else "库存"} ${item.stock_qty} ${item.unit}）") }
                 )
             }
         }
@@ -484,7 +485,7 @@ fun MeatProcessScreen(onBack: () -> Unit) {
                 FilterChip(
                     selected = itemId == item.id,
                     onClick = { itemId = item.id },
-                    label = { Text(item.item_name) }
+                    label = { Text(ItemNames.display(item.item_name)) }
                 )
             }
         }

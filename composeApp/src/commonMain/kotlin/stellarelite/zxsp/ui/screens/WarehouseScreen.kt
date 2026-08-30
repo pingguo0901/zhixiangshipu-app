@@ -33,6 +33,7 @@ import stellarelite.zxsp.network.StockInLog
 import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.WarehouseItem
+import stellarelite.zxsp.util.ItemNames
 import stellarelite.zxsp.ui.theme.DiningColors
 
 private sealed class WarehouseNav {
@@ -144,7 +145,7 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text(item.item_name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                Text(ItemNames.display(item.item_name), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
                                 Text(t("预警值", "Warning") + " ${item.warning_qty} ${item.unit}", fontSize = 12.sp, color = DiningColors.TextMuted)
                             }
                             Column(horizontalAlignment = Alignment.End) {
@@ -211,7 +212,7 @@ private fun MaterialActionDialog(
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text(item.item_name, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(ItemNames.display(item.item_name), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedButton(onClick = onViewHistory, modifier = Modifier.fillMaxWidth()) {
@@ -262,7 +263,7 @@ private fun StockInHistoryDialog(item: WarehouseItem, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text(t("进货记录", "Stock-in Records") + " · ${item.item_name}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("进货记录", "Stock-in Records") + " · ${ItemNames.display(item.item_name)}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             when {
                 loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
