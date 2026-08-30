@@ -1,7 +1,7 @@
 {
-  "versionCode": 144,
-  "versionName": "1.2.28",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.28/zhixiangshipu-app.apk",
-  "changelog": "- 更多页面新增「员工操作记录」（仅老板可见，展示员工所有操作）",
+  "versionCode": 145,
+  "versionName": "1.2.29",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.29/zhixiangshipu-app.apk",
+  "changelog": "- 员工操作记录点击卡片弹窗显示操作详情（操作人/时间/修改前后数据）",
   "buildDate": "2026-08-31"
 }

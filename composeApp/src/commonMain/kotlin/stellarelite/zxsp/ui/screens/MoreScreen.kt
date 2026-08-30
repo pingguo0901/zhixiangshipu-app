@@ -5,8 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Group
@@ -20,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -28,6 +31,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import stellarelite.zxsp.data.LanguageManager
@@ -624,6 +629,7 @@ private fun StaffLogScreen(onBack: () -> Unit) {
     var logs by remember { mutableStateOf<List<AuditLog>>(emptyList()) }
     var staffMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
     var loading by remember { mutableStateOf(true) }
+    var selected by remember { mutableStateOf<AuditLog?>(null) }
 
     fun load() {
         scope.launch {
@@ -655,7 +661,7 @@ private fun StaffLogScreen(onBack: () -> Unit) {
             ) {
                 items(logs, key = { it.id }) { log ->
                     val operator = staffMap[log.operate_staff_id] ?: t("系统", "System")
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                    Card(modifier = Modifier.fillMaxWidth().clickable { selected = log }, shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -672,6 +678,50 @@ private fun StaffLogScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    selected?.let { log ->
+        val operator = staffMap[log.operate_staff_id] ?: t("系统", "System")
+        AlertDialog(
+            onDismissRequest = { selected = null },
+            containerColor = DiningColors.Surface,
+            shape = RoundedCornerShape(20.dp),
+            title = { Text(actionLabel(log.action) + " · " + tableLabel(log.table_name), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()).heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(t("操作人", "Operator") + "：" + operator, fontSize = 13.sp, color = DiningColors.TextPrimary)
+                    Text(t("时间", "Time") + "：" + formatLogTime(log.action_time ?: ""), fontSize = 13.sp, color = DiningColors.TextPrimary)
+                    Text(t("记录ID", "Record ID") + "：#" + log.record_id, fontSize = 12.sp, color = DiningColors.TextMuted)
+                    log.old_data?.let { old ->
+                        HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                        Text(t("修改前", "Before"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+                        Text(
+                            prettyJson(old),
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            lineHeight = 14.sp,
+                            color = DiningColors.TextPrimary
+                        )
+                    }
+                    log.new_data?.let { new ->
+                        HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                        Text(t("修改后", "After"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+                        Text(
+                            prettyJson(new),
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            lineHeight = 14.sp,
+                            color = DiningColors.TextPrimary
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { selected = null }) { Text(t("关闭", "Close"), color = DiningColors.Primary) } }
+        )
     }
 }
 
@@ -716,3 +766,17 @@ private fun formatLogTime(iso: String): String = runCatching {
     val dt = instant.toLocalDateTime(TimeZone.of("Asia/Kuala_Lumpur"))
     "%04d-%02d-%02d %02d:%02d".format(dt.year, dt.monthNumber, dt.dayOfMonth, dt.hour, dt.minute)
 }.getOrElse { iso.take(16).replace("T", " ") }
+
+// 将 jsonb 对象格式化为可读的多行文本
+private fun prettyJson(element: JsonElement): String {
+    return runCatching {
+        val obj = element.jsonObject
+        obj.entries.joinToString("\n") { (k, v) ->
+            val value = when (v) {
+                is JsonPrimitive -> v.content
+                else -> v.toString()
+            }
+            "$k: $value"
+        }
+    }.getOrElse { element.toString() }
+}
