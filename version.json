@@ -1,7 +1,7 @@
 {
-  "versionCode": 142,
-  "versionName": "1.2.26",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.26/zhixiangshipu-app.apk",
-  "changelog": "- 仓库库存/冰箱操作/肉品加工页面物品名称英文界面显示英文",
+  "versionCode": 143,
+  "versionName": "1.2.27",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.27/zhixiangshipu-app.apk",
+  "changelog": "- 底部五个快捷按钮英文界面显示英文",
   "buildDate": "2026-08-31"
 }

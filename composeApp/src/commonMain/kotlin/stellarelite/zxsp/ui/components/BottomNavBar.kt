@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.ui.theme.DiningColors
 
 enum class DiningTab(val label: String, val icon: ImageVector) {
@@ -29,6 +30,15 @@ enum class DiningTab(val label: String, val icon: ImageVector) {
     Warehouse("仓库", Icons.Outlined.Inventory2),
     Finance("记账", Icons.Outlined.AccountBalanceWallet),
     More("更多", Icons.Outlined.MoreHoriz)
+}
+
+// 底部标签显示文案（跟随全局语言）
+private fun tabLabel(tab: DiningTab): String = when (tab) {
+    DiningTab.Home -> t("工作台", "Dashboard")
+    DiningTab.Orders -> t("订单", "Orders")
+    DiningTab.Warehouse -> t("仓库", "Warehouse")
+    DiningTab.Finance -> t("记账", "Finance")
+    DiningTab.More -> t("更多", "More")
 }
 
 @Composable
@@ -70,13 +80,13 @@ private fun NavTabItem(
     ) {
         Icon(
             tab.icon,
-            contentDescription = tab.label,
+            contentDescription = tabLabel(tab),
             tint = if (isSelected) DiningColors.Primary else DiningColors.TextMuted,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            tab.label,
+            tabLabel(tab),
             color = if (isSelected) DiningColors.Primary else DiningColors.TextMuted,
             fontSize = 10.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
