@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.platform.AppContext
 
@@ -14,6 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         AppContext.init(applicationContext)
         SessionManager.load()
+        LanguageManager.load()
         // 蓝牙打印权限（Android 12+）
         if (Build.VERSION.SDK_INT >= 31) {
             requestPermissions(

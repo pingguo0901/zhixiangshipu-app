@@ -28,6 +28,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.SupabaseClient
@@ -75,7 +76,7 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
             error = null
             runCatching { SupabaseClient.fetchTables() }
                 .onSuccess { tables = it }
-                .onFailure { error = it.message ?: "加载失败" }
+                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
             loading = false
         }
     }
@@ -101,15 +102,15 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("工作台", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-                Text("你好，${SessionManager.staffName}", fontSize = 14.sp, color = DiningColors.TextSecondary)
+                Text(t("工作台", "Dashboard"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                Text(t("你好", "Hello") + "，" + SessionManager.staffName, fontSize = 14.sp, color = DiningColors.TextSecondary)
             }
             Button(
                 onClick = onNewOrder,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
             ) {
-                Text("＋ 新建订单", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+                Text(t("＋ 新建订单", "＋ New Order"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -123,10 +124,10 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 modifier = Modifier.fillMaxWidth().padding(20.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatItem(Icons.Outlined.Chair, "$freeCount", "空闲桌")
-                StatItem(Icons.Outlined.Restaurant, "$occupiedCount", "占用中")
-                StatItem(Icons.Outlined.TableRestaurant, "${dineInTables.size}", "总桌台")
-                StatItem(Icons.Outlined.DeliveryDining, "${takeawayTables.size}", "外卖号")
+                StatItem(Icons.Outlined.Chair, "$freeCount", t("空闲桌", "Free Tables"))
+                StatItem(Icons.Outlined.Restaurant, "$occupiedCount", t("占用中", "Occupied"))
+                StatItem(Icons.Outlined.TableRestaurant, "${dineInTables.size}", t("总桌台", "Total Tables"))
+                StatItem(Icons.Outlined.DeliveryDining, "${takeawayTables.size}", t("外卖号", "Takeaway"))
             }
         }
 
@@ -139,15 +140,15 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("⚠️ $error", color = DiningColors.Error, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { load() }) { Text("重试") }
+                    Button(onClick = { load() }) { Text(t("重试", "Retry")) }
                 }
             }
             else -> {
-                Text("堂食桌台（${dineInTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                Text(t("堂食桌台", "Dine-in Tables") + "（${dineInTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 if (dineInTables.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        Text("暂无桌台，请老板先添加", color = DiningColors.TextMuted, fontSize = 14.sp)
+                        Text(t("暂无桌台，请老板先添加", "No tables yet"), color = DiningColors.TextMuted, fontSize = 14.sp)
                     }
                 } else {
                     TableGrid(dineInTables, onTableClick)
@@ -155,11 +156,11 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text("外卖（${takeawayTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                Text(t("外卖", "Takeaway") + "（${takeawayTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 if (takeawayTables.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        Text("暂无外卖号", color = DiningColors.TextMuted, fontSize = 14.sp)
+                        Text(t("暂无外卖号", "No takeaway"), color = DiningColors.TextMuted, fontSize = 14.sp)
                     }
                 } else {
                     TableGrid(takeawayTables, onTableClick)
@@ -212,9 +213,9 @@ private fun TableBadge(table: TableList, onClick: () -> Unit) {
         else -> DiningColors.Surface
     }
     val label = when (table.table_status) {
-        "occupied" -> "占用"
-        "cleaning" -> "清理"
-        else -> "空闲"
+        "occupied" -> t("占用", "Occupied")
+        "cleaning" -> t("清理", "Cleaning")
+        else -> t("空闲", "Free")
     }
     Column(
         modifier = Modifier

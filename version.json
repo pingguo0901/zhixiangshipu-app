@@ -1,7 +1,7 @@
 {
-  "versionCode": 118,
-  "versionName": "1.2.2",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.2/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔费用项新增「老板薪资」（含英文映射 Boss Salary）",
+  "versionCode": 119,
+  "versionName": "1.2.3",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.3/zhixiangshipu-app.apk",
+  "changelog": "- 工作台页面全英文（新增中英文语言系统）",
   "buildDate": "2026-08-31"
 }
