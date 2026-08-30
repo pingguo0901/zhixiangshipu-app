@@ -512,7 +512,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 TextButton(enabled = !deleting, onClick = {
                     scope.launch {
                         deleting = true
-                        val ok = SupabaseClient.deleteOrder(currentOrder.id, currentOrder.order_no)
+                        val ok = SupabaseClient.deleteOrder(currentOrder.id, currentOrder.order_no, currentOrder.table_id)
                         deleting = false
                         showDeleteConfirm = false
                         if (ok) onBack() else {

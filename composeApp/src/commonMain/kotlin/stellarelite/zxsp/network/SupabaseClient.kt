@@ -326,15 +326,23 @@ object SupabaseClient {
         return resp.status.isSuccess()
     }
 
-    // 删除订单（含关联的收据明细、收据主表、付款记录）
-    suspend fun deleteOrder(orderId: Long, orderNo: String): Boolean {
+    // 删除订单（含关联的收据明细、收据主表、付款记录，并释放桌台）
+    suspend fun deleteOrder(orderId: Long, orderNo: String, tableId: Long? = null): Boolean {
         val receiptNo = fetchReceiptByOrderNo(orderNo)?.receipt_no
         if (!receiptNo.isNullOrBlank()) {
             deleteBy("receipt_item", "receipt_no", receiptNo)
             deleteBy("receipt_master", "receipt_no", receiptNo)
         }
         deleteBy("payment_records", "order_id", orderId.toString())
-        return delete("customer_orders", orderId)
+        val ok = delete("customer_orders", orderId)
+        // 删除成功后，若该桌台已无其它未结订单，则释放为空闲
+        if (ok && tableId != null) {
+            val remaining = fetchOrders().count { it.table_id == tableId && it.payment_status == "unpaid" }
+            if (remaining == 0) {
+                setTableStatus(tableId, "free")
+            }
+        }
+        return ok
     }
 
     // ============ 报表视图（仅 admin，走 RPC 函数） ============

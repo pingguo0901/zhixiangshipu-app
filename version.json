@@ -1,7 +1,7 @@
 {
-  "versionCode": 116,
-  "versionName": "1.2.0",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.0/zhixiangshipu-app.apk",
-  "changelog": "- 打印日账（中/英）恢复为只显示进货成本总汇，不展示进货明细",
-  "buildDate": "2026-08-30"
+  "versionCode": 117,
+  "versionName": "1.2.1",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.1/zhixiangshipu-app.apk",
+  "changelog": "- 修复删除订单后桌台仍被占用的问题（删除时同步释放桌台）",
+  "buildDate": "2026-08-31"
 }
