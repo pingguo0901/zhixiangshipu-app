@@ -1,7 +1,7 @@
 {
-  "versionCode": 136,
-  "versionName": "1.2.20",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.20/zhixiangshipu-app.apk",
-  "changelog": "- 结账/加单页面全英文（结账弹窗、编辑订单、桌台订单、加单）",
+  "versionCode": 137,
+  "versionName": "1.2.21",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.21/zhixiangshipu-app.apk",
+  "changelog": "- 报表统计入口按钮允许 Staff 角色点击进入",
   "buildDate": "2026-08-31"
 }

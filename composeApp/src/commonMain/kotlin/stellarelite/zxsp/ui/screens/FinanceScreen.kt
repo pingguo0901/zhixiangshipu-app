@@ -108,12 +108,10 @@ private fun ExpenseListView(onReport: () -> Unit) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(t("开销记账", "Expense Records"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            if (SessionManager.isAdmin) {
-                TextButton(onClick = onReport) {
-                    Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(t("报表", "Reports"), color = DiningColors.Primary)
-                }
+            TextButton(onClick = onReport) {
+                Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(t("报表", "Reports"), color = DiningColors.Primary)
             }
             Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
