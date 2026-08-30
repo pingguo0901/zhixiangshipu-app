@@ -60,7 +60,8 @@ private sealed class FinanceNav {
 
 @Composable
 fun FinanceScreen() {
-    var nav by remember { mutableStateOf<FinanceNav>(FinanceNav.Expense) }
+    // 员工角色直接进入报表统计页面，老板进入开销记账页面
+    var nav by remember { mutableStateOf<FinanceNav>(if (SessionManager.isAdmin) FinanceNav.Expense else FinanceNav.Report) }
     // 进入页面时刷新角色，修复旧会话 role 缓存导致 Admin 按钮消失
     LaunchedEffect(Unit) {
         val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
@@ -71,7 +72,7 @@ fun FinanceScreen() {
     }
     when (val n = nav) {
         is FinanceNav.Expense -> ExpenseListView(onReport = { nav = FinanceNav.Report })
-        is FinanceNav.Report -> ReportScreen(onBack = { nav = FinanceNav.Expense })
+        is FinanceNav.Report -> ReportScreen(isStaff = !SessionManager.isAdmin, onBack = { nav = FinanceNav.Expense })
     }
 }
 
@@ -108,10 +109,12 @@ private fun ExpenseListView(onReport: () -> Unit) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(t("开销记账", "Expense Records"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = onReport) {
-                Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(t("报表", "Reports"), color = DiningColors.Primary)
+            if (SessionManager.isAdmin) {
+                TextButton(onClick = onReport) {
+                    Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(t("报表", "Reports"), color = DiningColors.Primary)
+                }
             }
             Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
@@ -600,7 +603,7 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
 // ============ 报表（仅老板） ============
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ReportScreen(onBack: () -> Unit) {
+private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var start by remember { mutableStateOf(todayDate()) }
     var end by remember { mutableStateOf(todayDate()) }
@@ -627,7 +630,9 @@ private fun ReportScreen(onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            if (!isStaff) {
+                TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
+            }
             Row(modifier = Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(22.dp))
                 Spacer(modifier = Modifier.width(6.dp))
@@ -652,7 +657,7 @@ private fun ReportScreen(onBack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 打印月账 / 进货日总汇单
+        // 打印月账 / 进货日总汇单（进货日总汇单仅老板可见）
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
                 onClick = { printMode = "monthly"; showPrintDialog = true },
@@ -663,14 +668,16 @@ private fun ReportScreen(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("打印月账", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
-            OutlinedButton(
-                onClick = { showPurchaseDialog = true },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Outlined.Inventory2, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("进货日总汇单", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            if (!isStaff) {
+                OutlinedButton(
+                    onClick = { showPurchaseDialog = true },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Outlined.Inventory2, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("进货日总汇单", color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
 
