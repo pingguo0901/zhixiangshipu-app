@@ -24,7 +24,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.Staff
 import stellarelite.zxsp.network.Supplier
@@ -86,6 +88,25 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
         }
 
         Spacer(modifier = Modifier.weight(1f))
+
+        // 语言切换
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { LanguageManager.setLanguage("zh") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("中文", color = if (!LanguageManager.isEnglish) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold)
+            }
+            OutlinedButton(
+                onClick = { LanguageManager.setLanguage("en") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("English", color = if (LanguageManager.isEnglish) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 退出登录
         Button(

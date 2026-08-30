@@ -1,7 +1,7 @@
 {
-  "versionCode": 131,
-  "versionName": "1.2.15",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.15/zhixiangshipu-app.apk",
-  "changelog": "- 记一笔页面全英文（物品、重量、批发商、金额、付款方式、收据）",
+  "versionCode": 132,
+  "versionName": "1.2.16",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.16/zhixiangshipu-app.apk",
+  "changelog": "- 更多页面新增语言切换按钮（中文/English）",
   "buildDate": "2026-08-31"
 }
