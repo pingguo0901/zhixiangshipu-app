@@ -1,7 +1,7 @@
 {
-  "versionCode": 122,
-  "versionName": "1.2.6",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.6/zhixiangshipu-app.apk",
-  "changelog": "- 选菜改2排4方形按钮 + 弹窗（三口味各自数量+订单详情+确认下单）\n- 外卖订单自动+RM1外带费（一单只收一次）\n- 确认下单自动打印厨房出单",
+  "versionCode": 123,
+  "versionName": "1.2.7",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.7/zhixiangshipu-app.apk",
+  "changelog": "- 备注输入框移到菜品弹窗里（口味数量选择弹窗内）",
   "buildDate": "2026-08-31"
 }

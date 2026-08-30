@@ -41,7 +41,6 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     var isTakeaway by remember { mutableStateOf(false) }
     var customerName by remember { mutableStateOf("") }
     var customerPhone by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
     var selectedItem by remember { mutableStateOf<MenuItem?>(null) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -182,16 +181,6 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     )
                 }
 
-                // 备注
-                item {
-                    OutlinedTextField(
-                        value = notes,
-                        onValueChange = { notes = it },
-                        label = { Text("备注（少辣、不要葱等）") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
                 // 选择菜品：2排4个方形按钮
                 item {
                     Text("选择菜品", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
@@ -212,7 +201,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
             item = item,
             isTakeaway = isTakeaway,
             saving = saving,
-            onConfirm = { noSpicy, spicy, extra ->
+            onConfirm = { noSpicy, spicy, extra, note ->
                 scope.launch {
                     saving = true
                     error = null
@@ -226,7 +215,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                         customer_phone = customerPhone.trim().ifBlank { null },
                         order_items = itemsJson,
                         total_amount_myr = totalAmount,
-                        notes = notes.trim().ifBlank { null },
+                        notes = note.trim().ifBlank { null },
                         created_by_staff_id = SupabaseClient.currentStaffId(),
                         order_datetime = currentIso()
                     )
@@ -326,12 +315,13 @@ private fun MenuItemOrderDialog(
     item: MenuItem,
     isTakeaway: Boolean,
     saving: Boolean,
-    onConfirm: (noSpicy: Int, spicy: Int, extra: Int) -> Unit,
+    onConfirm: (noSpicy: Int, spicy: Int, extra: Int, note: String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var qtyNoSpicy by remember { mutableStateOf(0) }
     var qtySpicy by remember { mutableStateOf(0) }
     var qtyExtra by remember { mutableStateOf(0) }
+    var note by remember { mutableStateOf("") }
 
     val totalQty = qtyNoSpicy + qtySpicy + qtyExtra
     val subTotal = item.sell_price_myr * totalQty
@@ -354,6 +344,14 @@ private fun MenuItemOrderDialog(
                 FlavorQtyRow("香辣", qtySpicy, { qtySpicy = it })
                 FlavorQtyRow("加辣", qtyExtra, { qtyExtra = it })
 
+                // 备注
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("备注（少辣、不要葱等）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 // 订单详情（让员工确认）
                 if (totalQty > 0) {
                     HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
@@ -370,7 +368,7 @@ private fun MenuItemOrderDialog(
         confirmButton = {
             TextButton(
                 enabled = totalQty > 0 && !saving,
-                onClick = { onConfirm(qtyNoSpicy, qtySpicy, qtyExtra) }
+                onClick = { onConfirm(qtyNoSpicy, qtySpicy, qtyExtra, note) }
             ) {
                 Text(
                     if (saving) "下单中…" else "确认下单 · RM%.2f".format(total),
