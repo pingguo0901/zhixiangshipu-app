@@ -22,6 +22,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.SupabaseClient
@@ -74,10 +75,10 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Text("‹ 返回", color = DiningColors.Primary)
+                Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary)
             }
             Text(
-                "新建订单",
+                t("新建订单", "New Order"),
                 modifier = Modifier.align(Alignment.Center),
                 fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary
             )
@@ -95,18 +96,18 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
             ) {
                 // 堂食/外卖
                 item {
-                    Text("用餐方式", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Text(t("用餐方式", "Dining Mode"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = !isTakeaway,
                             onClick = { isTakeaway = false; tableId = dineInTables.firstOrNull()?.id },
-                            label = { Text("堂食") }
+                            label = { Text(t("堂食", "Dine-in")) }
                         )
                         FilterChip(
                             selected = isTakeaway,
                             onClick = { isTakeaway = true; tableId = takeawayTables.firstOrNull()?.id },
-                            label = { Text("外卖") }
+                            label = { Text(t("外卖", "Takeaway")) }
                         )
                     }
                 }
@@ -114,10 +115,10 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                 // 桌台选择（堂食）
                 if (!isTakeaway) {
                     item {
-                        Text("选择桌台", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                        Text(t("选择桌台", "Select Table"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                         Spacer(modifier = Modifier.height(8.dp))
                         if (dineInTables.isEmpty()) {
-                            Text("暂无空闲桌台", fontSize = 13.sp, color = DiningColors.TextMuted)
+                            Text(t("暂无空闲桌台", "No free tables"), fontSize = 13.sp, color = DiningColors.TextMuted)
                         } else {
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
@@ -128,7 +129,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                                     FilterChip(
                                         selected = tableId == t.id,
                                         onClick = { tableId = t.id },
-                                        label = { Text(t.table_no) }
+                                        label = { Text(displayTableNo(t.table_no)) }
                                     )
                                 }
                             }
@@ -139,10 +140,10 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                 // 外卖号选择（外卖，自动分配可手动改）
                 if (isTakeaway) {
                     item {
-                        Text("外卖号（自动分配，可手动改）", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                        Text(t("外卖号（自动分配，可手动改）", "Takeaway No. (auto-assigned)"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                         Spacer(modifier = Modifier.height(8.dp))
                         if (takeawayTables.isEmpty()) {
-                            Text("暂无空闲外卖号", fontSize = 13.sp, color = DiningColors.TextMuted)
+                            Text(t("暂无空闲外卖号", "No free takeaway no."), fontSize = 13.sp, color = DiningColors.TextMuted)
                         } else {
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
@@ -153,7 +154,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                                     FilterChip(
                                         selected = tableId == t.id,
                                         onClick = { tableId = t.id },
-                                        label = { Text(t.table_no) }
+                                        label = { Text(displayTableNo(t.table_no)) }
                                     )
                                 }
                             }
@@ -166,7 +167,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     OutlinedTextField(
                         value = customerName,
                         onValueChange = { customerName = it },
-                        label = { Text("顾客姓名（可选）") },
+                        label = { Text(t("顾客姓名（可选）", "Customer Name (optional)")) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -174,7 +175,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     OutlinedTextField(
                         value = customerPhone,
                         onValueChange = { customerPhone = it },
-                        label = { Text("顾客电话（可选）") },
+                        label = { Text(t("顾客电话（可选）", "Customer Phone (optional)")) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.fillMaxWidth()
@@ -183,7 +184,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
 
                 // 选择菜品：2排4个方形按钮
                 item {
-                    Text("选择菜品", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Text(t("选择菜品", "Select Items"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     MenuGrid(menuItems, onSelect = { selectedItem = it })
                 }
@@ -254,7 +255,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                         printReceiptText(kitchenText)
                         onBack()
                     } else {
-                        error = "下单失败：" + (SupabaseClient.lastError ?: "")
+                        error = t("下单失败", "Order failed") + "：" + (SupabaseClient.lastError ?: "")
                     }
                 }
             },
@@ -265,6 +266,24 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
 
 private val FLAVOR_OPTIONS = listOf("不辣", "香辣", "加辣")
 private val FLAVOR_EN = mapOf("不辣" to "No Spicy", "香辣" to "Spicy", "加辣" to "Spicy+")
+
+// 口味标签显示（英文界面转英文）
+private fun flavorLabel(flavor: String): String =
+    if (LanguageManager.isEnglish) FLAVOR_EN[flavor] ?: flavor else flavor
+
+// 菜品名显示（英文界面用 name_en）
+private fun menuName(item: MenuItem): String =
+    if (LanguageManager.isEnglish) item.name_en?.takeIf { it.isNotBlank() } ?: item.item_name else item.item_name
+
+// 单位显示（英文界面转英文）
+private fun unitLabel(unit: String): String =
+    if (LanguageManager.isEnglish) when (unit) {
+        "串" -> "pc"; "份" -> "Serving"; "瓶" -> "Bottle"; else -> unit
+    } else unit
+
+// 桌台号显示：英文界面「外卖XX」转「TA-XX」
+private fun displayTableNo(tableNo: String): String =
+    if (LanguageManager.isEnglish && tableNo.startsWith("外卖")) "TA-" + tableNo.removePrefix("外卖") else tableNo
 
 // 2排4个方形按钮（最多8格，多余的先空着）
 @Composable
@@ -303,7 +322,7 @@ private fun MenuGridButton(item: MenuItem, onClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(item.item_name, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+        Text(menuName(item), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
         Spacer(modifier = Modifier.height(4.dp))
         Text("RM%.2f".format(item.sell_price_myr), fontSize = 12.sp, color = DiningColors.Primary)
     }
@@ -334,34 +353,34 @@ private fun MenuItemOrderDialog(
         shape = RoundedCornerShape(20.dp),
         title = {
             Column {
-                Text(item.item_name, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                Text("RM%.2f/${item.unit}".format(item.sell_price_myr), fontSize = 13.sp, color = DiningColors.TextMuted)
+                Text(menuName(item), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                Text("RM%.2f/${unitLabel(item.unit)}".format(item.sell_price_myr), fontSize = 13.sp, color = DiningColors.TextMuted)
             }
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                FlavorQtyRow("不辣", qtyNoSpicy, { qtyNoSpicy = it })
-                FlavorQtyRow("香辣", qtySpicy, { qtySpicy = it })
-                FlavorQtyRow("加辣", qtyExtra, { qtyExtra = it })
+                FlavorQtyRow(flavorLabel("不辣"), qtyNoSpicy, { qtyNoSpicy = it })
+                FlavorQtyRow(flavorLabel("香辣"), qtySpicy, { qtySpicy = it })
+                FlavorQtyRow(flavorLabel("加辣"), qtyExtra, { qtyExtra = it })
 
                 // 备注
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("备注（少辣、不要葱等）") },
+                    label = { Text(t("备注（少辣、不要葱等）", "Note (less spicy, no scallion)")) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 // 订单详情（让员工确认）
                 if (totalQty > 0) {
                     HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
-                    Text("订单详情", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                    if (qtyNoSpicy > 0) Text("不辣 × $qtyNoSpicy", fontSize = 13.sp, color = DiningColors.TextSecondary)
-                    if (qtySpicy > 0) Text("香辣 × $qtySpicy", fontSize = 13.sp, color = DiningColors.TextSecondary)
-                    if (qtyExtra > 0) Text("加辣 × $qtyExtra", fontSize = 13.sp, color = DiningColors.TextSecondary)
-                    if (isTakeaway) Text("外带费 +RM1.00", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    Text(t("订单详情", "Order Details"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    if (qtyNoSpicy > 0) Text("${flavorLabel("不辣")} × $qtyNoSpicy", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    if (qtySpicy > 0) Text("${flavorLabel("香辣")} × $qtySpicy", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    if (qtyExtra > 0) Text("${flavorLabel("加辣")} × $qtyExtra", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    if (isTakeaway) Text(t("外带费", "Takeaway Fee") + " +RM1.00", fontSize = 13.sp, color = DiningColors.TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("合计 RM%.2f".format(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                    Text(t("合计", "Total") + " RM%.2f".format(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
                 }
             }
         },
@@ -371,14 +390,14 @@ private fun MenuItemOrderDialog(
                 onClick = { onConfirm(qtyNoSpicy, qtySpicy, qtyExtra, note) }
             ) {
                 Text(
-                    if (saving) "下单中…" else "确认下单 · RM%.2f".format(total),
+                    if (saving) t("下单中…", "Placing…") else t("确认下单", "Place Order") + " · RM%.2f".format(total),
                     color = if (totalQty > 0) DiningColors.Primary else DiningColors.TextMuted,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+            TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) }
         }
     )
 }
