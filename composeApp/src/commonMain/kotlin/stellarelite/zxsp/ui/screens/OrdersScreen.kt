@@ -38,7 +38,9 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.compose.resources.painterResource
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.generated.resources.*
 import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.MenuItem
@@ -90,7 +92,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
             error = null
             runCatching { SupabaseClient.fetchOrders() }
                 .onSuccess { orders = it }
-                .onFailure { error = it.message ?: "加载失败" }
+                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
             runCatching { SupabaseClient.fetchTables() }
                 .onSuccess { tableMap = it.associate { t -> t.id to t.table_no } }
             loading = false
@@ -113,12 +115,12 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
         ) {
             Icon(Icons.Outlined.ReceiptLong, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("订单管理", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Text(t("订单管理", "Order Management"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { load() }) { Icon(Icons.Outlined.Refresh, contentDescription = "刷新", tint = DiningColors.Primary) }
+            IconButton(onClick = { load() }) { Icon(Icons.Outlined.Refresh, contentDescription = t("刷新", "Refresh"), tint = DiningColors.Primary) }
             Button(onClick = onNew, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
-                Text("＋ 新建", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+                Text(t("＋ 新建", "＋ New"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -127,9 +129,9 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            FilterChip(selected = filter == "all", onClick = { filter = "all" }, label = { Text("全部") })
-            FilterChip(selected = filter == "paid", onClick = { filter = "paid" }, label = { Text("已付款") })
-            FilterChip(selected = filter == "unpaid", onClick = { filter = "unpaid" }, label = { Text("未付款") })
+            FilterChip(selected = filter == "all", onClick = { filter = "all" }, label = { Text(t("全部", "All")) })
+            FilterChip(selected = filter == "paid", onClick = { filter = "paid" }, label = { Text(t("已付款", "Paid")) })
+            FilterChip(selected = filter == "unpaid", onClick = { filter = "unpaid" }, label = { Text(t("未付款", "Unpaid")) })
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -142,11 +144,11 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("⚠️ $error", color = DiningColors.Error, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { load() }) { Text("重试") }
+                    Button(onClick = { load() }) { Text(t("重试", "Retry")) }
                 }
             }
             filtered.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("暂无订单", color = DiningColors.TextMuted, fontSize = 14.sp)
+                Text(t("暂无订单", "No orders"), color = DiningColors.TextMuted, fontSize = 14.sp)
             }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -154,7 +156,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 grouped.forEach { (date, list) ->
-                    val dateLabel = if (date.isBlank()) "未标注日期" else {
+                    val dateLabel = if (date.isBlank()) t("未标注日期", "No date") else {
                         val p = date.split("-")
                         if (p.size == 3) "${p[2]}/${p[1]}/${p[0]}" else date
                     }
@@ -179,9 +181,9 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
 @Composable
 private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Unit) {
     val statusLabel = when (order.payment_status) {
-        "paid" -> "已付清"
-        "partial" -> "部分付"
-        else -> "未付"
+        "paid" -> t("已付清", "Paid")
+        "partial" -> t("部分付", "Partial")
+        else -> t("未付", "Unpaid")
     }
     val statusColor = when (order.payment_status) {
         "paid" -> DiningColors.Success
@@ -189,7 +191,7 @@ private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Uni
         else -> DiningColors.Error
     }
     // 堂食/外卖判断：有桌台就是堂食，否则才是外卖
-    val orderType = if (order.table_id != null) "堂食 · 桌 ${tableNo ?: order.table_id}" else "外卖订单"
+    val orderType = if (order.table_id != null) t("堂食", "Dine-in") + " · " + t("桌", "Table") + " ${tableNo ?: order.table_id}" else t("外卖订单", "Takeaway Order")
     val orderTypeColor = if (order.table_id != null) DiningColors.Primary else DiningColors.TextSecondary
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },

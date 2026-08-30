@@ -1,7 +1,7 @@
 {
-  "versionCode": 125,
-  "versionName": "1.2.9",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.9/zhixiangshipu-app.apk",
-  "changelog": "- 新建订单页面全英文（含选菜弹窗、口味、备注、订单详情）",
+  "versionCode": 126,
+  "versionName": "1.2.10",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.10/zhixiangshipu-app.apk",
+  "changelog": "- 订单管理页面全英文（列表、筛选、状态、卡片）",
   "buildDate": "2026-08-31"
 }
