@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.RestaurantMenu
@@ -24,9 +25,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.data.t
+import stellarelite.zxsp.network.AuditLog
 import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.Staff
 import stellarelite.zxsp.network.Supplier
@@ -41,6 +48,7 @@ private sealed class MoreNav {
     object Tables : MoreNav()
     object Suppliers : MoreNav()
     object Staffs : MoreNav()
+    object StaffLogs : MoreNav()
 }
 
 @Composable
@@ -59,17 +67,19 @@ fun MoreScreen() {
             onMenu = { nav = MoreNav.MenuManage },
             onTables = { nav = MoreNav.Tables },
             onSuppliers = { nav = MoreNav.Suppliers },
-            onStaffs = { nav = MoreNav.Staffs }
+            onStaffs = { nav = MoreNav.Staffs },
+            onStaffLogs = { nav = MoreNav.StaffLogs }
         )
         is MoreNav.MenuManage -> MenuManageScreen(onBack = { nav = MoreNav.Menu })
         is MoreNav.Tables -> TableManageScreen(onBack = { nav = MoreNav.Menu })
         is MoreNav.Suppliers -> SupplierManageScreen(onBack = { nav = MoreNav.Menu })
         is MoreNav.Staffs -> StaffManageScreen(onBack = { nav = MoreNav.Menu })
+        is MoreNav.StaffLogs -> StaffLogScreen(onBack = { nav = MoreNav.Menu })
     }
 }
 
 @Composable
-private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: () -> Unit, onStaffs: () -> Unit) {
+private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: () -> Unit, onStaffs: () -> Unit, onStaffLogs: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.MoreHoriz, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
@@ -85,6 +95,7 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
             MenuEntry(Icons.Outlined.TableRestaurant, t("桌台管理", "Table Management"), t("新增/编辑桌台、修改状态", "Add/edit tables, change status")) { onTables() }
             MenuEntry(Icons.Outlined.LocalShipping, t("供应商管理", "Supplier Management"), t("批发商档案、BRN、TIN", "Supplier profiles, BRN, TIN")) { onSuppliers() }
             MenuEntry(Icons.Outlined.Group, t("员工管理", "Staff Management"), t("新增/停用员工账号", "Add/deactivate staff accounts")) { onStaffs() }
+            MenuEntry(Icons.Outlined.History, t("员工操作记录", "Staff Activity Log"), t("查看员工所有操作记录", "View all staff operation records")) { onStaffLogs() }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -605,3 +616,103 @@ private fun StaffManageScreen(onBack: () -> Unit) {
         }
     }
 }
+
+// ============ 员工操作记录（仅老板） ============
+@Composable
+private fun StaffLogScreen(onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var logs by remember { mutableStateOf<List<AuditLog>>(emptyList()) }
+    var staffMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    var loading by remember { mutableStateOf(true) }
+
+    fun load() {
+        scope.launch {
+            loading = true
+            runCatching {
+                staffMap = SupabaseClient.fetchStaffs().associate { it.id to it.staff_name }
+                logs = SupabaseClient.fetchAuditLogs()
+            }
+            loading = false
+        }
+    }
+    LaunchedEffect(Unit) { load() }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
+            Text(t("员工操作记录", "Staff Activity Log"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+        }
+
+        if (loading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = DiningColors.Primary) }
+        } else if (logs.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(t("暂无操作记录", "No activity yet"), color = DiningColors.TextMuted, fontSize = 14.sp) }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(logs, key = { it.id }) { log ->
+                    val operator = staffMap[log.operate_staff_id] ?: t("系统", "System")
+                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(operator, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary, modifier = Modifier.weight(1f))
+                                Text(formatLogTime(log.action_time ?: ""), fontSize = 11.sp, color = DiningColors.TextMuted)
+                            }
+                            Text(actionLabel(log.action) + " · " + tableLabel(log.table_name), fontSize = 12.sp, color = DiningColors.Primary)
+                            val detail = logDetail(log)
+                            if (detail.isNotBlank()) {
+                                Text(detail, fontSize = 12.sp, color = DiningColors.TextSecondary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun actionLabel(action: String): String = when (action) {
+    "insert" -> t("新增", "Create")
+    "update" -> t("修改", "Update")
+    "delete" -> t("删除", "Delete")
+    else -> action
+}
+
+private fun tableLabel(table: String): String = when (table) {
+    "customer_orders" -> t("订单", "Order")
+    "table_list" -> t("桌台", "Table")
+    "payment_records" -> t("收款", "Payment")
+    "receipt_master" -> t("收据", "Receipt")
+    "receipt_item" -> t("收据明细", "Receipt Item")
+    "menu_items" -> t("菜品", "Menu Item")
+    "warehouse_items" -> t("库存物料", "Inventory Item")
+    "stock_in_log" -> t("进货", "Stock-in")
+    "fridge_log" -> t("冰箱", "Fridge")
+    "meat_process_log" -> t("肉品加工", "Meat Process")
+    "expense_records" -> t("开销", "Expense")
+    "supplier" -> t("供应商", "Supplier")
+    "staff" -> t("员工", "Staff")
+    else -> table
+}
+
+private fun logDetail(log: AuditLog): String {
+    val obj = log.new_data?.jsonObject ?: return ""
+    val keys = listOf("order_no", "table_no", "item_name", "supplier_name", "staff_name", "receipt_no", "stock_in_no", "expense_title", "expense_type")
+    for (k in keys) {
+        val v = runCatching { obj[k]?.jsonPrimitive?.content }.getOrNull()
+        if (!v.isNullOrBlank() && v != "null") return v
+    }
+    return ""
+}
+
+private fun formatLogTime(iso: String): String = runCatching {
+    var s = iso.trim().replace(" ", "T")
+    if (s.endsWith("+00")) s = s.dropLast(3) + "Z"
+    val instant = Instant.parse(s)
+    val dt = instant.toLocalDateTime(TimeZone.of("Asia/Kuala_Lumpur"))
+    "%04d-%02d-%02d %02d:%02d".format(dt.year, dt.monthNumber, dt.dayOfMonth, dt.hour, dt.minute)
+}.getOrElse { iso.take(16).replace("T", " ") }

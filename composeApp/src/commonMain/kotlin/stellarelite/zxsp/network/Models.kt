@@ -242,8 +242,8 @@ data class AuditLog(
     val table_name: String = "",
     val record_id: Long = 0,
     val action: String = "",
-    val old_data: String? = null,
-    val new_data: String? = null,
+    val old_data: JsonElement? = null,
+    val new_data: JsonElement? = null,
     val operate_staff_id: Long = 0,
     val action_time: String? = null
 )
