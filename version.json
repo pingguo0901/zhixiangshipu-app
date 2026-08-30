@@ -1,7 +1,7 @@
 {
-  "versionCode": 129,
-  "versionName": "1.2.13",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.13/zhixiangshipu-app.apk",
-  "changelog": "- 肉品加工页面全英文",
+  "versionCode": 130,
+  "versionName": "1.2.14",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.14/zhixiangshipu-app.apk",
+  "changelog": "- 开销记账页面全英文（列表、详情弹窗）",
   "buildDate": "2026-08-31"
 }

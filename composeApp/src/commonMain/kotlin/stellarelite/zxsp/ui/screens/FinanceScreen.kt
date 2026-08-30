@@ -36,7 +36,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.DailySales
 import stellarelite.zxsp.network.ExpenseRecord
 import stellarelite.zxsp.network.StockInLog
@@ -91,7 +93,7 @@ private fun ExpenseListView(onReport: () -> Unit) {
             error = null
             runCatching { SupabaseClient.fetchExpenses() }
                 .onSuccess { expenses = it }
-                .onFailure { error = it.message ?: "加载失败" }
+                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
             loading = false
         }
     }
@@ -104,18 +106,18 @@ private fun ExpenseListView(onReport: () -> Unit) {
         ) {
             Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("开销记账", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Text(t("开销记账", "Expense Records"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
             Spacer(modifier = Modifier.weight(1f))
             if (SessionManager.isAdmin) {
                 TextButton(onClick = onReport) {
                     Icon(Icons.Outlined.Assessment, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("报表", color = DiningColors.Primary)
+                    Text(t("报表", "Reports"), color = DiningColors.Primary)
                 }
             }
             Button(onClick = { showAdd = true }, shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
-                Text("＋ 记一笔", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+                Text(t("＋ 记一笔", "＋ Add Expense"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -126,11 +128,11 @@ private fun ExpenseListView(onReport: () -> Unit) {
             error != null -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("⚠️ $error", color = DiningColors.Error, fontSize = 14.sp)
-                    Button(onClick = { load() }) { Text("重试") }
+                    Button(onClick = { load() }) { Text(t("重试", "Retry")) }
                 }
             }
             expenses.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("暂无开销记录", color = DiningColors.TextMuted, fontSize = 14.sp)
+                Text(t("暂无开销记录", "No expense records"), color = DiningColors.TextMuted, fontSize = 14.sp)
             }
             else -> {
                 val grouped = expenses.groupBy { it.transaction_datetime?.take(10) ?: "" }
@@ -148,7 +150,7 @@ private fun ExpenseListView(onReport: () -> Unit) {
                                 Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    if (date.isBlank()) "未标注日期" else fmtMyDate(date),
+                                    if (date.isBlank()) t("未标注日期", "No date") else fmtMyDate(date),
                                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
@@ -174,7 +176,7 @@ private fun ExpenseListView(onReport: () -> Unit) {
                                         Text(
                                             "${expenseTypeLabel(e.expense_type)}" +
                                                 (e.notes?.takeIf { it.isNotBlank() }?.let { " · $it" } ?: "") +
-                                                (if (e.is_personal) " · 私人" else ""),
+                                                (if (e.is_personal) (if (LanguageManager.isEnglish) " · Personal" else " · 私人") else ""),
                                             fontSize = 12.sp, color = DiningColors.TextMuted
                                         )
                                     }
@@ -212,11 +214,19 @@ private fun ExpenseListView(onReport: () -> Unit) {
 }
 
 private fun expenseTypeLabel(t: String): String = when (t) {
-    "stock" -> "进货"; "utility" -> "杂费"; "logistics" -> "运费"; "maintenance" -> "维修"; else -> t
+    "stock" -> if (LanguageManager.isEnglish) "Purchase" else "进货"
+    "utility" -> if (LanguageManager.isEnglish) "Utilities" else "杂费"
+    "logistics" -> if (LanguageManager.isEnglish) "Logistics" else "运费"
+    "maintenance" -> if (LanguageManager.isEnglish) "Maintenance" else "维修"
+    else -> t
 }
 
 private fun payMethodLabel(m: String): String = when (m) {
-    "cash" -> "现金"; "duitnow" -> "DuitNow"; "tng_ewallet" -> "TNG"; "alipay" -> "支付宝"; else -> m
+    "cash" -> if (LanguageManager.isEnglish) "Cash" else "现金"
+    "duitnow" -> "DuitNow"
+    "tng_ewallet" -> "TNG"
+    "alipay" -> if (LanguageManager.isEnglish) "Alipay" else "支付宝"
+    else -> m
 }
 
 @Composable
@@ -234,17 +244,17 @@ private fun ExpenseActionDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedButton(onClick = onViewDetail, modifier = Modifier.fillMaxWidth()) {
-                    Text("查看开销详情", color = DiningColors.Primary)
+                    Text(t("查看开销详情", "View Expense Detail"), color = DiningColors.Primary)
                 }
                 if (SessionManager.isAdmin) {
                     OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth()) {
-                        Text("编辑", color = DiningColors.Primary)
+                        Text(t("编辑", "Edit"), color = DiningColors.Primary)
                     }
                 }
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 }
 
@@ -268,30 +278,30 @@ private fun ExpenseDetailDialog(record: ExpenseRecord, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("开销详情", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("开销详情", "Expense Detail"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()).heightIn(max = 480.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                DetailLine("物品", expenseTypeLabel(record.expense_type))
-                DetailLine("批发商", record.expense_title.ifBlank { "—" })
-                record.notes?.takeIf { it.isNotBlank() }?.let { DetailLine("重量", it) }
-                DetailLine("金额", "RM%.2f".format(record.amount_myr))
-                DetailLine("付款方式", payMethodLabel(record.pay_method))
-                DetailLine("日期", fmtMyTime(record.transaction_datetime ?: ""))
+                DetailLine(t("物品", "Item"), expenseTypeLabel(record.expense_type))
+                DetailLine(t("批发商", "Supplier"), record.expense_title.ifBlank { "—" })
+                record.notes?.takeIf { it.isNotBlank() }?.let { DetailLine(t("重量", "Weight"), it) }
+                DetailLine(t("金额", "Amount"), "RM%.2f".format(record.amount_myr))
+                DetailLine(t("付款方式", "Payment Method"), payMethodLabel(record.pay_method))
+                DetailLine(t("日期", "Date"), fmtMyTime(record.transaction_datetime ?: ""))
                 if (transferBmp != null) {
-                    Text("转账收据", fontSize = 12.sp, color = DiningColors.TextSecondary)
-                    Image(transferBmp!!, contentDescription = "转账收据", modifier = Modifier.fillMaxWidth().height(140.dp))
+                    Text(t("转账收据", "Transfer Receipt"), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Image(transferBmp!!, contentDescription = t("转账收据", "Transfer Receipt"), modifier = Modifier.fillMaxWidth().height(140.dp))
                 }
                 if (supplierBmp != null) {
-                    Text("批发商收据", fontSize = 12.sp, color = DiningColors.TextSecondary)
-                    Image(supplierBmp!!, contentDescription = "批发商收据", modifier = Modifier.fillMaxWidth().height(140.dp))
+                    Text(t("批发商收据", "Supplier Receipt"), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Image(supplierBmp!!, contentDescription = t("批发商收据", "Supplier Receipt"), modifier = Modifier.fillMaxWidth().height(140.dp))
                 }
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("关闭", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("关闭", "Close"), color = DiningColors.TextMuted) } }
     )
 }
 
