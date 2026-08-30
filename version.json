@@ -1,7 +1,7 @@
 {
-  "versionCode": 115,
-  "versionName": "1.1.99",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.99/zhixiangshipu-app.apk",
-  "changelog": "- 新增进货日总汇单（每日进货汇总，含明细/总计/付款方式/LHDN警示）",
+  "versionCode": 116,
+  "versionName": "1.2.0",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.0/zhixiangshipu-app.apk",
+  "changelog": "- 打印日账（中/英）恢复为只显示进货成本总汇，不展示进货明细",
   "buildDate": "2026-08-30"
 }
