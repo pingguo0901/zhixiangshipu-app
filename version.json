@@ -1,7 +1,7 @@
 {
-  "versionCode": 123,
-  "versionName": "1.2.7",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.7/zhixiangshipu-app.apk",
-  "changelog": "- 备注输入框移到菜品弹窗里（口味数量选择弹窗内）",
+  "versionCode": 124,
+  "versionName": "1.2.8",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.8/zhixiangshipu-app.apk",
+  "changelog": "- 英文界面下外卖号显示为 TA-XX（不再是中文外卖XX）",
   "buildDate": "2026-08-31"
 }

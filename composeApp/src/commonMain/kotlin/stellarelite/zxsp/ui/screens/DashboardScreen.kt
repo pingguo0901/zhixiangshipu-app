@@ -27,6 +27,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.CustomerOrder
@@ -201,6 +202,13 @@ private fun TableGrid(tables: List<TableList>, onTableClick: (TableList) -> Unit
     }
 }
 
+// 桌台号显示：英文界面下「外卖XX」转成「TA-XX」
+private fun displayTableNo(tableNo: String): String {
+    return if (LanguageManager.isEnglish && tableNo.startsWith("外卖")) {
+        "TA-" + tableNo.removePrefix("外卖")
+    } else tableNo
+}
+
 @Composable
 private fun TableBadge(table: TableList, onClick: () -> Unit) {
     val bg = when (table.table_status) {
@@ -225,7 +233,7 @@ private fun TableBadge(table: TableList, onClick: () -> Unit) {
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(table.table_no, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = fg)
+        Text(displayTableNo(table.table_no), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = fg)
         Text(label, fontSize = 10.sp, color = fg.copy(alpha = 0.8f))
     }
 }
@@ -254,7 +262,7 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("${table.table_no}（${if (table.table_no.startsWith("外卖")) "外卖" else "堂食"}）", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text("${displayTableNo(table.table_no)}（${if (table.table_no.startsWith("外卖")) t("外卖", "Takeaway") else t("堂食", "Dine-in")}）", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             when {
                 loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -268,7 +276,7 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
                         OrderInfoRow("收据号", o.receipt_no)
                         OrderInfoRow("顾客", o.customer_name ?: "—")
                         OrderInfoRow("电话", o.customer_phone ?: "—")
-                        OrderInfoRow("桌台", table.table_no)
+                        OrderInfoRow(t("桌台", "Table"), displayTableNo(table.table_no))
                         OrderInfoRow("状态", when (o.payment_status) {
                             "paid" -> "已付清"; "partial" -> "部分付"; else -> "未付"
                         })
