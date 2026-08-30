@@ -74,17 +74,17 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.MoreHoriz, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("更多", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Text(t("更多", "More"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
         }
-        Text("你好，${SessionManager.staffName}（${if (SessionManager.isAdmin) "老板" else "员工"}）", fontSize = 14.sp, color = DiningColors.TextSecondary)
+        Text(t("你好", "Hello") + "，${SessionManager.staffName}（${if (SessionManager.isAdmin) t("老板", "Owner") else t("员工", "Staff")}）", fontSize = 14.sp, color = DiningColors.TextSecondary)
         Spacer(modifier = Modifier.height(4.dp))
 
         // 菜单管理（仅老板，维护菜品价格上下架）
         if (SessionManager.isAdmin) {
-            MenuEntry(Icons.Outlined.RestaurantMenu, "菜品管理", "维护菜品、价格、上下架") { onMenu() }
-            MenuEntry(Icons.Outlined.TableRestaurant, "桌台管理", "新增/编辑桌台、修改状态") { onTables() }
-            MenuEntry(Icons.Outlined.LocalShipping, "供应商管理", "批发商档案、BRN、TIN") { onSuppliers() }
-            MenuEntry(Icons.Outlined.Group, "员工管理", "新增/停用员工账号") { onStaffs() }
+            MenuEntry(Icons.Outlined.RestaurantMenu, t("菜品管理", "Menu Management"), t("维护菜品、价格、上下架", "Manage items, prices, availability")) { onMenu() }
+            MenuEntry(Icons.Outlined.TableRestaurant, t("桌台管理", "Table Management"), t("新增/编辑桌台、修改状态", "Add/edit tables, change status")) { onTables() }
+            MenuEntry(Icons.Outlined.LocalShipping, t("供应商管理", "Supplier Management"), t("批发商档案、BRN、TIN", "Supplier profiles, BRN, TIN")) { onSuppliers() }
+            MenuEntry(Icons.Outlined.Group, t("员工管理", "Staff Management"), t("新增/停用员工账号", "Add/deactivate staff accounts")) { onStaffs() }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -115,7 +115,7 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Error.copy(alpha = 0.1f))
         ) {
-            Text("退出登录", fontSize = 16.sp, color = DiningColors.Error)
+            Text(t("退出登录", "Log Out"), fontSize = 16.sp, color = DiningColors.Error)
         }
     }
 }
@@ -162,18 +162,18 @@ private fun MenuManageScreen(onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
-            Text("菜品管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
+            Text(t("菜品管理", "Menu Management"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
             Button(onClick = { showAdd = true }, modifier = Modifier.align(Alignment.CenterEnd), shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
-                Text("＋ 新增", color = DiningColors.Surface)
+                Text(t("＋ 新增", "＋ New"), color = DiningColors.Surface)
             }
         }
 
         if (loading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = DiningColors.Primary) }
         } else if (menuItems.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("暂无菜品，点右上角新增", color = DiningColors.TextMuted, fontSize = 14.sp) }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(t("暂无菜品，点右上角新增", "No items, tap + to add"), color = DiningColors.TextMuted, fontSize = 14.sp) }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -209,7 +209,7 @@ private fun MenuManageScreen(onBack: () -> Unit) {
                                         }
                                     }
                                 },
-                                label = { Text(if (m.is_active) "下架" else "上架", fontSize = 11.sp) }
+                                label = { Text(if (m.is_active) t("下架", "Deactivate") else t("上架", "Activate"), fontSize = 11.sp) }
                             )
                         }
                     }
@@ -278,7 +278,7 @@ private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () ->
                     saving = true; error = null
                     val p = price.trim().toDoubleOrNull()
                     if (p == null) {
-                        saving = false; error = "售价格式不对"
+                        saving = false; error = t("售价格式不对", "Invalid price")
                         return@launch
                     }
                     val ok = if (isEdit) {
@@ -293,11 +293,11 @@ private fun MenuItemDialog(item: MenuItem?, onDismiss: () -> Unit, onDone: () ->
                         )) != null
                     }
                     saving = false
-                    if (ok) onDone() else error = "保存失败"
+                    if (ok) onDone() else error = t("保存失败", "Save failed")
                 }
-            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 }
 
@@ -320,11 +320,11 @@ private fun TableManageScreen(onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
-            Text("桌台管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
+            Text(t("桌台管理", "Table Management"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
             Button(onClick = { showAdd = true }, modifier = Modifier.align(Alignment.CenterEnd), shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
-                Text("＋ 新增", color = DiningColors.Surface)
+                Text(t("＋ 新增", "＋ New"), color = DiningColors.Surface)
             }
         }
 
@@ -350,7 +350,7 @@ private fun TableManageScreen(onBack: () -> Unit) {
                             }
                             // 状态切换
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                listOf("free" to "空闲", "occupied" to "占用", "cleaning" to "清理").forEach { (v, l) ->
+                                listOf("free" to t("空闲", "Free"), "occupied" to t("占用", "Occupied"), "cleaning" to t("清理", "Cleaning")).forEach { (v, l) ->
                                     FilterChip(
                                         selected = t.table_status == v,
                                         onClick = {
@@ -387,11 +387,11 @@ private fun TableAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("新增桌台", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("新增桌台", "New Table"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = tableNo, onValueChange = { tableNo = it }, label = { Text("桌台号（如 T05、BAR-01）") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（大桌、户外桌）") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = tableNo, onValueChange = { tableNo = it }, label = { Text(t("桌台号（如 T05、BAR-01）", "Table No. (e.g. T05, BAR-01)")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(t("备注（大桌、户外桌）", "Note (big table, outdoor)")) }, modifier = Modifier.fillMaxWidth())
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
             }
         },
@@ -401,11 +401,11 @@ private fun TableAddDialog(onDismiss: () -> Unit, onDone: () -> Unit) {
                     saving = true; error = null
                     val r = SupabaseClient.insertTable(TableList(table_no = tableNo.trim(), notes = notes.trim().ifBlank { null }))
                     saving = false
-                    if (r != null) onDone() else error = "保存失败（桌台号可能重复）"
+                    if (r != null) onDone() else error = t("保存失败（桌台号可能重复）", "Save failed (duplicate table no.)")
                 }
-            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 }
 
@@ -430,18 +430,18 @@ private fun SupplierManageScreen(onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
-            Text("供应商管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
+            Text(t("供应商管理", "Supplier Management"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
             Button(onClick = { showAdd = true }, modifier = Modifier.align(Alignment.CenterEnd), shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)) {
-                Text("＋ 新增", color = DiningColors.Surface)
+                Text(t("＋ 新增", "＋ New"), color = DiningColors.Surface)
             }
         }
 
         if (loading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = DiningColors.Primary) }
         } else if (suppliers.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("暂无供应商", color = DiningColors.TextMuted, fontSize = 14.sp) }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(t("暂无供应商", "No suppliers"), color = DiningColors.TextMuted, fontSize = 14.sp) }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -457,10 +457,10 @@ private fun SupplierManageScreen(onBack: () -> Unit) {
                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(s.supplier_name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.weight(1f))
-                                Icon(Icons.Outlined.Edit, contentDescription = "编辑", tint = DiningColors.TextMuted, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Outlined.Edit, contentDescription = t("编辑", "Edit"), tint = DiningColors.TextMuted, modifier = Modifier.size(16.dp))
                             }
-                            s.contact_person?.takeIf { it.isNotBlank() }?.let { Text("对接人：$it", fontSize = 12.sp, color = DiningColors.TextSecondary) }
-                            s.phone?.takeIf { it.isNotBlank() }?.let { Text("电话：$it", fontSize = 12.sp, color = DiningColors.TextSecondary) }
+                            s.contact_person?.takeIf { it.isNotBlank() }?.let { Text(t("对接人", "Contact") + "：$it", fontSize = 12.sp, color = DiningColors.TextSecondary) }
+                            s.phone?.takeIf { it.isNotBlank() }?.let { Text(t("电话", "Phone") + "：$it", fontSize = 12.sp, color = DiningColors.TextSecondary) }
                             s.supplier_brn?.takeIf { it.isNotBlank() }?.let { Text("BRN：$it", fontSize = 12.sp, color = DiningColors.TextMuted) }
                             s.supplier_tin?.takeIf { it.isNotBlank() }?.let { Text("TIN：$it", fontSize = 12.sp, color = DiningColors.TextMuted) }
                         }
@@ -493,16 +493,16 @@ private fun SupplierAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text(if (initial == null) "新增供应商" else "编辑供应商", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(if (initial == null) t("新增供应商", "New Supplier") else t("编辑供应商", "Edit Supplier"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("批发商名称") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = contact, onValueChange = { contact = it }, label = { Text("对接人") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("联系电话") }, singleLine = true,
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(t("批发商名称", "Supplier Name")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = contact, onValueChange = { contact = it }, label = { Text(t("对接人", "Contact Person")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(t("联系电话", "Phone")) }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = brn, onValueChange = { brn = it }, label = { Text("BRN/SSM 号") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = tin, onValueChange = { tin = it }, label = { Text("TIN 税号") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("备注（猪肉、调料供应商）") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = brn, onValueChange = { brn = it }, label = { Text(t("BRN/SSM 号", "BRN/SSM No.")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = tin, onValueChange = { tin = it }, label = { Text(t("TIN 税号", "TIN No.")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(t("备注（猪肉、调料供应商）", "Note (pork, seasoning supplier)")) }, modifier = Modifier.fillMaxWidth())
             }
         },
         confirmButton = {
@@ -525,7 +525,7 @@ private fun SupplierAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial
                     saving = false
                     if (ok) onDone()
                 }
-            }) { Text("保存", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -535,9 +535,9 @@ private fun SupplierAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial
                             val ok = SupabaseClient.deleteSupplier(initial.id)
                             if (ok) onDone()
                         }
-                    }) { Text("删除", color = DiningColors.Error) }
+                    }) { Text(t("删除", "Delete"), color = DiningColors.Error) }
                 }
-                TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) }
+                TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) }
             }
         }
     )
@@ -561,8 +561,8 @@ private fun StaffManageScreen(onBack: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text("‹ 返回", color = DiningColors.Primary) }
-            Text("员工管理", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) { Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary) }
+            Text(t("员工管理", "Staff Management"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary, modifier = Modifier.align(Alignment.Center))
         }
 
         if (loading) {
@@ -583,7 +583,7 @@ private fun StaffManageScreen(onBack: () -> Unit) {
                         ) {
                             Column {
                                 Text(s.staff_name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
-                                Text(if (s.role == "admin") "老板" else "员工", fontSize = 12.sp, color = if (s.role == "admin") DiningColors.Primary else DiningColors.TextMuted)
+                                Text(if (s.role == "admin") t("老板", "Owner") else t("员工", "Staff"), fontSize = 12.sp, color = if (s.role == "admin") DiningColors.Primary else DiningColors.TextMuted)
                             }
                             // 停用/启用切换
                             FilterChip(
@@ -596,7 +596,7 @@ private fun StaffManageScreen(onBack: () -> Unit) {
                                         }
                                     }
                                 },
-                                label = { Text(if (s.is_active) "停用" else "启用", fontSize = 11.sp) }
+                                label = { Text(if (s.is_active) t("停用", "Deactivate") else t("启用", "Activate"), fontSize = 11.sp) }
                             )
                         }
                     }

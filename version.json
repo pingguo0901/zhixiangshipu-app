@@ -1,7 +1,7 @@
 {
-  "versionCode": 132,
-  "versionName": "1.2.16",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.16/zhixiangshipu-app.apk",
-  "changelog": "- 更多页面新增语言切换按钮（中文/English）",
+  "versionCode": 133,
+  "versionName": "1.2.17",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.17/zhixiangshipu-app.apk",
+  "changelog": "- 更多页面全英文（菜单、菜品/桌台/供应商/员工管理）",
   "buildDate": "2026-08-31"
 }
