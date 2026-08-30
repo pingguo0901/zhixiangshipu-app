@@ -1,7 +1,7 @@
 {
-  "versionCode": 120,
-  "versionName": "1.2.4",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.4/zhixiangshipu-app.apk",
-  "changelog": "- 菜品合并为基础串 + 口味三选一打勾 + 外带勾选+RM1 + 新增菜品备注改规格多选",
+  "versionCode": 121,
+  "versionName": "1.2.5",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.5/zhixiangshipu-app.apk",
+  "changelog": "- 新建订单取消日期选择，下单时间直接用当前时间",
   "buildDate": "2026-08-31"
 }
