@@ -1,7 +1,7 @@
 {
-  "versionCode": 145,
-  "versionName": "1.2.29",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.29/zhixiangshipu-app.apk",
-  "changelog": "- 员工操作记录点击卡片弹窗显示操作详情（操作人/时间/修改前后数据）",
+  "versionCode": 146,
+  "versionName": "1.2.30",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.30/zhixiangshipu-app.apk",
+  "changelog": "- 加单页面初始显示所有0，每样菜品下不辣/香辣/加辣各带数量加减（与下单页一致）",
   "buildDate": "2026-08-31"
 }

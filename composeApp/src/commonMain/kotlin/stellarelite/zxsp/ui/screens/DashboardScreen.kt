@@ -354,28 +354,21 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    val quantities = remember { mutableStateMapOf<Long, Int>() }
-    val origQuantities = remember { mutableStateMapOf<Long, Int>() }
+    val qtyNoSpicy = remember { mutableStateMapOf<Long, Int>() }
+    val qtySpicy = remember { mutableStateMapOf<Long, Int>() }
+    val qtyExtra = remember { mutableStateMapOf<Long, Int>() }
     var addOnTextZh by remember { mutableStateOf<String?>(null) }
     var addOnTextEn by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        runCatching {
-            menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active }
-            order.order_items.jsonArray.forEach { el ->
-                val obj = el.jsonObject
-                val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
-                val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull()
-                if (itemId != null && qty != null) {
-                    quantities[itemId] = qty
-                    origQuantities[itemId] = qty
-                }
-            }
-        }
+        runCatching { menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active } }
         loading = false
     }
 
-    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) }
+    // 本次加单新增金额（三种口味合计）
+    val addedAmount = menuItems.sumOf { item ->
+        item.sell_price_myr * ((qtyNoSpicy[item.id] ?: 0) + (qtySpicy[item.id] ?: 0) + (qtyExtra[item.id] ?: 0))
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -388,23 +381,20 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                     CircularProgressIndicator(color = DiningColors.Primary)
                 }
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     menuItems.forEach { item ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(item.item_name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(addOnItemName(item), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
                                 Text("RM%.2f/${item.unit}".format(item.sell_price_myr), fontSize = 11.sp, color = DiningColors.TextMuted)
-                            }
-                            TextButton(onClick = {
-                                val q = quantities[item.id] ?: 0
-                                if (q > 1) quantities[item.id] = q - 1 else quantities.remove(item.id)
-                            }) { Text("−", fontSize = 18.sp, color = DiningColors.Primary) }
-                            Text("${quantities[item.id] ?: 0}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-                            TextButton(onClick = { quantities[item.id] = (quantities[item.id] ?: 0) + 1 }) {
-                                Text("＋", fontSize = 18.sp, color = DiningColors.Primary)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                FlavorQtyRow(t("不辣", "No Spicy"), qtyNoSpicy[item.id] ?: 0) { qtyNoSpicy[item.id] = it }
+                                FlavorQtyRow(t("香辣", "Spicy"), qtySpicy[item.id] ?: 0) { qtySpicy[item.id] = it }
+                                FlavorQtyRow(t("加辣", "Spicy+"), qtyExtra[item.id] ?: 0) { qtyExtra[item.id] = it }
                             }
                         }
                     }
@@ -413,48 +403,42 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
             }
         },
         confirmButton = {
-            TextButton(enabled = !loading && !saving, onClick = {
+            TextButton(enabled = !loading && !saving && addedAmount > 0, onClick = {
                 scope.launch {
                     saving = true; error = null
-                    val itemsJson = buildJsonArray {
+                    // 本次新增菜品（按口味拆分）
+                    val addedItems = buildJsonArray {
                         menuItems.forEach { item ->
-                            val q = quantities[item.id] ?: 0
-                            if (q > 0) {
-                                add(buildJsonObject {
-                                    put("item_id", JsonPrimitive(item.id))
-                                    put("item_name", JsonPrimitive(item.item_name))
-                                    put("name_en", JsonPrimitive(item.name_en ?: ""))
-                                    put("quantity", JsonPrimitive(q))
-                                    put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
-                                    put("unit", JsonPrimitive(item.unit))
-                                })
-                            }
+                            val qn = qtyNoSpicy[item.id] ?: 0
+                            val qs = qtySpicy[item.id] ?: 0
+                            val qe = qtyExtra[item.id] ?: 0
+                            if (qn > 0) add(flavorItemJson(item, "不辣", "No Spicy", qn))
+                            if (qs > 0) add(flavorItemJson(item, "香辣", "Spicy", qs))
+                            if (qe > 0) add(flavorItemJson(item, "加辣", "Spicy+", qe))
                         }
                     }
-                    val ok = SupabaseClient.updateOrderItems(order.id, itemsJson, totalAmount)
+                    // 合并：原订单明细 + 本次新增
+                    val merged = buildJsonArray {
+                        order.order_items.jsonArray.forEach { add(it) }
+                        addedItems.jsonArray.forEach { add(it) }
+                    }
+                    val newTotal = order.total_amount_myr + addedAmount
+                    val ok = SupabaseClient.updateOrderItems(order.id, merged, newTotal)
                     saving = false
                     if (ok) {
-                        // 计算新增菜品（本次加单 diff）
-                        val addedLines = menuItems.mapNotNull { item ->
-                            val newQty = quantities[item.id] ?: 0
-                            val oldQty = origQuantities[item.id] ?: 0
-                            val diff = newQty - oldQty
-                            if (diff > 0) {
-                                val (name, remark) = splitItemName(item.item_name)
-                                KitchenLine(diff, name, remark)
-                            } else null
+                        // 厨房追加单：只打印本次新增
+                        val addedLinesZh = mutableListOf<KitchenLine>()
+                        val addedLinesEn = mutableListOf<KitchenLine>()
+                        menuItems.forEach { item ->
+                            val en = item.name_en?.takeIf { it.isNotBlank() } ?: item.item_name
+                            val qn = qtyNoSpicy[item.id] ?: 0
+                            val qs = qtySpicy[item.id] ?: 0
+                            val qe = qtyExtra[item.id] ?: 0
+                            if (qn > 0) { addedLinesZh.add(KitchenLine(qn, item.item_name, "不辣")); addedLinesEn.add(KitchenLine(qn, en, "No Spicy")) }
+                            if (qs > 0) { addedLinesZh.add(KitchenLine(qs, item.item_name, "香辣")); addedLinesEn.add(KitchenLine(qs, en, "Spicy")) }
+                            if (qe > 0) { addedLinesZh.add(KitchenLine(qe, item.item_name, "加辣")); addedLinesEn.add(KitchenLine(qe, en, "Spicy+")) }
                         }
-                        val addedLinesEn = menuItems.mapNotNull { item ->
-                            val newQty = quantities[item.id] ?: 0
-                            val oldQty = origQuantities[item.id] ?: 0
-                            val diff = newQty - oldQty
-                            if (diff > 0) {
-                                val en = item.name_en?.takeIf { it.isNotBlank() } ?: item.item_name
-                                val (name, remark) = splitItemNameEn(en)
-                                KitchenLine(diff, name, remark)
-                            } else null
-                        }
-                        if (addedLines.isNotEmpty()) {
+                        if (addedLinesZh.isNotEmpty()) {
                             val time = formatDateTimeMy(currentIso())
                             val tblZh = tableNo ?: t("外卖", "Takeaway")
                             val tblEn = if (tableNo == null || tableNo == "外卖") "Takeaway" else tableNo
@@ -462,7 +446,7 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                                 orderNo = order.order_no,
                                 tableNo = tblZh,
                                 time = time,
-                                items = addedLines
+                                items = addedLinesZh
                             )
                             addOnTextEn = buildKitchenAddOnOrderEnglish(
                                 orderNo = order.order_no,
@@ -475,7 +459,7 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                         }
                     } else error = t("加单失败", "Add items failed")
                 }
-            }) { Text(t("保存", "Save") + title + " · RM %.2f".format(totalAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save") + title + " · RM %.2f".format(addedAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
@@ -489,4 +473,35 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
             onDone = { addOnTextZh = null; addOnTextEn = null; onDone() }
         )
     }
+}
+
+// 加单页菜品名显示（英文界面用 name_en）
+private fun addOnItemName(item: MenuItem): String =
+    if (LanguageManager.isEnglish) item.name_en?.takeIf { it.isNotBlank() } ?: item.item_name else item.item_name
+
+// 单个口味行：不辣/香辣/加辣 各带 − 数量 +
+@Composable
+private fun FlavorQtyRow(label: String, qty: Int, onQtyChange: (Int) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            TextButton(onClick = { if (qty > 0) onQtyChange(qty - 1) }) { Text("−", fontSize = 18.sp, color = DiningColors.Primary) }
+            Text("$qty", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            TextButton(onClick = { onQtyChange(qty + 1) }) { Text("＋", fontSize = 18.sp, color = DiningColors.Primary) }
+        }
+    }
+}
+
+// 生成单个口味明细条目（用于追加到订单）
+private fun flavorItemJson(item: MenuItem, flavor: String, flavorEn: String, qty: Int): JsonElement = buildJsonObject {
+    put("item_id", JsonPrimitive(item.id))
+    put("item_name", JsonPrimitive("${item.item_name}（$flavor）"))
+    put("name_en", JsonPrimitive("${item.name_en ?: item.item_name} ($flavorEn)"))
+    put("quantity", JsonPrimitive(qty))
+    put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
+    put("unit", JsonPrimitive(item.unit))
 }
