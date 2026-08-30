@@ -1,7 +1,7 @@
 {
-  "versionCode": 113,
-  "versionName": "1.1.97",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.97/zhixiangshipu-app.apk",
-  "changelog": "- 修复长文本打印底部被截断：切纸改为自动喂纸到切纸线的安全半切指令",
+  "versionCode": 114,
+  "versionName": "1.1.98",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.98/zhixiangshipu-app.apk",
+  "changelog": "- 切纸指令改回立即切纸",
   "buildDate": "2026-08-30"
 }
