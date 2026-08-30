@@ -1,7 +1,7 @@
 {
-  "versionCode": 108,
-  "versionName": "1.1.92",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.92/zhixiangshipu-app.apk",
-  "changelog": "- 订单管理页按日期分界显示，新增全部/已付款/未付款筛选按钮\n- 操作人显示改为 HUM PING CONG",
+  "versionCode": 109,
+  "versionName": "1.1.93",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.1.93/zhixiangshipu-app.apk",
+  "changelog": "- 日账/月账进货成本新增明细（物品+数量KG）",
   "buildDate": "2026-08-30"
 }

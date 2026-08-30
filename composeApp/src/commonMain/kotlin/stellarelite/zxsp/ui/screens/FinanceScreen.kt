@@ -928,6 +928,7 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
     val totalExpense = obj["total_expense"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
     val grossProfit = actualRevenue - totalStockCost - totalExpense
     val skewersArr = obj["skewers"]?.jsonArray
+    val stockArr = obj["stock_breakdown"]?.jsonArray
     val expenseObj = obj["expense_breakdown"]?.jsonObject
 
     fun money(v: Double) = "%.2f".format(v)
@@ -997,6 +998,19 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
 
     // 进货成本
     r.add(if (isEnglish) "[PURCHASE COST]" else "【进货成本】")
+    if (stockArr != null && stockArr.isNotEmpty()) {
+        stockArr.forEach { el ->
+            val o = el.jsonObject
+            val name = o["name"]?.jsonPrimitive?.content ?: ""
+            val q = o["qty"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+            val unit = o["unit"]?.jsonPrimitive?.content ?: "KG"
+            val qtyStr = if (q == q.toLong().toDouble()) q.toLong().toString() else "%.2f".format(q)
+            r.add(row("${if (isEnglish) expenseLabelEn(name) else name}:", qtyStr, unit))
+        }
+    } else {
+        r.add(row(if (isEnglish) "(none)" else "（无）", "", ""))
+    }
+    r.add("-".repeat(W))
     r.add(row(if (isEnglish) "Total Purchase Cost:" else "进货成本合计:", "RM", money(totalStockCost)))
     r.add("")
 
