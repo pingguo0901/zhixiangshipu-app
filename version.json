@@ -1,7 +1,7 @@
 {
-  "versionCode": 135,
-  "versionName": "1.2.19",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.19/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情页面全英文",
+  "versionCode": 136,
+  "versionName": "1.2.20",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.20/zhixiangshipu-app.apk",
+  "changelog": "- 结账/加单页面全英文（结账弹窗、编辑订单、桌台订单、加单）",
   "buildDate": "2026-08-31"
 }

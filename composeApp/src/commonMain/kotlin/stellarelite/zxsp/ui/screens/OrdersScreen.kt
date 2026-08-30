@@ -588,7 +588,7 @@ private fun OrderEditDialog(
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("编辑订单 · ${order.order_no}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("编辑订单", "Edit Order") + " · ${order.order_no}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             if (loading) {
                 Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -600,16 +600,16 @@ private fun OrderEditDialog(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     // 类型
-                    Text("类型", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Text(t("类型", "Type"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(selected = !isTakeaway, onClick = { isTakeaway = false }, label = { Text("堂食") })
-                        FilterChip(selected = isTakeaway, onClick = { isTakeaway = true }, label = { Text("外卖") })
+                        FilterChip(selected = !isTakeaway, onClick = { isTakeaway = false }, label = { Text(t("堂食", "Dine-in")) })
+                        FilterChip(selected = isTakeaway, onClick = { isTakeaway = true }, label = { Text(t("外卖", "Takeaway")) })
                     }
                     // 桌台（独立字段）
-                    Text("桌台", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Text(t("桌台", "Table"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                     if (isTakeaway) {
                         OutlinedTextField(
-                            value = "外卖",
+                            value = t("外卖", "Takeaway"),
                             onValueChange = {},
                             readOnly = true,
                             enabled = false,
@@ -621,7 +621,7 @@ private fun OrderEditDialog(
                             OutlinedButton(onClick = { tableExpanded = true }, modifier = Modifier.fillMaxWidth()) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                                     Text(
-                                        tables.firstOrNull { it.id == tableId }?.table_no ?: "选择桌台",
+                                        tables.firstOrNull { it.id == tableId }?.table_no ?: t("选择桌台", "Select Table"),
                                         modifier = Modifier.weight(1f),
                                         color = DiningColors.TextPrimary
                                     )
@@ -639,42 +639,42 @@ private fun OrderEditDialog(
                         }
                     }
 
-                    OutlinedTextField(value = customerName, onValueChange = { customerName = it }, label = { Text("顾客") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                    OutlinedTextField(value = customerPhone, onValueChange = { customerPhone = it }, label = { Text("电话") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = customerName, onValueChange = { customerName = it }, label = { Text(t("顾客", "Customer")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = customerPhone, onValueChange = { customerPhone = it }, label = { Text(t("电话", "Phone")) }, singleLine = true, modifier = Modifier.fillMaxWidth())
 
                     // 状态
-                    Text("状态", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Text(t("状态", "Status"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("unpaid" to "未付", "partial" to "部分付", "paid" to "已付清").forEach { (v, l) ->
+                        listOf("unpaid" to t("未付", "Unpaid"), "partial" to t("部分付", "Partial"), "paid" to t("已付清", "Paid")).forEach { (v, l) ->
                             FilterChip(selected = status == v, onClick = { status = v }, label = { Text(l) })
                         }
                     }
 
                     // 折扣 / 付款方式 / 顾客支付
-                    OutlinedTextField(value = discount, onValueChange = { discount = it }, label = { Text("折扣 (RM)") }, singleLine = true,
+                    OutlinedTextField(value = discount, onValueChange = { discount = it }, label = { Text(t("折扣 (RM)", "Discount (RM)")) }, singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                    Text("付款方式", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Text(t("付款方式", "Payment Method"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("CASH" to "现金", "DUITNOW" to "DuitNow", "TNG" to "TNG", "ALIPAY" to "支付宝").forEach { (v, l) ->
+                        listOf("CASH" to t("现金", "Cash"), "DUITNOW" to "DuitNow", "TNG" to "TNG", "ALIPAY" to t("支付宝", "Alipay")).forEach { (v, l) ->
                             FilterChip(selected = payMode == v, onClick = { payMode = v }, label = { Text(l) })
                         }
                     }
-                    OutlinedTextField(value = amountReceived, onValueChange = { amountReceived = it }, label = { Text("顾客支付 (RM)") }, singleLine = true,
+                    OutlinedTextField(value = amountReceived, onValueChange = { amountReceived = it }, label = { Text(t("顾客支付 (RM)", "Amount Received (RM)")) }, singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
 
                     // 已上传收据
                     if (receiptPhoto != null) {
-                        Text("已上传收据", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                        Text(t("已上传收据", "Uploaded Receipt"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                         Image(
                             bitmap = receiptPhoto!!,
-                            contentDescription = "已上传收据",
+                            contentDescription = t("已上传收据", "Uploaded Receipt"),
                             modifier = Modifier.fillMaxWidth().height(140.dp).clickable { showFullImage = true }
                         )
                     }
 
                     // 菜品明细
                     HorizontalDivider(color = DiningColors.SurfaceVariant)
-                    Text("菜品明细", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+                    Text(t("菜品明细", "Items"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
                     menuItems.forEach { item ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -696,7 +696,7 @@ private fun OrderEditDialog(
                     }
 
                     Text(
-                        "实收合计 RM %.2f · 找零 RM %.2f".format(finalTotal, changeVal),
+                        t("实收合计", "Total Received") + " RM %.2f · ".format(finalTotal) + t("找零", "Change") + " RM %.2f".format(changeVal),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = DiningColors.Primary
@@ -740,11 +740,11 @@ private fun OrderEditDialog(
                         )
                     }
                     saving = false
-                    if (ok1 && ok2 && ok3) onDone() else error = "保存失败"
+                    if (ok1 && ok2 && ok3) onDone() else error = t("保存失败", "Save failed")
                 }
-            }) { Text("保存", color = if (!loading && !saving) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save"), color = if (!loading && !saving) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 
     if (showFullImage && receiptPhoto != null) {
@@ -825,29 +825,29 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
         onDismissRequest = onDismiss,
         containerColor = DiningColors.Surface,
         shape = RoundedCornerShape(20.dp),
-        title = { Text("结账", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        title = { Text(t("结账", "Checkout"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // 付款方式
-                Text("付款方式", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                Text(t("付款方式", "Payment Method"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("cash" to "现金", "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to "支付宝").forEach { (v, l) ->
+                    listOf("cash" to t("现金", "Cash"), "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to t("支付宝", "Alipay")).forEach { (v, l) ->
                         FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
                     }
                 }
 
                 if (method == "cash") {
-                    Text("消费金额：RM%.2f".format(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                    Text(t("消费金额", "Amount Due") + "：RM%.2f".format(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
                     OutlinedTextField(
                         value = cashReceived,
                         onValueChange = { cashReceived = it },
-                        label = { Text("客户给多少 (RM)") },
+                        label = { Text(t("客户给多少 (RM)", "Cash Received (RM)")) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Text(
-                        if (received >= total) "找零：RM%.2f".format(change) else "还需收 RM%.2f".format(total - received),
+                        if (received >= total) t("找零", "Change") + "：RM%.2f".format(change) else t("还需收", "Still Due") + " RM%.2f".format(total - received),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (received >= total) DiningColors.Success else DiningColors.Error
@@ -860,14 +860,14 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                     }
                     Image(
                         painter = painterResource(qr),
-                        contentDescription = "付款二维码",
+                        contentDescription = t("付款二维码", "Payment QR"),
                         modifier = Modifier.fillMaxWidth().height(180.dp)
                     )
                     OutlinedButton(onClick = { takePhoto() }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (receiptBitmap == null) "📷 拍收据" else "📷 重拍收据", color = DiningColors.Primary)
+                        Text(if (receiptBitmap == null) t("📷 拍收据", "📷 Take Receipt") else t("📷 重拍收据", "📷 Retake Receipt"), color = DiningColors.Primary)
                     }
                     receiptBitmap?.let {
-                        Image(it, contentDescription = "收据", modifier = Modifier.fillMaxWidth().height(120.dp))
+                        Image(it, contentDescription = t("收据", "Receipt"), modifier = Modifier.fillMaxWidth().height(120.dp))
                     }
                 }
 
@@ -910,7 +910,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                         val m = SupabaseClient.insertReceiptMaster(master)
                         if (m == null) {
                             saving = false
-                            error = "收款失败：${SupabaseClient.lastError ?: "未知原因"}"
+                            error = t("收款失败", "Payment failed") + "：${SupabaseClient.lastError ?: t("未知原因", "unknown")}"
                             return@launch
                         }
                         val receiptNo = m.receipt_no
@@ -956,15 +956,15 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                                 )
                             )
                         } else {
-                            error = "收款失败：${SupabaseClient.lastError ?: "未知原因"}"
+                            error = t("收款失败", "Payment failed") + "：${SupabaseClient.lastError ?: t("未知原因", "unknown")}"
                         }
                     }
                 }
             ) {
-                Text("结账", color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold)
+                Text(t("结账", "Checkout"), color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 }
 

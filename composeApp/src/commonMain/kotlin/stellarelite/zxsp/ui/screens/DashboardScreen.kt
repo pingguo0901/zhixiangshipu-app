@@ -268,25 +268,25 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
                 loading -> Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = DiningColors.Primary)
                 }
-                order == null -> Text("该桌台暂无未结账订单", color = DiningColors.TextMuted, fontSize = 14.sp)
+                order == null -> Text(t("该桌台暂无未结账订单", "No active order on this table"), color = DiningColors.TextMuted, fontSize = 14.sp)
                 else -> {
                     val o = order!!
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        OrderInfoRow("订单号", o.order_no)
-                        OrderInfoRow("收据号", o.receipt_no)
-                        OrderInfoRow("顾客", o.customer_name ?: "—")
-                        OrderInfoRow("电话", o.customer_phone ?: "—")
+                        OrderInfoRow(t("订单号", "Order No."), o.order_no)
+                        OrderInfoRow(t("收据号", "Receipt No."), o.receipt_no)
+                        OrderInfoRow(t("顾客", "Customer"), o.customer_name ?: "—")
+                        OrderInfoRow(t("电话", "Phone"), o.customer_phone ?: "—")
                         OrderInfoRow(t("桌台", "Table"), displayTableNo(table.table_no))
-                        OrderInfoRow("状态", when (o.payment_status) {
-                            "paid" -> "已付清"; "partial" -> "部分付"; else -> "未付"
+                        OrderInfoRow(t("状态", "Status"), when (o.payment_status) {
+                            "paid" -> t("已付清", "Paid"); "partial" -> t("部分付", "Partial"); else -> t("未付", "Unpaid")
                         })
                         HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
-                        Text("订单明细", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                        Text(t("订单明细", "Items"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                         parseOrderItems(o.order_items).forEach { line ->
                             Text("• $line", fontSize = 12.sp, color = DiningColors.TextSecondary)
                         }
                         HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
-                        OrderInfoRow("总金额", "RM%.2f".format(o.total_amount_myr))
+                        OrderInfoRow(t("总金额", "Total"), "RM%.2f".format(o.total_amount_myr))
                     }
                 }
             }
@@ -294,12 +294,12 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
         confirmButton = {
             if (order != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { showAddItems = true }) { Text("加单", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
-                    TextButton(onClick = { showPayment = true }) { Text("结账", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                    TextButton(onClick = { showAddItems = true }) { Text(t("加单", "Add Items"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                    TextButton(onClick = { showPayment = true }) { Text(t("结账", "Checkout"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
                 }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("关闭", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("关闭", "Close"), color = DiningColors.TextMuted) } }
     )
 
     if (showPayment && order != null) {
@@ -453,7 +453,7 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                         }
                         if (addedLines.isNotEmpty()) {
                             val time = formatDateTimeMy(currentIso())
-                            val tblZh = tableNo ?: "外卖"
+                            val tblZh = tableNo ?: t("外卖", "Takeaway")
                             val tblEn = if (tableNo == null || tableNo == "外卖") "Takeaway" else tableNo
                             addOnTextZh = buildKitchenAddOnOrder(
                                 orderNo = order.order_no,
@@ -470,11 +470,11 @@ internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone:
                         } else {
                             onDone()
                         }
-                    } else error = "加单失败"
+                    } else error = t("加单失败", "Add items failed")
                 }
-            }) { Text("保存$title · RM %.2f".format(totalAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+            }) { Text(t("保存", "Save") + title + " · RM %.2f".format(totalAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消", color = DiningColors.TextMuted) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
 
     // 加单成功后弹厨房追加单
