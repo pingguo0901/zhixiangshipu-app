@@ -16,7 +16,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
+import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.theme.DiningColors
 
@@ -50,12 +52,12 @@ fun LoginScreen() {
                         refreshToken = s.refresh_token
                     )
                 } else if (staff != null && !staff.is_active) {
-                    error = "该账号已停用，请联系老板"
+                    error = t("该账号已停用，请联系老板", "Account deactivated, contact the owner")
                 } else {
-                    error = "该账号未关联员工档案，请联系老板"
+                    error = t("该账号未关联员工档案，请联系老板", "Account not linked to a staff profile, contact the owner")
                 }
             } else {
-                error = session.exceptionOrNull()?.message ?: "登录失败"
+                error = session.exceptionOrNull()?.message ?: t("登录失败", "Login failed")
             }
             loading = false
         }
@@ -74,13 +76,13 @@ fun LoginScreen() {
         Text("🍖", fontSize = 64.sp)
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "炙巷食铺",
+            t("炙巷食铺", "ZHI XIANG FOOD"),
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
             color = DiningColors.TextPrimary
         )
         Text(
-            "内部员工管理端",
+            t("内部员工管理端", "Internal Staff Portal"),
             fontSize = 14.sp,
             color = DiningColors.TextSecondary
         )
@@ -97,7 +99,7 @@ fun LoginScreen() {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    "账号登录",
+                    t("账号登录", "Sign In"),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = DiningColors.TextPrimary
@@ -105,7 +107,7 @@ fun LoginScreen() {
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("邮箱") },
+                    label = { Text(t("邮箱", "Email")) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth()
@@ -113,7 +115,7 @@ fun LoginScreen() {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("密码") },
+                    label = { Text(t("密码", "Password")) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -147,7 +149,7 @@ fun LoginScreen() {
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("登录", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Surface)
+                        Text(t("登录", "Login"), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Surface)
                     }
                 }
             }
@@ -155,7 +157,7 @@ fun LoginScreen() {
 
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            "登录即代表你已获得授权访问内部系统",
+            t("登录即代表你已获得授权访问内部系统", "By signing in, you confirm authorized access to the internal system"),
             fontSize = 11.sp,
             color = DiningColors.TextMuted
         )
