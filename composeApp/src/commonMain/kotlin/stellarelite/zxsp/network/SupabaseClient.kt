@@ -192,8 +192,8 @@ object SupabaseClient {
         } else null
     }
 
-    // 加单：更新订单明细与总金额
-    suspend fun updateOrderItems(orderId: Long, orderItems: JsonElement, totalAmount: Double): Boolean {
+    // 加单：更新订单明细与总金额（discount 可选，用于加单折扣）
+    suspend fun updateOrderItems(orderId: Long, orderItems: JsonElement, totalAmount: Double, discount: Double? = null): Boolean {
         val resp: HttpResponse = client.patch("$BASE/rest/v1/customer_orders") {
             applyAuth()
             url { parameters.append("id", "eq.$orderId") }
@@ -201,6 +201,7 @@ object SupabaseClient {
             setBody(buildJsonObject {
                 put("order_items", orderItems)
                 put("total_amount_myr", JsonPrimitive(totalAmount))
+                if (discount != null) put("discount", JsonPrimitive(discount))
             })
         }
         return resp.status.isSuccess()

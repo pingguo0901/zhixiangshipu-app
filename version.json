@@ -1,7 +1,7 @@
 {
-  "versionCode": 151,
-  "versionName": "1.2.35",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.35/zhixiangshipu-app.apk",
-  "changelog": "- 折扣输入框移到新建订单页下单详情下方，下单即保存折扣，结账自动带出",
+  "versionCode": 152,
+  "versionName": "1.2.36",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.36/zhixiangshipu-app.apk",
+  "changelog": "- 加单从弹窗改为全屏购物车式页面（下单详情+折扣+选菜+确认加单）",
   "buildDate": "2026-09-01"
 }

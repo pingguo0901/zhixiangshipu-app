@@ -21,9 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -31,7 +28,6 @@ import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.data.t
 import stellarelite.zxsp.network.CustomerOrder
-import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.platform.printReceiptText
@@ -42,9 +38,20 @@ fun DashboardScreen() {
     var showNewOrder by remember { mutableStateOf(false) }
     var newOrderTableId by remember { mutableStateOf<Long?>(null) }
     var orderDialogTable by remember { mutableStateOf<TableList?>(null) }
+    var addItemsOrder by remember { mutableStateOf<CustomerOrder?>(null) }
+    var addItemsTableNo by remember { mutableStateOf<String?>(null) }
 
     if (showNewOrder) {
         NewOrderScreen(onBack = { showNewOrder = false }, initialTableId = newOrderTableId)
+        return
+    }
+    if (addItemsOrder != null) {
+        AddItemsScreen(
+            order = addItemsOrder!!,
+            tableNo = addItemsTableNo,
+            onBack = { addItemsOrder = null },
+            onDone = { addItemsOrder = null }
+        )
         return
     }
     DashboardView(
@@ -60,7 +67,15 @@ fun DashboardScreen() {
     )
 
     orderDialogTable?.let { table ->
-        TableOrderDialog(table = table, onDismiss = { orderDialogTable = null })
+        TableOrderDialog(
+            table = table,
+            onDismiss = { orderDialogTable = null },
+            onAddItems = { order ->
+                orderDialogTable = null
+                addItemsOrder = order
+                addItemsTableNo = table.table_no
+            }
+        )
     }
 }
 
@@ -240,12 +255,11 @@ private fun TableBadge(table: TableList, onClick: () -> Unit) {
 
 // ============ 桌台订单弹窗 ============
 @Composable
-private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
+private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit, onAddItems: (CustomerOrder) -> Unit) {
     val scope = rememberCoroutineScope()
     var order by remember { mutableStateOf<CustomerOrder?>(null) }
     var loading by remember { mutableStateOf(true) }
     var showPayment by remember { mutableStateOf(false) }
-    var showAddItems by remember { mutableStateOf(false) }
     var showReceipt by remember { mutableStateOf(false) }
     var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
 
@@ -294,7 +308,7 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
         confirmButton = {
             if (order != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { showAddItems = true }) { Text(t("加单", "Add Items"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
+                    TextButton(onClick = { onAddItems(order!!) }) { Text(t("加单", "Add Items"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
                     TextButton(onClick = { showPayment = true }) { Text(t("结账", "Checkout"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
                 }
             }
@@ -320,9 +334,6 @@ private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit) {
             onDone = { showReceipt = false; onDismiss() }
         )
     }
-    if (showAddItems && order != null) {
-        AddItemsDialog(order = order!!, onDismiss = { showAddItems = false }, onDone = { showAddItems = false; loadOrder() }, tableNo = table.table_no)
-    }
 }
 
 @Composable
@@ -346,162 +357,5 @@ private fun parseOrderItems(items: JsonElement): List<String> {
     }
 }
 
-// ============ 加单弹窗 ============
-@Composable
-internal fun AddItemsDialog(order: CustomerOrder, onDismiss: () -> Unit, onDone: () -> Unit, title: String = "加单", tableNo: String? = null) {
-    val scope = rememberCoroutineScope()
-    var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
-    var saving by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val qtyNoSpicy = remember { mutableStateMapOf<Long, Int>() }
-    val qtySpicy = remember { mutableStateMapOf<Long, Int>() }
-    val qtyExtra = remember { mutableStateMapOf<Long, Int>() }
-    var addOnTextZh by remember { mutableStateOf<String?>(null) }
-    var addOnTextEn by remember { mutableStateOf<String?>(null) }
+// ============ 加单弹窗（已改为 AddItemsScreen 页面，见 NewOrderScreen.kt） ============
 
-    LaunchedEffect(Unit) {
-        runCatching { menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active } }
-        loading = false
-    }
-
-    // 本次加单新增金额（三种口味合计）
-    val addedAmount = menuItems.sumOf { item ->
-        item.sell_price_myr * ((qtyNoSpicy[item.id] ?: 0) + (qtySpicy[item.id] ?: 0) + (qtyExtra[item.id] ?: 0))
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = DiningColors.Surface,
-        shape = RoundedCornerShape(20.dp),
-        title = { Text("$title · ${order.order_no}", fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
-        text = {
-            if (loading) {
-                Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = DiningColors.Primary)
-                }
-            } else {
-                Column(
-                    modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    menuItems.forEach { item ->
-                        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
-                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(addOnItemName(item), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
-                                Text("RM%.2f/${item.unit}".format(item.sell_price_myr), fontSize = 11.sp, color = DiningColors.TextMuted)
-                                Spacer(modifier = Modifier.height(2.dp))
-                                FlavorQtyRow(t("不辣", "No Spicy"), qtyNoSpicy[item.id] ?: 0) { qtyNoSpicy[item.id] = it }
-                                FlavorQtyRow(t("香辣", "Spicy"), qtySpicy[item.id] ?: 0) { qtySpicy[item.id] = it }
-                                FlavorQtyRow(t("加辣", "Spicy+"), qtyExtra[item.id] ?: 0) { qtyExtra[item.id] = it }
-                            }
-                        }
-                    }
-                    if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(enabled = !loading && !saving && addedAmount > 0, onClick = {
-                scope.launch {
-                    saving = true; error = null
-                    // 本次新增菜品（按口味拆分）
-                    val addedItems = buildJsonArray {
-                        menuItems.forEach { item ->
-                            val qn = qtyNoSpicy[item.id] ?: 0
-                            val qs = qtySpicy[item.id] ?: 0
-                            val qe = qtyExtra[item.id] ?: 0
-                            if (qn > 0) add(flavorItemJson(item, "不辣", "No Spicy", qn))
-                            if (qs > 0) add(flavorItemJson(item, "香辣", "Spicy", qs))
-                            if (qe > 0) add(flavorItemJson(item, "加辣", "Spicy+", qe))
-                        }
-                    }
-                    // 合并：原订单明细 + 本次新增
-                    val merged = buildJsonArray {
-                        order.order_items.jsonArray.forEach { add(it) }
-                        addedItems.jsonArray.forEach { add(it) }
-                    }
-                    val newTotal = order.total_amount_myr + addedAmount
-                    val ok = SupabaseClient.updateOrderItems(order.id, merged, newTotal)
-                    saving = false
-                    if (ok) {
-                        // 厨房追加单：只打印本次新增
-                        val addedLinesZh = mutableListOf<KitchenLine>()
-                        val addedLinesEn = mutableListOf<KitchenLine>()
-                        menuItems.forEach { item ->
-                            val en = item.name_en?.takeIf { it.isNotBlank() } ?: item.item_name
-                            val qn = qtyNoSpicy[item.id] ?: 0
-                            val qs = qtySpicy[item.id] ?: 0
-                            val qe = qtyExtra[item.id] ?: 0
-                            if (qn > 0) { addedLinesZh.add(KitchenLine(qn, item.item_name, "不辣")); addedLinesEn.add(KitchenLine(qn, en, "No Spicy")) }
-                            if (qs > 0) { addedLinesZh.add(KitchenLine(qs, item.item_name, "香辣")); addedLinesEn.add(KitchenLine(qs, en, "Spicy")) }
-                            if (qe > 0) { addedLinesZh.add(KitchenLine(qe, item.item_name, "加辣")); addedLinesEn.add(KitchenLine(qe, en, "Spicy+")) }
-                        }
-                        if (addedLinesZh.isNotEmpty()) {
-                            val time = formatDateTimeMy(currentIso())
-                            val tblZh = tableNo ?: t("外卖", "Takeaway")
-                            val tblEn = if (tableNo == null || tableNo == "外卖") "Takeaway" else tableNo
-                            addOnTextZh = buildKitchenAddOnOrder(
-                                orderNo = order.order_no,
-                                tableNo = tblZh,
-                                time = time,
-                                items = addedLinesZh
-                            )
-                            addOnTextEn = buildKitchenAddOnOrderEnglish(
-                                orderNo = order.order_no,
-                                tableNo = tblEn,
-                                time = time,
-                                items = addedLinesEn
-                            )
-                        } else {
-                            onDone()
-                        }
-                    } else error = t("加单失败", "Add items failed")
-                }
-            }) { Text(t("保存", "Save") + title + " · RM %.2f".format(addedAmount), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
-    )
-
-    // 加单成功后弹厨房追加单
-    addOnTextZh?.let { zh ->
-        KitchenAddOnDialog(
-            textZh = zh,
-            textEn = addOnTextEn ?: zh,
-            onPrint = { printReceiptText(it) },
-            onDone = { addOnTextZh = null; addOnTextEn = null; onDone() }
-        )
-    }
-}
-
-// 加单页菜品名显示（英文界面用 name_en）
-private fun addOnItemName(item: MenuItem): String =
-    if (LanguageManager.isEnglish) item.name_en?.takeIf { it.isNotBlank() } ?: item.item_name else item.item_name
-
-// 单个口味行：不辣/香辣/加辣 各带 − 数量 +
-@Composable
-private fun FlavorQtyRow(label: String, qty: Int, onQtyChange: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            TextButton(onClick = { if (qty > 0) onQtyChange(qty - 1) }) { Text("−", fontSize = 18.sp, color = DiningColors.Primary) }
-            Text("$qty", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-            TextButton(onClick = { onQtyChange(qty + 1) }) { Text("＋", fontSize = 18.sp, color = DiningColors.Primary) }
-        }
-    }
-}
-
-// 生成单个口味明细条目（用于追加到订单）
-private fun flavorItemJson(item: MenuItem, flavor: String, flavorEn: String, qty: Int): JsonElement = buildJsonObject {
-    put("item_id", JsonPrimitive(item.id))
-    put("item_name", JsonPrimitive("${item.item_name}（$flavor）"))
-    put("name_en", JsonPrimitive("${item.name_en ?: item.item_name} ($flavorEn)"))
-    put("quantity", JsonPrimitive(qty))
-    put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
-    put("unit", JsonPrimitive(item.unit))
-}

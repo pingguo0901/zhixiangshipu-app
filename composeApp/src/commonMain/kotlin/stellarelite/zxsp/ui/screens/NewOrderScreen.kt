@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonArray
 import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.data.t
@@ -562,5 +563,230 @@ private fun StepperBtn(label: String, enabled: Boolean, onClick: () -> Unit) {
     ) {
         Text(label, fontSize = 17.sp, fontWeight = FontWeight.Bold,
             color = if (enabled) DiningColors.Primary else DiningColors.TextMuted)
+    }
+}
+
+// ============ 加单页面（购物车模式，跟新建订单页面一致） ============
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    val cart = remember { mutableStateListOf<CartLine>() }
+    var selectedItem by remember { mutableStateOf<MenuItem?>(null) }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var discount by remember { mutableStateOf("") }
+    var addOnTextZh by remember { mutableStateOf<String?>(null) }
+    var addOnTextEn by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        runCatching { menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active } }
+        loading = false
+    }
+
+    // 本次加单新增金额
+    val addedAmount = cart.sumOf { line ->
+        line.item.sell_price_myr * (line.qtyNoSpicy + line.qtySpicy + line.qtyExtra)
+    }
+    val discountVal = discount.toDoubleOrNull() ?: 0.0
+    val finalAdded = (addedAmount - discountVal).coerceAtLeast(0.0)
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary)
+            }
+            Text(
+                t("加单", "Add Items") + " · ${order.order_no}",
+                modifier = Modifier.align(Alignment.Center),
+                fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary
+            )
+        }
+
+        if (loading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = DiningColors.Primary)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // 下单详情（本次新增）
+                item {
+                    Text(t("下单详情", "Order Details"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (cart.isEmpty()) {
+                        Text(t("暂未添加菜品", "No items yet"), fontSize = 13.sp, color = DiningColors.TextMuted)
+                    } else {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                cart.forEachIndexed { idx, line ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(menuName(line.item), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                            val flavors = buildList {
+                                                if (line.qtyNoSpicy > 0) add("${flavorLabel("不辣")}×${line.qtyNoSpicy}")
+                                                if (line.qtySpicy > 0) add("${flavorLabel("香辣")}×${line.qtySpicy}")
+                                                if (line.qtyExtra > 0) add("${flavorLabel("加辣")}×${line.qtyExtra}")
+                                            }
+                                            if (flavors.isNotEmpty()) Text(flavors.joinToString("  "), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                                        }
+                                        TextButton(onClick = { cart.removeAt(idx) }) {
+                                            Text("✕", color = DiningColors.Error, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                                HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(t("本次加单合计", "Add-on Total"), fontSize = 13.sp, color = DiningColors.TextSecondary)
+                                    Text("RM%.2f".format(addedAmount), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 折扣输入框（下单详情下方）
+                if (cart.isNotEmpty()) {
+                    item {
+                        OutlinedTextField(
+                            value = discount,
+                            onValueChange = { discount = it },
+                            label = { Text(t("折扣 (RM)", "Discount (RM)")) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (discountVal > 0.0) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(t("折后应付", "Amount Due"), fontSize = 14.sp, color = DiningColors.TextSecondary)
+                                Text("RM%.2f".format(finalAdded), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                            }
+                        }
+                    }
+                }
+
+                // 选择菜品
+                item {
+                    Text(t("选择菜品", "Select Items"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    MenuGrid(menuItems, onSelect = { selectedItem = it })
+                }
+
+                if (error != null) {
+                    item { Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp) }
+                }
+            }
+
+            // 底部确认加单按钮
+            if (cart.isNotEmpty()) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            saving = true
+                            error = null
+                            val addedItems = buildCartItemsJson(cart.toList(), false)
+                            val merged = buildJsonArray {
+                                order.order_items.jsonArray.forEach { add(it) }
+                                addedItems.jsonArray.forEach { add(it) }
+                            }
+                            val newSubTotal = order.total_amount_myr + addedAmount
+                            val newDiscount = order.discount + discountVal
+                            val ok = SupabaseClient.updateOrderItems(order.id, merged, newSubTotal, newDiscount)
+                            saving = false
+                            if (ok) {
+                                // 厨房追加单：只打印本次新增
+                                val addedLinesZh = mutableListOf<KitchenLine>()
+                                val addedLinesEn = mutableListOf<KitchenLine>()
+                                cart.forEach { line ->
+                                    val en = line.item.name_en?.takeIf { it.isNotBlank() } ?: line.item.item_name
+                                    if (line.qtyNoSpicy > 0) { addedLinesZh.add(KitchenLine(line.qtyNoSpicy, line.item.item_name, "不辣")); addedLinesEn.add(KitchenLine(line.qtyNoSpicy, en, "No Spicy")) }
+                                    if (line.qtySpicy > 0) { addedLinesZh.add(KitchenLine(line.qtySpicy, line.item.item_name, "香辣")); addedLinesEn.add(KitchenLine(line.qtySpicy, en, "Spicy")) }
+                                    if (line.qtyExtra > 0) { addedLinesZh.add(KitchenLine(line.qtyExtra, line.item.item_name, "加辣")); addedLinesEn.add(KitchenLine(line.qtyExtra, en, "Spicy+")) }
+                                }
+                                if (addedLinesZh.isNotEmpty()) {
+                                    val time = formatDateTimeMy(currentIso())
+                                    val tblZh = tableNo ?: t("外卖", "Takeaway")
+                                    val tblEn = if (tableNo == null || tableNo == "外卖") "Takeaway" else tableNo
+                                    addOnTextZh = buildKitchenAddOnOrder(orderNo = order.order_no, tableNo = tblZh, time = time, items = addedLinesZh)
+                                    addOnTextEn = buildKitchenAddOnOrderEnglish(orderNo = order.order_no, tableNo = tblEn, time = time, items = addedLinesEn)
+                                } else {
+                                    onDone()
+                                }
+                            } else error = t("加单失败", "Add items failed")
+                        }
+                    },
+                    enabled = !saving && cart.isNotEmpty(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DiningColors.Primary,
+                        disabledContainerColor = DiningColors.TextMuted.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Text(
+                        if (saving) t("加单中…", "Adding…") else t("确认加单", "Add Items") + " · RM%.2f".format(finalAdded),
+                        color = DiningColors.Surface, fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+
+    // 菜品弹窗：选口味数量 → 加入购物车
+    selectedItem?.let { item ->
+        MenuItemOrderDialog(
+            item = item,
+            isTakeaway = false,
+            onConfirm = { noSpicy, spicy, extra, note ->
+                selectedItem = null
+                val existing = cart.firstOrNull { it.item.id == item.id }
+                if (existing != null) {
+                    val i = cart.indexOf(existing)
+                    cart[i] = existing.copy(
+                        qtyNoSpicy = existing.qtyNoSpicy + noSpicy,
+                        qtySpicy = existing.qtySpicy + spicy,
+                        qtyExtra = existing.qtyExtra + extra,
+                        note = if (note.isNotBlank()) note else existing.note
+                    )
+                } else {
+                    cart.add(CartLine(item, noSpicy, spicy, extra, note))
+                }
+            },
+            onDismiss = { selectedItem = null }
+        )
+    }
+
+    // 加单成功后弹厨房追加单
+    addOnTextZh?.let { zh ->
+        KitchenAddOnDialog(
+            textZh = zh,
+            textEn = addOnTextEn ?: zh,
+            onPrint = { printReceiptText(it) },
+            onDone = { addOnTextZh = null; addOnTextEn = null; onDone() }
+        )
     }
 }
