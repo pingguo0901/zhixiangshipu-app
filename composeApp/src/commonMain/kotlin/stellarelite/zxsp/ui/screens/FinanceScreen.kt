@@ -101,6 +101,20 @@ private fun ExpenseListView(onReport: () -> Unit) {
     }
     LaunchedEffect(Unit) { load() }
 
+    // 记一笔开销页面（全屏）
+    if (showAdd) {
+        ExpenseAddScreen(onBack = { showAdd = false }, onDone = { showAdd = false; load() })
+        return
+    }
+    editing?.let { e ->
+        ExpenseAddScreen(
+            initial = e,
+            onBack = { editing = null },
+            onDone = { editing = null; load() }
+        )
+        return
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -192,16 +206,6 @@ private fun ExpenseListView(onReport: () -> Unit) {
         }
     }
 
-    if (showAdd) {
-        ExpenseAddDialog(onDismiss = { showAdd = false }, onDone = { showAdd = false; load() })
-    }
-    editing?.let { e ->
-        ExpenseAddDialog(
-            initial = e,
-            onDismiss = { editing = null },
-            onDone = { editing = null; load() }
-        )
-    }
     actionRecord?.let { e ->
         ExpenseActionDialog(
             record = e,
@@ -325,7 +329,7 @@ private val EXPENSE_FEE_OPTIONS = listOf("员工", "老板薪资", "租金", "�
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial: ExpenseRecord? = null) {
+private fun ExpenseAddScreen(onBack: () -> Unit, onDone: () -> Unit, initial: ExpenseRecord? = null) {
     val scope = rememberCoroutineScope()
     var suppliers by remember { mutableStateOf<List<Supplier>>(emptyList()) }
     var warehouseItems by remember { mutableStateOf<List<WarehouseItem>>(emptyList()) }
@@ -381,16 +385,22 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
         (!isStockItem || weightVal > 0) &&
         (hasExistingReceipts || (if (needTransferReceipt) receipt1 != null && receipt2 != null else receipt2 != null)) && !saving
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = DiningColors.Surface,
-        shape = RoundedCornerShape(20.dp),
-        title = { Text(if (initial == null) t("记一笔开销", "Add Expense") else t("编辑开销", "Edit Expense"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary)
+            }
+            Text(
+                if (initial == null) t("记一笔开销", "Add Expense") else t("编辑开销", "Edit Expense"),
+                modifier = Modifier.align(Alignment.Center),
+                fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary
+            )
+        }
+
+        Column(
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
                 // 日期（临时，录入历史数据用）
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.fillMaxWidth()) {
                     Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = DiningColors.Primary, modifier = Modifier.size(18.dp))
@@ -481,9 +491,11 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
                 if (saving) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = DiningColors.Primary)
             }
-        },
-        confirmButton = {
-            TextButton(enabled = canSave, onClick = {
+
+        // 底部保存按钮
+        Button(
+            enabled = canSave,
+            onClick = {
                 scope.launch {
                     saving = true; error = null
                     var url1: String? = initial?.attachment_url
@@ -565,22 +577,36 @@ private fun ExpenseAddDialog(onDismiss: () -> Unit, onDone: () -> Unit, initial:
                     saving = false
                     onDone()
                 }
-            }) { Text(t("保存", "Save"), color = if (canSave) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold) }
-        },
-        dismissButton = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (initial != null) {
-                    TextButton(onClick = {
-                        scope.launch {
-                            val ok = SupabaseClient.deleteExpense(initial.id)
-                            if (ok) onDone()
-                        }
-                    }) { Text(t("删除", "Delete"), color = DiningColors.Error) }
-                }
-                TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) }
+            },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = DiningColors.Primary,
+                disabledContainerColor = DiningColors.TextMuted.copy(alpha = 0.3f)
+            )
+        ) {
+            Text(
+                if (saving) t("保存中…", "Saving…") else t("保存", "Save"),
+                color = DiningColors.Surface, fontWeight = FontWeight.Bold
+            )
+        }
+
+        if (initial != null) {
+            OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        val ok = SupabaseClient.deleteExpense(initial.id)
+                        if (ok) onDone()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = DiningColors.Error)
+            ) {
+                Text(t("删除", "Delete"), color = DiningColors.Error, fontWeight = FontWeight.SemiBold)
             }
         }
-    )
+    }
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
