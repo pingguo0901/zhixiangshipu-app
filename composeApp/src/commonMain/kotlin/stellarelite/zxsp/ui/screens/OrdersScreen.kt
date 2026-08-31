@@ -817,15 +817,20 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
     val scope = rememberCoroutineScope()
     var method by remember { mutableStateOf("cash") }
     var cashReceived by remember { mutableStateOf("") }
+    var discount by remember { mutableStateOf("") }
     var receiptBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var showQr by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    val lines = parseOrderLines(order.order_items)
     val total = order.total_amount_myr
+    val discountVal = discount.toDoubleOrNull() ?: 0.0
+    val finalTotal = (total - discountVal).coerceAtLeast(0.0)
     val received = cashReceived.toDoubleOrNull() ?: 0.0
-    val change = (received - total).coerceAtLeast(0.0)
+    val change = (received - finalTotal).coerceAtLeast(0.0)
     val canSave = !saving && when (method) {
-        "cash" -> received >= total
+        "cash" -> received >= finalTotal
         else -> true
     }
 
@@ -837,7 +842,10 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
         shape = RoundedCornerShape(20.dp),
         title = { Text(t("结账", "Checkout"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 320.dp, max = 560.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 // 付款方式
                 Text(t("付款方式", "Payment Method"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -846,33 +854,89 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                     }
                 }
 
+                // 订单明细
+                HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                Text(t("订单明细", "Order Items"), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                lines.forEach { line ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            if (LanguageManager.isEnglish) line.nameEn.ifBlank { line.name } else line.name,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 14.sp,
+                            color = DiningColors.TextPrimary
+                        )
+                        Text("${line.qty} × RM%.2f".format(line.unitPrice), fontSize = 13.sp, color = DiningColors.TextSecondary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("RM%.2f".format(line.amount), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                    }
+                }
+
+                // 总价格
+                HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(t("总价格", "Total"), fontSize = 14.sp, color = DiningColors.TextSecondary)
+                    Text("RM%.2f".format(total), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+                }
+
+                // 折扣输入框
+                OutlinedTextField(
+                    value = discount,
+                    onValueChange = { discount = it },
+                    label = { Text(t("折扣 (RM)", "Discount (RM)")) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (discountVal > 0.0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(t("折后应付", "Amount Due"), fontSize = 14.sp, color = DiningColors.TextSecondary)
+                        Text("RM%.2f".format(finalTotal), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                    }
+                }
+
                 if (method == "cash") {
-                    Text(t("消费金额", "Amount Due") + "：RM%.2f".format(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
                     OutlinedTextField(
                         value = cashReceived,
                         onValueChange = { cashReceived = it },
-                        label = { Text(t("客户给多少 (RM)", "Cash Received (RM)")) },
+                        label = { Text(t("顾客给多少 (RM)", "Cash Received (RM)")) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Text(
-                        if (received >= total) t("找零", "Change") + "：RM%.2f".format(change) else t("还需收", "Still Due") + " RM%.2f".format(total - received),
+                        if (received >= finalTotal) t("需找零", "Change") + "：RM%.2f".format(change) else t("还需收", "Still Due") + " RM%.2f".format(finalTotal - received),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (received >= total) DiningColors.Success else DiningColors.Error
+                        color = if (received >= finalTotal) DiningColors.Success else DiningColors.Error
                     )
                 } else {
-                    val qr = when (method) {
-                        "duitnow" -> Res.drawable.duitnow_tng_qr
-                        "tng_ewallet" -> Res.drawable.duitnow_tng_qr
-                        else -> Res.drawable.alipay_qr
+                    // 显示二维码按钮
+                    OutlinedButton(onClick = { showQr = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text(t("显示二维码", "Show QR Code"), color = DiningColors.Primary)
                     }
-                    Image(
-                        painter = painterResource(qr),
-                        contentDescription = t("付款二维码", "Payment QR"),
-                        modifier = Modifier.fillMaxWidth().height(180.dp)
-                    )
+                    if (showQr) {
+                        val qr = when (method) {
+                            "duitnow" -> Res.drawable.duitnow_tng_qr
+                            "tng_ewallet" -> Res.drawable.duitnow_tng_qr
+                            else -> Res.drawable.alipay_qr
+                        }
+                        Image(
+                            painter = painterResource(qr),
+                            contentDescription = t("付款二维码", "Payment QR"),
+                            modifier = Modifier.fillMaxWidth().height(180.dp)
+                        )
+                    }
                     OutlinedButton(onClick = { takePhoto() }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (receiptBitmap == null) t("📷 拍收据", "📷 Take Receipt") else t("📷 重拍收据", "📷 Retake Receipt"), color = DiningColors.Primary)
                     }
@@ -902,15 +966,14 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                         }
                         val payMode = mapPayMode(method)
                         val now = currentIso()
-                        val lines = parseOrderLines(order.order_items)
-                        val amountReceived = if (method == "cash") received else total
+                        val amountReceived = if (method == "cash") received else finalTotal
                         val changeGiven = if (method == "cash") change else 0.0
 
                         val master = ReceiptMaster(
                             trans_datetime = now,
                             sub_total = total,
-                            discount = 0.0,
-                            total_amount = total,
+                            discount = discountVal,
+                            total_amount = finalTotal,
                             payment_mode = payMode,
                             amount_received = amountReceived,
                             change_given = changeGiven,
@@ -939,7 +1002,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
 
                         val p = PaymentRecord(
                             order_id = order.id,
-                            pay_amount_myr = total,
+                            pay_amount_myr = finalTotal,
                             pay_method = method,
                             transaction_ref = "",
                             receipt_attachment_url = receiptUrl,
@@ -958,8 +1021,8 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                                     transDatetime = now,
                                     items = lines,
                                     subTotal = total,
-                                    discount = 0.0,
-                                    total = total,
+                                    discount = discountVal,
+                                    total = finalTotal,
                                     paymentMode = payMode,
                                     amountReceived = amountReceived,
                                     changeGiven = changeGiven

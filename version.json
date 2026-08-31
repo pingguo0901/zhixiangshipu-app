@@ -1,7 +1,7 @@
 {
-  "versionCode": 148,
-  "versionName": "1.2.32",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.32/zhixiangshipu-app.apk",
-  "changelog": "- 新建订单改购物车模式：取消顾客姓名/电话输入，改下单详情；点菜加入购物车，底部确认下单才真正下单并自动打印厨房单",
+  "versionCode": 149,
+  "versionName": "1.2.33",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.33/zhixiangshipu-app.apk",
+  "changelog": "- 结账弹窗升级：新增订单明细/总价格/折扣输入框/显示二维码按钮，找零按折后金额计算，弹窗加高可滚动",
   "buildDate": "2026-09-01"
 }
