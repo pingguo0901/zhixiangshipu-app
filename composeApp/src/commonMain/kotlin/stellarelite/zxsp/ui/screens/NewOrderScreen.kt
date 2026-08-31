@@ -40,8 +40,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
 
     var tableId by remember { mutableStateOf<Long?>(null) }
     var isTakeaway by remember { mutableStateOf(false) }
-    var customerName by remember { mutableStateOf("") }
-    var customerPhone by remember { mutableStateOf("") }
+    val cart = remember { mutableStateListOf<CartLine>() }
     var selectedItem by remember { mutableStateOf<MenuItem?>(null) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -69,6 +68,11 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
 
     val dineInTables = tables.filter { !it.table_no.startsWith("外卖") }
     val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
+
+    // 购物车合计（含外卖费）
+    val cartTotal = cart.sumOf { line ->
+        line.item.sell_price_myr * (line.qtyNoSpicy + line.qtySpicy + line.qtyExtra)
+    } + (if (isTakeaway) 1.0 else 0.0)
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -162,24 +166,51 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     }
                 }
 
-                // 顾客信息
+                // 下单详情（购物车）
                 item {
-                    OutlinedTextField(
-                        value = customerName,
-                        onValueChange = { customerName = it },
-                        label = { Text(t("顾客姓名（可选）", "Customer Name (optional)")) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Text(t("下单详情", "Order Details"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = customerPhone,
-                        onValueChange = { customerPhone = it },
-                        label = { Text(t("顾客电话（可选）", "Customer Phone (optional)")) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (cart.isEmpty()) {
+                        Text(t("暂未添加菜品", "No items yet"), fontSize = 13.sp, color = DiningColors.TextMuted)
+                    } else {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                cart.forEachIndexed { idx, line ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(menuName(line.item), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                                            val flavors = buildList {
+                                                if (line.qtyNoSpicy > 0) add("${flavorLabel("不辣")}×${line.qtyNoSpicy}")
+                                                if (line.qtySpicy > 0) add("${flavorLabel("香辣")}×${line.qtySpicy}")
+                                                if (line.qtyExtra > 0) add("${flavorLabel("加辣")}×${line.qtyExtra}")
+                                            }
+                                            if (flavors.isNotEmpty()) Text(flavors.joinToString("  "), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                                        }
+                                        TextButton(onClick = { cart.removeAt(idx) }) {
+                                            Text("✕", color = DiningColors.Error, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                                HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(t("合计", "Total"), fontSize = 13.sp, color = DiningColors.TextSecondary)
+                                    Text("RM%.2f".format(cartTotal), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // 选择菜品：2排4个方形按钮
@@ -193,70 +224,98 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     item { Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp) }
                 }
             }
+
+            // 底部确认下单按钮（点击才真正下单 + 自动打印厨房单）
+            if (cart.isNotEmpty()) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            saving = true
+                            error = null
+                            val itemsJson = buildCartItemsJson(cart.toList(), isTakeaway)
+                            val order = CustomerOrder(
+                                table_id = tableId,
+                                customer_name = null,
+                                customer_phone = null,
+                                order_items = itemsJson,
+                                total_amount_myr = cartTotal,
+                                notes = null,
+                                created_by_staff_id = SupabaseClient.currentStaffId(),
+                                order_datetime = currentIso()
+                            )
+                            val r = SupabaseClient.insertOrder(order)
+                            saving = false
+                            if (r != null) {
+                                // 自动打印厨房出单（按当前语言）
+                                val tno = tables.firstOrNull { it.id == r.table_id }?.table_no ?: "外卖"
+                                val time = formatDateTimeMy(r.order_datetime ?: "")
+                                val lines = parseOrderLines(r.order_items)
+                                val kitchenText = if (LanguageManager.isEnglish) {
+                                    buildKitchenOrderEnglish(
+                                        orderNo = r.order_no,
+                                        tableNo = if (tno == "外卖") "Takeaway" else tno,
+                                        time = time,
+                                        items = lines.map { line ->
+                                            val en = line.nameEn.ifBlank { line.name }
+                                            val (name, remark) = splitItemNameEn(en)
+                                            KitchenLine(line.qty, name, remark)
+                                        },
+                                        note = r.notes
+                                    )
+                                } else {
+                                    buildKitchenOrder(
+                                        orderNo = r.order_no,
+                                        tableNo = tno,
+                                        time = time,
+                                        items = lines.map { line ->
+                                            val (name, remark) = splitItemName(line.name)
+                                            KitchenLine(line.qty, name, remark)
+                                        },
+                                        note = r.notes
+                                    )
+                                }
+                                printReceiptText(kitchenText)
+                                onBack()
+                            } else {
+                                error = t("下单失败", "Order failed") + "：" + (SupabaseClient.lastError ?: "")
+                            }
+                        }
+                    },
+                    enabled = !saving && tableId != null,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DiningColors.Primary,
+                        disabledContainerColor = DiningColors.TextMuted.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Text(
+                        if (saving) t("下单中…", "Placing…") else t("确认下单", "Place Order") + " · RM%.2f".format(cartTotal),
+                        color = DiningColors.Surface, fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 
-    // 菜品弹窗：选口味数量 → 查看订单详情 → 确认下单自动打印
+    // 菜品弹窗：选口味数量 → 加入购物车（不真正下单）
     selectedItem?.let { item ->
         MenuItemOrderDialog(
             item = item,
             isTakeaway = isTakeaway,
-            saving = saving,
             onConfirm = { noSpicy, spicy, extra, note ->
-                scope.launch {
-                    saving = true
-                    error = null
-                    val itemsJson = buildOrderItemsJson(item, noSpicy, spicy, extra, isTakeaway)
-                    val totalQty = noSpicy + spicy + extra
-                    val takeawayFee = if (isTakeaway) 1.0 else 0.0
-                    val totalAmount = item.sell_price_myr * totalQty + takeawayFee
-                    val order = CustomerOrder(
-                        table_id = tableId,
-                        customer_name = customerName.trim().ifBlank { null },
-                        customer_phone = customerPhone.trim().ifBlank { null },
-                        order_items = itemsJson,
-                        total_amount_myr = totalAmount,
-                        notes = note.trim().ifBlank { null },
-                        created_by_staff_id = SupabaseClient.currentStaffId(),
-                        order_datetime = currentIso()
+                selectedItem = null
+                val existing = cart.firstOrNull { it.item.id == item.id }
+                if (existing != null) {
+                    val i = cart.indexOf(existing)
+                    cart[i] = existing.copy(
+                        qtyNoSpicy = existing.qtyNoSpicy + noSpicy,
+                        qtySpicy = existing.qtySpicy + spicy,
+                        qtyExtra = existing.qtyExtra + extra,
+                        note = if (note.isNotBlank()) note else existing.note
                     )
-                    val r = SupabaseClient.insertOrder(order)
-                    saving = false
-                    if (r != null) {
-                        selectedItem = null
-                        // 自动打印厨房出单（按当前语言）
-                        val tno = tables.firstOrNull { it.id == r.table_id }?.table_no ?: "外卖"
-                        val time = formatDateTimeMy(r.order_datetime ?: "")
-                        val lines = parseOrderLines(r.order_items)
-                        val kitchenText = if (LanguageManager.isEnglish) {
-                            buildKitchenOrderEnglish(
-                                orderNo = r.order_no,
-                                tableNo = if (tno == "外卖") "Takeaway" else tno,
-                                time = time,
-                                items = lines.map { line ->
-                                    val en = line.nameEn.ifBlank { line.name }
-                                    val (name, remark) = splitItemNameEn(en)
-                                    KitchenLine(line.qty, name, remark)
-                                },
-                                note = r.notes
-                            )
-                        } else {
-                            buildKitchenOrder(
-                                orderNo = r.order_no,
-                                tableNo = tno,
-                                time = time,
-                                items = lines.map { line ->
-                                    val (name, remark) = splitItemName(line.name)
-                                    KitchenLine(line.qty, name, remark)
-                                },
-                                note = r.notes
-                            )
-                        }
-                        printReceiptText(kitchenText)
-                        onBack()
-                    } else {
-                        error = t("下单失败", "Order failed") + "：" + (SupabaseClient.lastError ?: "")
-                    }
+                } else {
+                    cart.add(CartLine(item, noSpicy, spicy, extra, note))
                 }
             },
             onDismiss = { selectedItem = null }
@@ -266,6 +325,15 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
 
 private val FLAVOR_OPTIONS = listOf("不辣", "香辣", "加辣")
 private val FLAVOR_EN = mapOf("不辣" to "No Spicy", "香辣" to "Spicy", "加辣" to "Spicy+")
+
+// 购物车条目
+private data class CartLine(
+    val item: MenuItem,
+    val qtyNoSpicy: Int,
+    val qtySpicy: Int,
+    val qtyExtra: Int,
+    val note: String
+)
 
 // 口味标签显示（英文界面转英文）
 private fun flavorLabel(flavor: String): String =
@@ -328,12 +396,11 @@ private fun MenuGridButton(item: MenuItem, onClick: () -> Unit) {
     }
 }
 
-// 菜品点单弹窗：三口味各自数量 + 订单详情 + 确认下单
+// 菜品点单弹窗：三口味各自数量 + 备注 + 加入购物车
 @Composable
 private fun MenuItemOrderDialog(
     item: MenuItem,
     isTakeaway: Boolean,
-    saving: Boolean,
     onConfirm: (noSpicy: Int, spicy: Int, extra: Int, note: String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -386,11 +453,11 @@ private fun MenuItemOrderDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = totalQty > 0 && !saving,
+                enabled = totalQty > 0,
                 onClick = { onConfirm(qtyNoSpicy, qtySpicy, qtyExtra, note) }
             ) {
                 Text(
-                    if (saving) t("下单中…", "Placing…") else t("确认下单", "Place Order") + " · RM%.2f".format(total),
+                    t("添加", "Add") + " · RM%.2f".format(total),
                     color = if (totalQty > 0) DiningColors.Primary else DiningColors.TextMuted,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -418,28 +485,25 @@ private fun FlavorQtyRow(label: String, qty: Int, onQtyChange: (Int) -> Unit) {
     }
 }
 
-private fun buildOrderItemsJson(
-    item: MenuItem,
-    qtyNoSpicy: Int,
-    qtySpicy: Int,
-    qtyExtra: Int,
-    isTakeaway: Boolean
-): JsonElement {
+// 把整个购物车生成 order_items JSON
+private fun buildCartItemsJson(cart: List<CartLine>, isTakeaway: Boolean): JsonElement {
     return buildJsonArray {
-        listOf(
-            Triple("不辣", "No Spicy", qtyNoSpicy),
-            Triple("香辣", "Spicy", qtySpicy),
-            Triple("加辣", "Spicy+", qtyExtra)
-        ).forEach { (flavor, flavorEn, qty) ->
-            if (qty > 0) {
-                add(buildJsonObject {
-                    put("item_id", JsonPrimitive(item.id))
-                    put("item_name", JsonPrimitive("${item.item_name}（$flavor）"))
-                    put("name_en", JsonPrimitive("${item.name_en ?: item.item_name} ($flavorEn)"))
-                    put("quantity", JsonPrimitive(qty))
-                    put("unit_price_myr", JsonPrimitive(item.sell_price_myr))
-                    put("unit", JsonPrimitive(item.unit))
-                })
+        cart.forEach { line ->
+            listOf(
+                Triple("不辣", "No Spicy", line.qtyNoSpicy),
+                Triple("香辣", "Spicy", line.qtySpicy),
+                Triple("加辣", "Spicy+", line.qtyExtra)
+            ).forEach { (flavor, flavorEn, qty) ->
+                if (qty > 0) {
+                    add(buildJsonObject {
+                        put("item_id", JsonPrimitive(line.item.id))
+                        put("item_name", JsonPrimitive("${line.item.item_name}（$flavor）"))
+                        put("name_en", JsonPrimitive("${line.item.name_en ?: line.item.item_name} ($flavorEn)"))
+                        put("quantity", JsonPrimitive(qty))
+                        put("unit_price_myr", JsonPrimitive(line.item.sell_price_myr))
+                        put("unit", JsonPrimitive(line.item.unit))
+                    })
+                }
             }
         }
         if (isTakeaway) {

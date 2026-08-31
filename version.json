@@ -1,7 +1,7 @@
 {
-  "versionCode": 147,
-  "versionName": "1.2.31",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.31/zhixiangshipu-app.apk",
-  "changelog": "- 进货日总汇单物品名显示英文",
-  "buildDate": "2026-08-31"
+  "versionCode": 148,
+  "versionName": "1.2.32",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.32/zhixiangshipu-app.apk",
+  "changelog": "- 新建订单改购物车模式：取消顾客姓名/电话输入，改下单详情；点菜加入购物车，底部确认下单才真正下单并自动打印厨房单",
+  "buildDate": "2026-09-01"
 }
