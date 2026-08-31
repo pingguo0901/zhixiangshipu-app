@@ -44,6 +44,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     var selectedItem by remember { mutableStateOf<MenuItem?>(null) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var discount by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         runCatching {
@@ -73,6 +74,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
     val cartTotal = cart.sumOf { line ->
         line.item.sell_price_myr * (line.qtyNoSpicy + line.qtySpicy + line.qtyExtra)
     } + (if (isTakeaway) 1.0 else 0.0)
+    val discountVal = discount.toDoubleOrNull() ?: 0.0
+    val finalTotal = (cartTotal - discountVal).coerceAtLeast(0.0)
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -213,6 +216,31 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     }
                 }
 
+                // 折扣输入框（下单详情下方）
+                if (cart.isNotEmpty()) {
+                    item {
+                        OutlinedTextField(
+                            value = discount,
+                            onValueChange = { discount = it },
+                            label = { Text(t("折扣 (RM)", "Discount (RM)")) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (discountVal > 0.0) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(t("折后应付", "Amount Due"), fontSize = 14.sp, color = DiningColors.TextSecondary)
+                                Text("RM%.2f".format(finalTotal), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                            }
+                        }
+                    }
+                }
+
                 // 选择菜品：2排4个方形按钮
                 item {
                     Text(t("选择菜品", "Select Items"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
@@ -239,6 +267,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                                 customer_phone = null,
                                 order_items = itemsJson,
                                 total_amount_myr = cartTotal,
+                                discount = discountVal,
                                 notes = null,
                                 created_by_staff_id = SupabaseClient.currentStaffId(),
                                 order_datetime = currentIso()
@@ -290,7 +319,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                     )
                 ) {
                     Text(
-                        if (saving) t("下单中…", "Placing…") else t("确认下单", "Place Order") + " · RM%.2f".format(cartTotal),
+                        if (saving) t("下单中…", "Placing…") else t("确认下单", "Place Order") + " · RM%.2f".format(finalTotal),
                         color = DiningColors.Surface, fontWeight = FontWeight.Bold
                     )
                 }

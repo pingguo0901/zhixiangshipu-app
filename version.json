@@ -1,7 +1,7 @@
 {
-  "versionCode": 150,
-  "versionName": "1.2.34",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.34/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情弹窗：取消顾客/电话显示，改为备注",
+  "versionCode": 151,
+  "versionName": "1.2.35",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.35/zhixiangshipu-app.apk",
+  "changelog": "- 折扣输入框移到新建订单页下单详情下方，下单即保存折扣，结账自动带出",
   "buildDate": "2026-09-01"
 }

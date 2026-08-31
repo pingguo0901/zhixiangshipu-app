@@ -66,6 +66,8 @@ data class CustomerOrder(
     val order_items: JsonElement = JsonArray(emptyList()),
     val total_amount_myr: Double = 0.0,
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
+    val discount: Double = 0.0,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val payment_status: String = "unpaid",
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val receipt_no: String = "",

@@ -329,7 +329,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 }
 
                 HorizontalDivider(color = DiningColors.SurfaceVariant)
-                DetailRow(t("折扣", "Discount"), "RM%.2f".format(receipt?.discount ?: 0.0))
+                DetailRow(t("折扣", "Discount"), "RM%.2f".format(receipt?.discount ?: currentOrder.discount))
                 DetailRow(t("付款方式", "Payment Method"), receipt?.payment_mode?.ifBlank { t("未付", "Unpaid") } ?: t("未付", "Unpaid"))
                 DetailRow(t("顾客给多少", "Amount Received"), "RM%.2f".format(receipt?.amount_received ?: 0.0))
                 DetailRow(t("找零", "Change"), "RM%.2f".format(receipt?.change_given ?: 0.0))
@@ -560,7 +560,7 @@ private fun OrderEditDialog(
     var customerName by remember { mutableStateOf(order.customer_name ?: "") }
     var customerPhone by remember { mutableStateOf(order.customer_phone ?: "") }
     var status by remember { mutableStateOf(order.payment_status) }
-    var discount by remember { mutableStateOf(if ((receipt?.discount ?: 0.0) > 0) (receipt?.discount ?: 0.0).toString() else "") }
+    var discount by remember { mutableStateOf(if ((receipt?.discount ?: order.discount) > 0) (receipt?.discount ?: order.discount).toString() else "") }
     var payMode by remember { mutableStateOf(receipt?.payment_mode ?: "CASH") }
     var amountReceived by remember { mutableStateOf(if ((receipt?.amount_received ?: 0.0) > 0) (receipt?.amount_received ?: 0.0).toString() else "") }
     var receiptPhoto by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -815,7 +815,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
     val scope = rememberCoroutineScope()
     var method by remember { mutableStateOf("cash") }
     var cashReceived by remember { mutableStateOf("") }
-    var discount by remember { mutableStateOf("") }
+    var discount by remember { mutableStateOf(if (order.discount > 0) order.discount.toString() else "") }
     var receiptBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var showQr by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
