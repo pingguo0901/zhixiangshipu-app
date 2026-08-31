@@ -303,8 +303,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 DetailRow(t("订单号", "Order No."), currentOrder.order_no)
                 DetailRow(t("收据号", "Receipt No."), currentOrder.receipt_no.ifBlank { "—" })
                 DetailRow(t("类型", "Type"), if (isTakeaway) t("外卖", "Takeaway") else t("堂食", "Dine-in"))
-                DetailRow(t("顾客", "Customer"), currentOrder.customer_name ?: "—")
-                DetailRow(t("电话", "Phone"), currentOrder.customer_phone ?: "—")
+                DetailRow(t("备注", "Note"), currentOrder.notes?.takeIf { it.isNotBlank() } ?: "—")
                 DetailRow(t("桌台", "Table"), if (isTakeaway) (tableNo?.let { displayTableNo(it) } ?: t("外卖", "Takeaway")) else (tableNo ?: "${t("桌", "Table")} #${currentOrder.table_id}"))
                 DetailRow(t("状态", "Status"), when (currentOrder.payment_status) {
                     "paid" -> t("已付清", "Paid"); "partial" -> t("部分付", "Partial"); else -> t("未付", "Unpaid")
@@ -335,7 +334,6 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 DetailRow(t("顾客给多少", "Amount Received"), "RM%.2f".format(receipt?.amount_received ?: 0.0))
                 DetailRow(t("找零", "Change"), "RM%.2f".format(receipt?.change_given ?: 0.0))
                 DetailRow(t("总金额", "Total"), "RM%.2f".format(currentOrder.total_amount_myr))
-                currentOrder.notes?.takeIf { it.isNotBlank() }?.let { DetailRow(t("备注", "Note"), it) }
             }
         }
 
