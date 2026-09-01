@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
@@ -74,6 +75,15 @@ fun App(
     if (!SessionManager.isLoggedIn) {
         LoginScreen()
         return
+    }
+
+    // 自动监听新订单打印厨房单（网页下单 → 店内手机自动出单）
+    LaunchedEffect(Unit) {
+        KitchenAutoPrinter.initBaseline()
+        while (true) {
+            try { KitchenAutoPrinter.pollOnce() } catch (_: Exception) { }
+            delay(3000)
+        }
     }
 
     Column(

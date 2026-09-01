@@ -276,6 +276,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                             val r = SupabaseClient.insertOrder(order)
                             saving = false
                             if (r != null) {
+                                // 标记本单已打印，避免自动监听重复打印
+                                KitchenAutoPrinter.markPrinted(r.id)
                                 // 自动打印厨房出单（按当前语言）
                                 val tno = tables.firstOrNull { it.id == r.table_id }?.table_no ?: "外卖"
                                 val time = formatDateTimeMy(r.order_datetime ?: "")

@@ -115,6 +115,21 @@ object SupabaseClient {
     suspend fun fetchWarehouseItems(): List<WarehouseItem> = getList("warehouse_items", mapOf("order" to "item_name.asc"))
     suspend fun fetchOrders(): List<CustomerOrder> = getList("customer_orders", mapOf("order" to "order_datetime.desc"))
 
+    // 查 id 大于某值的新订单（自动打印厨房单轮询用，按 id 升序）
+    suspend fun fetchOrdersAfterId(id: Long): List<CustomerOrder> {
+        val resp: HttpResponse = client.get("$BASE/rest/v1/customer_orders") {
+            applyAuth()
+            url {
+                parameters.append("select", "*")
+                parameters.append("id", "gt.$id")
+                parameters.append("order", "id.asc")
+            }
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<List<CustomerOrder>>() }.getOrElse { emptyList() }
+        } else emptyList()
+    }
+
     // 按ID查单个订单
     suspend fun fetchOrder(orderId: Long): CustomerOrder? {
         val resp: HttpResponse = client.get("$BASE/rest/v1/customer_orders") {
