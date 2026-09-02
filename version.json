@@ -1,7 +1,7 @@
 {
-  "versionCode": 155,
-  "versionName": "1.2.39",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.39/zhixiangshipu-app.apk",
-  "changelog": "- 登录页 Logo 换成 App Icon",
+  "versionCode": 156,
+  "versionName": "1.2.40",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.40/zhixiangshipu-app.apk",
+  "changelog": "- 修复：有折扣的已付款订单误判为部分付（触发器算折扣+结账写回折扣）",
   "buildDate": "2026-09-03"
 }

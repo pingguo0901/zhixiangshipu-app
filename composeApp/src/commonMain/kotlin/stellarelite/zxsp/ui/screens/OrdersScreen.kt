@@ -1007,6 +1007,8 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                             received_by_staff_id = SupabaseClient.currentStaffId(),
                             transaction_datetime = now
                         )
+                        // 先把折扣写回订单，触发器才能正确判定「已付清」
+                        SupabaseClient.updateOrderDiscount(order.id, discountVal)
                         val r = SupabaseClient.insertPayment(p)
                         saving = false
                         if (r != null) {

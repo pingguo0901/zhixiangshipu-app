@@ -249,6 +249,17 @@ object SupabaseClient {
         return resp.status.isSuccess()
     }
 
+    // 结账时把折扣写回订单（供触发器判定「已付清」用）
+    suspend fun updateOrderDiscount(orderId: Long, discount: Double): Boolean {
+        val resp: HttpResponse = client.patch("$BASE/rest/v1/customer_orders") {
+            applyAuth()
+            url { parameters.append("id", "eq.$orderId") }
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("discount", JsonPrimitive(discount)) })
+        }
+        return resp.status.isSuccess()
+    }
+
     // 更新收据主表（小计/折扣/付款方式/顾客支付/找零）
     suspend fun updateReceiptByNo(receiptNo: String, subTotal: Double, discount: Double, totalAmount: Double, paymentMode: String, amountReceived: Double, changeGiven: Double): Boolean {
         val resp: HttpResponse = client.patch("$BASE/rest/v1/receipt_master") {
