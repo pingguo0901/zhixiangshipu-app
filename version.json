@@ -1,7 +1,7 @@
 {
-  "versionCode": 160,
-  "versionName": "1.2.44",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.44/zhixiangshipu-app.apk",
-  "changelog": "- 修复订单时间时区显示（UTC 转回 +08:00）",
+  "versionCode": 161,
+  "versionName": "1.2.45",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.45/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情总金额改为菜品总价扣折扣",
   "buildDate": "2026-09-03"
 }

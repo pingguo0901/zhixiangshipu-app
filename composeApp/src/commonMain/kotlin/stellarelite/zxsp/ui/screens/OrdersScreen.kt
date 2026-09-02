@@ -329,11 +329,12 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 }
 
                 HorizontalDivider(color = DiningColors.SurfaceVariant)
+                DetailRow(t("小计", "Sub Total"), "RM%.2f".format(currentOrder.total_amount_myr))
                 DetailRow(t("折扣", "Discount"), "RM%.2f".format(receipt?.discount ?: currentOrder.discount))
                 DetailRow(t("付款方式", "Payment Method"), receipt?.payment_mode?.ifBlank { t("未付", "Unpaid") } ?: t("未付", "Unpaid"))
                 DetailRow(t("顾客给多少", "Amount Received"), "RM%.2f".format(receipt?.amount_received ?: 0.0))
                 DetailRow(t("找零", "Change"), "RM%.2f".format(receipt?.change_given ?: 0.0))
-                DetailRow(t("总金额", "Total"), "RM%.2f".format(currentOrder.total_amount_myr))
+                DetailRow(t("总金额", "Total"), "RM%.2f".format((currentOrder.total_amount_myr - (receipt?.discount ?: currentOrder.discount)).coerceAtLeast(0.0)))
             }
         }
 
