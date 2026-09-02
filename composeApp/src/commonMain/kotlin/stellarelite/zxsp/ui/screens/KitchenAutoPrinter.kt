@@ -35,7 +35,9 @@ object KitchenAutoPrinter {
             val tno = tables.firstOrNull { it.id == order.table_id }?.table_no ?: "外卖"
             val time = formatDateTimeMy(order.order_datetime ?: "")
             val lines = parseOrderLines(order.order_items)
-            val kitchenText = if (LanguageManager.isEnglish) {
+            // 顾客网页下单（created_by_staff_id == 0）固定打印英文版厨房单
+            val isWebOrder = order.created_by_staff_id == 0L
+            val kitchenText = if (isWebOrder || LanguageManager.isEnglish) {
                 buildKitchenOrderEnglish(
                     orderNo = order.order_no,
                     tableNo = if (tno.startsWith("外卖")) "Takeaway" else tno,
