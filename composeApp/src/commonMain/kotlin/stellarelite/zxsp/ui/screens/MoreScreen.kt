@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.RestaurantMenu
@@ -44,6 +45,7 @@ import stellarelite.zxsp.network.Staff
 import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
+import stellarelite.zxsp.platform.printTableQrSticker
 import stellarelite.zxsp.ui.theme.DiningColors
 import stellarelite.zxsp.util.decodeJwtSub
 
@@ -85,6 +87,7 @@ fun MoreScreen() {
 
 @Composable
 private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: () -> Unit, onStaffs: () -> Unit, onStaffLogs: () -> Unit) {
+    var showPrintQr by remember { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.MoreHoriz, contentDescription = null, tint = DiningColors.TextPrimary, modifier = Modifier.size(24.dp))
@@ -101,6 +104,7 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
             MenuEntry(Icons.Outlined.LocalShipping, t("供应商管理", "Supplier Management"), t("批发商档案、BRN、TIN", "Supplier profiles, BRN, TIN")) { onSuppliers() }
             MenuEntry(Icons.Outlined.Group, t("员工管理", "Staff Management"), t("新增/停用员工账号", "Add/deactivate staff accounts")) { onStaffs() }
             MenuEntry(Icons.Outlined.History, t("员工操作记录", "Staff Activity Log"), t("查看员工所有操作记录", "View all staff operation records")) { onStaffLogs() }
+            MenuEntry(Icons.Outlined.QrCode2, t("打印二维码", "Print QR Code"), t("打印桌台下单二维码", "Print table ordering QR codes")) { showPrintQr = true }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -134,6 +138,10 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
             Text(t("退出登录", "Log Out"), fontSize = 16.sp, color = DiningColors.Error)
         }
     }
+
+    if (showPrintQr) {
+        PrintQrDialog(onDismiss = { showPrintQr = false })
+    }
 }
 
 @Composable
@@ -155,6 +163,110 @@ private fun MenuEntry(icon: ImageVector, title: String, desc: String, onClick: (
             }
             Text("›", fontSize = 20.sp, color = DiningColors.TextMuted)
         }
+    }
+}
+
+// ============ 打印桌台下单二维码 ============
+@Composable
+private fun PrintQrDialog(onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var tableExpanded by remember { mutableStateOf(false) }
+    var selectedId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(Unit) {
+        runCatching { SupabaseClient.fetchTables() }
+            .onSuccess { tables = it.filter { t -> !t.table_no.startsWith("外卖") } }
+        loading = false
+    }
+
+    val selected = tables.firstOrNull { it.id == selectedId }
+    val tableNo = selected?.let { "TABLE-" + it.table_no }
+    val qrUrl = selected?.let { "https://zhixiangshipu-web.vercel.app/?table=${it.id}" }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DiningColors.Surface,
+        shape = RoundedCornerShape(20.dp),
+        title = { Text(t("打印二维码", "Print QR Code"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(t("选择桌台", "Select Table"), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                Box {
+                    OutlinedButton(onClick = { tableExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                selected?.table_no ?: t("选择桌台", "Select Table"),
+                                modifier = Modifier.weight(1f),
+                                color = DiningColors.TextPrimary
+                            )
+                            Text("▾", color = DiningColors.TextMuted)
+                        }
+                    }
+                    DropdownMenu(expanded = tableExpanded, onDismissRequest = { tableExpanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
+                        tables.forEach { t ->
+                            DropdownMenuItem(
+                                text = { Text(t.table_no) },
+                                onClick = { selectedId = t.id; tableExpanded = false }
+                            )
+                        }
+                    }
+                }
+
+                if (selected != null && tableNo != null && qrUrl != null) {
+                    HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                    Text(t("打印内容", "Print Content"), fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    Text(
+                        buildTableQrPreviewText(tableNo, qrUrl),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = DiningColors.TextPrimary,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = selected != null && tableNo != null && qrUrl != null,
+                onClick = { if (tableNo != null && qrUrl != null) printTableQrSticker(tableNo, qrUrl) }
+            ) {
+                Text(t("打印", "Print"), color = if (selected != null) DiningColors.Primary else DiningColors.TextMuted, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("完成", "Done"), color = DiningColors.TextMuted) } }
+    )
+}
+
+// 预览用：桌台下单二维码贴纸文本内容（与字节流排版一致，二维码用占位符表示）
+private fun buildTableQrPreviewText(tableNo: String, qrUrl: String): String {
+    return buildString {
+        appendLine("ZHI XIANG")
+        appendLine("ZHI XIANG SKEWER HOUSE")
+        appendLine()
+        appendLine("📱 SCAN TO ORDER BY YOURSELF")
+        appendLine()
+        appendLine(tableNo)
+        appendLine("================================================")
+        appendLine()
+        appendLine("[ QR CODE ]")
+        appendLine(qrUrl)
+        appendLine()
+        appendLine("⚠️ FRIENDLY REMINDERS")
+        appendLine("1. Scan QR to order. Sent to kitchen automatically.")
+        appendLine("2. To add items, simply scan the same QR again.")
+        appendLine("3. For takeaway, please select the 'Takeaway' option.")
+        appendLine("4. Need assistance? Please call our friendly staff.")
+        appendLine()
+        appendLine("================================================")
+        appendLine("ZHI XIANG FOOD ENTERPRISE")
+        appendLine("2313, Jalan Dato Sulaiman, Taman Abad")
+        appendLine("80250 Johor Bahru")
+        appendLine("================================================")
     }
 }
 
