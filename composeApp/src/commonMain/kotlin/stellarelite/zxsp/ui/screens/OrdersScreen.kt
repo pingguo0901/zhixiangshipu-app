@@ -106,7 +106,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
         "unpaid" -> orders.filter { it.payment_status != "paid" }
         else -> orders
     }
-    val grouped = filtered.groupBy { it.order_datetime?.take(10) ?: "" }
+    val grouped = filtered.groupBy { isoToKlDate(it.order_datetime ?: "") }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -220,7 +220,7 @@ private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Uni
                     color = orderTypeColor
                 )
                 Text(
-                    order.order_datetime?.take(16)?.replace("T", " ") ?: "",
+                    isoToKlDateTime(order.order_datetime ?: ""),
                     fontSize = 11.sp,
                     color = DiningColors.TextMuted
                 )
@@ -1340,12 +1340,9 @@ data class ReceiptData(
     }
 }
 
-// 日期转马来西亚格式 dd/MM/yyyy HH:mm
+// 日期转马来西亚格式 dd/MM/yyyy HH:mm（自动把 UTC 转回 +08:00 时区）
 internal fun formatDateTimeMy(iso: String): String {
-    val datePart = iso.take(10)
-    val timePart = if (iso.length >= 16) iso.substring(11, 16) else ""
-    val parts = datePart.split("-")
-    return if (parts.size == 3) "${parts[2]}/${parts[1]}/${parts[0]} $timePart" else iso
+    return isoToKlDateTimeSlash(iso)
 }
 
 private fun mapPayMode(method: String): String = when (method) {

@@ -1,7 +1,7 @@
 {
-  "versionCode": 159,
-  "versionName": "1.2.43",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.43/zhixiangshipu-app.apk",
-  "changelog": "- 顾客网页下单厨房单自动打印英文版",
+  "versionCode": 160,
+  "versionName": "1.2.44",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.44/zhixiangshipu-app.apk",
+  "changelog": "- 修复订单时间时区显示（UTC 转回 +08:00）",
   "buildDate": "2026-09-03"
 }
