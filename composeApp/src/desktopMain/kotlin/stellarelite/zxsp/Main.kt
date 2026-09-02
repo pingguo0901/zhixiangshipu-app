@@ -17,6 +17,10 @@ fun main() = application {
         title = "炙巷食铺 · ZHI XIANG FOOD ENTERPRISE",
         state = state
     ) {
-        App(useSideNav = true)
+        App(
+            useSideNav = true,
+            onCheckUpdate = { DesktopUpdater.checkForUpdate() },
+            onRequestUpdate = { info -> DesktopUpdater.openDownload(info.apkUrl) }
+        )
     }
 }
