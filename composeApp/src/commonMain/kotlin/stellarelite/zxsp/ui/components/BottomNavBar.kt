@@ -33,7 +33,7 @@ enum class DiningTab(val label: String, val icon: ImageVector) {
 }
 
 // 底部标签显示文案（跟随全局语言）
-private fun tabLabel(tab: DiningTab): String = when (tab) {
+internal fun tabLabel(tab: DiningTab): String = when (tab) {
     DiningTab.Home -> t("工作台", "Dashboard")
     DiningTab.Orders -> t("订单", "Orders")
     DiningTab.Warehouse -> t("仓库", "Warehouse")

@@ -17,6 +17,8 @@ kotlin {
         }
     }
 
+    jvm("desktop")
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -55,6 +57,14 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
+
+        val desktopMain by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation(libs.ktor.client.cio)
+                implementation(libs.kotlinx.coroutines.swing)
+            }
+        }
     }
 }
 
@@ -66,8 +76,8 @@ android {
         applicationId = "stellarelite.zxsp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 157
-        versionName = "1.2.41"
+        versionCode = 158
+        versionName = "1.2.42"
     }
 
     compileOptions {
@@ -78,4 +88,10 @@ android {
 
 compose.resources {
     packageOfResClass = "stellarelite.zxsp.generated.resources"
+}
+
+compose.desktop {
+    application {
+        mainClass = "stellarelite.zxsp.MainKt"
+    }
 }
