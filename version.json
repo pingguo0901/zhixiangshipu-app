@@ -1,7 +1,7 @@
 {
-  "versionCode": 154,
-  "versionName": "1.2.38",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.38/zhixiangshipu-app.apk",
-  "changelog": "- 网页下单自动打印厨房单（店内手机实时监听新订单自动出单）",
-  "buildDate": "2026-09-02"
+  "versionCode": 155,
+  "versionName": "1.2.39",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.39/zhixiangshipu-app.apk",
+  "changelog": "- 登录页 Logo 换成 App Icon",
+  "buildDate": "2026-09-03"
 }

@@ -1,5 +1,6 @@
 package stellarelite.zxsp.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,15 +11,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.data.t
+import stellarelite.zxsp.generated.resources.*
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.theme.DiningColors
 
@@ -73,7 +78,14 @@ fun LoginScreen() {
     ) {
         Spacer(modifier = Modifier.height(80.dp))
 
-        Text("🍖", fontSize = 64.sp)
+        Image(
+            painter = painterResource(Res.drawable.app_logo),
+            contentDescription = t("炙巷食铺", "ZHI XIANG FOOD"),
+            modifier = Modifier
+                .size(96.dp)
+                .clip(RoundedCornerShape(20.dp)),
+            contentScale = ContentScale.Crop
+        )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             t("炙巷食铺", "ZHI XIANG FOOD"),
