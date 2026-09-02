@@ -1,7 +1,7 @@
 {
-  "versionCode": 157,
-  "versionName": "1.2.41",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.41/zhixiangshipu-app.apk",
-  "changelog": "- 更多页新增打印桌台下单二维码（选桌台+预览+打印）",
+  "versionCode": 158,
+  "versionName": "1.2.42",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.42/zhixiangshipu-app.apk",
+  "changelog": "- 登录页支持回车键快捷登录\n- 中英文切换与图标优化",
   "buildDate": "2026-09-03"
 }
