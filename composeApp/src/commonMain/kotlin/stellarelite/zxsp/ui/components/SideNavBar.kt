@@ -1,21 +1,28 @@
 package stellarelite.zxsp.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.painterResource
+import stellarelite.zxsp.data.LanguageManager
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.data.t
+import stellarelite.zxsp.generated.resources.Res
+import stellarelite.zxsp.generated.resources.app_logo
 import stellarelite.zxsp.ui.theme.DiningColors
 
 // 桌面端左侧快捷导航栏（对标网页员工版 sidebar）
@@ -33,8 +40,15 @@ fun SideNavBar(
     ) {
         // Logo
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("🍢", fontSize = 26.sp)
-            Spacer(modifier = Modifier.width(8.dp))
+            Image(
+                painter = painterResource(Res.drawable.app_logo),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
                 t("炙巷食铺", "ZHI XIANG"),
                 fontSize = 18.sp,
@@ -74,6 +88,25 @@ fun SideNavBar(
         }
 
         Spacer(modifier = Modifier.weight(1f))
+
+        // 语言切换
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { LanguageManager.setLanguage("zh") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("中文", color = if (!LanguageManager.isEnglish) DiningColors.Primary else DiningColors.TextMuted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+            OutlinedButton(
+                onClick = { LanguageManager.setLanguage("en") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("EN", color = if (LanguageManager.isEnglish) DiningColors.Primary else DiningColors.TextMuted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 用户信息
         Text(
