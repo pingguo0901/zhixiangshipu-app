@@ -93,5 +93,10 @@ compose.resources {
 compose.desktop {
     application {
         mainClass = "stellarelite.zxsp.MainKt"
+        nativeDistributions {
+            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe)
+            packageName = "ZhiXiangFood"
+            packageVersion = "1.2.42"
+        }
     }
 }
