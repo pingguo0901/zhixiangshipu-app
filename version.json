@@ -1,7 +1,7 @@
 {
-  "versionCode": 162,
-  "versionName": "1.2.46",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.46/zhixiangshipu-app.apk",
-  "changelog": "- 订单列表显示扣折扣后总金额\n- 报表收款合计改为总销售额扣总折扣",
+  "versionCode": 163,
+  "versionName": "1.2.47",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.47/zhixiangshipu-app.apk",
+  "changelog": "- 收据/报表填入 SSM BRN 号码",
   "buildDate": "2026-09-03"
 }

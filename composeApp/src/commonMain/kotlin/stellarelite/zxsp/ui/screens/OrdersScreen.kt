@@ -1293,7 +1293,7 @@ data class ReceiptData(
         r.add("")
         r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
         r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
-        r.add(ReceiptFormatter.padCenter("SSM BRN: 【12位BRN NUMBER】", W))
+        r.add(ReceiptFormatter.padCenter("SSM BRN: 202603232514", W))
         r.add(ReceiptFormatter.padCenter("2313, Jalan Dato Sulaiman,", W))
         r.add(ReceiptFormatter.padCenter("Taman Abad, 80250 Johor Bahru,", W))
         r.add(ReceiptFormatter.padCenter("Johor Darul Ta'zim", W))

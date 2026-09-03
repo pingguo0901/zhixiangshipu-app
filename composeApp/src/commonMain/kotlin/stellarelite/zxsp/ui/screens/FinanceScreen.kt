@@ -1155,7 +1155,7 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
         r.add("")
         r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
         r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
-        r.add(ReceiptFormatter.padCenter("SSM BRN: [ENTER BRN NUMBER]", W))
+        r.add(ReceiptFormatter.padCenter("SSM BRN: 202603232514", W))
         r.add(ReceiptFormatter.padRight((if (isMonthly) "Report Period: " else "Report Date: ") + (if (isMonthly) start.substring(0, 7) else fmtMyDate(start)), W))
     } else {
         r.add(ReceiptFormatter.padCenter(if (isMonthly) "MONTHLY BUSINESS REPORT" else "DAILY BUSINESS REPORT", W))
@@ -1163,7 +1163,7 @@ private fun buildReportText(isMonthly: Boolean, isEnglish: Boolean, report: Json
         r.add("")
         r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
         r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
-        r.add(ReceiptFormatter.padCenter("SSM BRN: 【填写BRN】", W))
+        r.add(ReceiptFormatter.padCenter("SSM BRN: 202603232514", W))
         r.add(ReceiptFormatter.padRight((if (isMonthly) "统计月份: " else "统计日期: ") + (if (isMonthly) start.substring(0, 7) else fmtMyDate(start)), W))
     }
     r.add("=".repeat(W))
@@ -1275,7 +1275,7 @@ private fun buildMonthlyReportZh(report: JsonElement, start: String): String {
     r.add("")
     r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
     r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
-    r.add(ReceiptFormatter.padCenter("SSM BRN: 【填写BRN】", W))
+    r.add(ReceiptFormatter.padCenter("SSM BRN: 202603232514", W))
     r.add(ReceiptFormatter.padRight("统计月份: $monthLabel", W))
     r.add("=".repeat(W))
 
@@ -1413,7 +1413,7 @@ private fun buildMonthlyReportEn(report: JsonElement, start: String): String {
     r.add("")
     r.add(ReceiptFormatter.padCenter("ZHI XIANG FOOD ENTERPRISE", W))
     r.add(ReceiptFormatter.padCenter("(Trade Name: 炙巷食铺)", W))
-    r.add(ReceiptFormatter.padCenter("SSM BRN: [ENTER BRN NUMBER]", W))
+    r.add(ReceiptFormatter.padCenter("SSM BRN: 202603232514", W))
     r.add(ReceiptFormatter.padRight("Report Month: $monthLabel", W))
     r.add("=".repeat(W))
 
