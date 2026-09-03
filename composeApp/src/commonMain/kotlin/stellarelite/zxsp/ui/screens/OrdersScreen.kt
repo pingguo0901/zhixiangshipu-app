@@ -226,7 +226,7 @@ private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Uni
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("RM%.2f".format(order.total_amount_myr), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                Text("RM%.2f".format((order.total_amount_myr - order.discount).coerceAtLeast(0.0)), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
                 Text(statusLabel, fontSize = 12.sp, color = statusColor, fontWeight = FontWeight.SemiBold)
             }
         }

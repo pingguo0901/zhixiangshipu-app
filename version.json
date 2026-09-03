@@ -1,7 +1,7 @@
 {
-  "versionCode": 161,
-  "versionName": "1.2.45",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.45/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情总金额改为菜品总价扣折扣",
+  "versionCode": 162,
+  "versionName": "1.2.46",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.46/zhixiangshipu-app.apk",
+  "changelog": "- 订单列表显示扣折扣后总金额\n- 报表收款合计改为总销售额扣总折扣",
   "buildDate": "2026-09-03"
 }

@@ -16,7 +16,7 @@ BEGIN
   SELECT json_build_object(
     'total_orders', (SELECT count(*) FROM customer_orders WHERE (order_datetime AT TIME ZONE 'Asia/Kuala_Lumpur')::date BETWEEN p_start AND p_end),
     'paid_orders', (SELECT count(*) FROM customer_orders WHERE payment_status='paid' AND (order_datetime AT TIME ZONE 'Asia/Kuala_Lumpur')::date BETWEEN p_start AND p_end),
-    'total_sales', COALESCE((SELECT sum(p.pay_amount_myr) FROM payment_records p JOIN customer_orders c ON c.id = p.order_id WHERE (c.order_datetime AT TIME ZONE 'Asia/Kuala_Lumpur')::date BETWEEN p_start AND p_end),0),
+    'total_sales', COALESCE((SELECT sum(rm.sub_total) FROM receipt_master rm JOIN customer_orders c ON c.order_no = rm.remark WHERE (c.order_datetime AT TIME ZONE 'Asia/Kuala_Lumpur')::date BETWEEN p_start AND p_end),0),
     'total_discount', COALESCE((SELECT sum(rm.discount) FROM receipt_master rm JOIN customer_orders c ON c.order_no = rm.remark WHERE (c.order_datetime AT TIME ZONE 'Asia/Kuala_Lumpur')::date BETWEEN p_start AND p_end),0),
     'cash', COALESCE((SELECT sum(p.pay_amount_myr) FROM payment_records p JOIN customer_orders c ON c.id = p.order_id WHERE p.pay_method='cash' AND (c.order_datetime AT TIME ZONE 'Asia/Kuala_Lumpur')::date BETWEEN p_start AND p_end),0),
     'duitnow', COALESCE((SELECT sum(p.pay_amount_myr) FROM payment_records p JOIN customer_orders c ON c.id = p.order_id WHERE p.pay_method='duitnow' AND (c.order_datetime AT TIME ZONE 'Asia/Kuala_Lumpur')::date BETWEEN p_start AND p_end),0),
