@@ -79,6 +79,25 @@ fun App(
         return
     }
 
+    // 运行期自动续期：access_token 有效期仅 1 小时，快过期（剩 5 分钟内）就提前用 refresh_token 换新，
+    // 避免手机一直开着、不重启导致 token 过期掉线自动退出
+    LaunchedEffect(Unit) {
+        while (true) {
+            try {
+                val exp = SessionManager.accessToken?.let { decodeJwtExp(it) }
+                val nowSec = Clock.System.now().toEpochMilliseconds() / 1000
+                if (exp != null && exp - nowSec < 300) {
+                    val rt = SessionManager.refreshToken
+                    val ns = rt?.let { SupabaseClient.refreshSession(it).getOrNull() }
+                    if (ns != null) {
+                        SessionManager.updateTokens(ns.access_token, ns.refresh_token)
+                    }
+                }
+            } catch (_: Exception) { }
+            delay(60_000)
+        }
+    }
+
     // 自动监听新订单打印厨房单（网页下单 → 店内手机自动出单）
     LaunchedEffect(Unit) {
         KitchenAutoPrinter.initBaseline()

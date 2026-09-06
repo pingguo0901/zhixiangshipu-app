@@ -1,7 +1,7 @@
 {
-  "versionCode": 163,
-  "versionName": "1.2.47",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.47/zhixiangshipu-app.apk",
-  "changelog": "- 收据/报表填入 SSM BRN 号码",
-  "buildDate": "2026-09-03"
+  "versionCode": 164,
+  "versionName": "1.2.48",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.48/zhixiangshipu-app.apk",
+  "changelog": "- 修复长时间开着 APP 登录态自动退出：运行期自动续期 token",
+  "buildDate": "2026-09-07"
 }
