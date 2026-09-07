@@ -65,7 +65,7 @@ fun App(
             val staff = if (uid != null) runCatching { SupabaseClient.fetchMyStaff(uid) }.getOrNull() else null
             if (staff != null) {
                 if (staff.is_active) {
-                    SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+                    SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid, canPrintDaily = staff.can_print_daily, canPrintQr = staff.can_print_qr)
                 } else {
                     SessionManager.clear()
                 }

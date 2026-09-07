@@ -1,7 +1,7 @@
 {
-  "versionCode": 164,
-  "versionName": "1.2.48",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.48/zhixiangshipu-app.apk",
-  "changelog": "- 修复长时间开着 APP 登录态自动退出：运行期自动续期 token",
-  "buildDate": "2026-09-07"
+  "versionCode": 165,
+  "versionName": "1.2.49",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.49/zhixiangshipu-app.apk",
+  "changelog": "- 新增员工权限：打印日账/打印二维码可单独开通给员工账号",
+  "buildDate": "2026-09-08"
 }

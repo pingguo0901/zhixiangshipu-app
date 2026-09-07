@@ -262,7 +262,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
         val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
         val staff = uid?.let { runCatching { SupabaseClient.fetchMyStaff(it) }.getOrNull() }
         if (staff != null && staff.is_active) {
-            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid, canPrintDaily = staff.can_print_daily, canPrintQr = staff.can_print_qr)
         }
         val p = runCatching { SupabaseClient.fetchPaymentByOrder(currentOrder.id) }.getOrNull()
         payment = p

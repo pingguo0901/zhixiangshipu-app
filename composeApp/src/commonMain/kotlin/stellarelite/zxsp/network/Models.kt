@@ -28,6 +28,8 @@ data class Staff(
     val role: String = "",
     val phone: String? = null,
     val is_active: Boolean = true,
+    val can_print_daily: Boolean = false,
+    val can_print_qr: Boolean = false,
     val created_at: String? = null
 )
 

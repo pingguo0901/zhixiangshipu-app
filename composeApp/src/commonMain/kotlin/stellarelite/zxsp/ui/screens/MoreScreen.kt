@@ -66,7 +66,7 @@ fun MoreScreen() {
         val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
         val staff = uid?.let { runCatching { SupabaseClient.fetchMyStaff(it) }.getOrNull() }
         if (staff != null && staff.is_active) {
-            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid, canPrintDaily = staff.can_print_daily, canPrintQr = staff.can_print_qr)
         }
     }
     when (val n = nav) {
@@ -104,6 +104,9 @@ private fun MoreMenuView(onMenu: () -> Unit, onTables: () -> Unit, onSuppliers: 
             MenuEntry(Icons.Outlined.LocalShipping, t("供应商管理", "Supplier Management"), t("批发商档案、BRN、TIN", "Supplier profiles, BRN, TIN")) { onSuppliers() }
             MenuEntry(Icons.Outlined.Group, t("员工管理", "Staff Management"), t("新增/停用员工账号", "Add/deactivate staff accounts")) { onStaffs() }
             MenuEntry(Icons.Outlined.History, t("员工操作记录", "Staff Activity Log"), t("查看员工所有操作记录", "View all staff operation records")) { onStaffLogs() }
+        }
+        // 打印二维码（老板或有权限的员工）
+        if (SessionManager.isAdmin || SessionManager.canPrintQr) {
             MenuEntry(Icons.Outlined.QrCode2, t("打印二维码", "Print QR Code"), t("打印桌台下单二维码", "Print table ordering QR codes")) { showPrintQr = true }
         }
 

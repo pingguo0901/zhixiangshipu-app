@@ -68,7 +68,7 @@ fun FinanceScreen() {
         val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
         val staff = uid?.let { runCatching { SupabaseClient.fetchMyStaff(it) }.getOrNull() }
         if (staff != null && staff.is_active) {
-            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid)
+            SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid, canPrintDaily = staff.can_print_daily, canPrintQr = staff.can_print_qr)
         }
     }
     when (val n = nav) {
@@ -644,6 +644,8 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
     var printLang by remember { mutableStateOf("zh") } // zh / en
     var dailyPrintDate by remember { mutableStateOf<String?>(null) }
     var showPurchaseDialog by remember { mutableStateOf(false) }
+    // 打印日账权限：老板或有 can_print_daily 权限的员工
+    val canPrintDaily = SessionManager.isAdmin || SessionManager.canPrintDaily
 
     fun load() {
         scope.launch {
@@ -736,7 +738,7 @@ private fun ReportScreen(isStaff: Boolean, onBack: () -> Unit) {
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(rows, key = { it.period_date }) { r ->
-                    Card(modifier = Modifier.fillMaxWidth().clickable { dailyPrintDate = r.period_date }, shape = RoundedCornerShape(12.dp),
+                    Card(modifier = Modifier.fillMaxWidth().clickable(enabled = canPrintDaily, onClick = { dailyPrintDate = r.period_date }), shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = DiningColors.Surface)) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(r.period_date, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)

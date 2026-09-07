@@ -59,7 +59,9 @@ fun LoginScreen() {
                         staffName = staff.staff_name,
                         role = staff.role,
                         authUid = s.user.id,
-                        refreshToken = s.refresh_token
+                        refreshToken = s.refresh_token,
+                        canPrintDaily = staff.can_print_daily,
+                        canPrintQr = staff.can_print_qr
                     )
                 } else if (staff != null && !staff.is_active) {
                     error = t("该账号已停用，请联系老板", "Account deactivated, contact the owner")
