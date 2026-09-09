@@ -1,7 +1,7 @@
 {
-  "versionCode": 165,
-  "versionName": "1.2.49",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.49/zhixiangshipu-app.apk",
-  "changelog": "- 新增员工权限：打印日账/打印二维码可单独开通给员工账号",
-  "buildDate": "2026-09-08"
+  "versionCode": 166,
+  "versionName": "1.2.50",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.50/zhixiangshipu-app.apk",
+  "changelog": "- 底部导航栏增加安全区边距，避免被手机底部手势条遮挡",
+  "buildDate": "2026-09-10"
 }

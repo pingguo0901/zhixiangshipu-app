@@ -46,20 +46,26 @@ fun BottomNavBar(
     currentTab: DiningTab,
     onTabSelected: (DiningTab) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(DiningColors.NavBar)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .navigationBarsPadding()
     ) {
-        DiningTab.entries.forEach { tab ->
-            NavTabItem(
-                tab = tab,
-                isSelected = currentTab == tab,
-                onClick = { onTabSelected(tab) },
-                modifier = Modifier.weight(1f)
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            DiningTab.entries.forEach { tab ->
+                NavTabItem(
+                    tab = tab,
+                    isSelected = currentTab == tab,
+                    onClick = { onTabSelected(tab) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
