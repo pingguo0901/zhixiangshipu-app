@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 炙巷食谱 - 固定开销自动记账脚本
 // 用法：
-//   node auto_fixed_expense.js daily     每天跑：每月1号记店租/员工薪资/老板薪资；炭火每3天记一笔
+//   node auto_fixed_expense.js daily     每天跑：每月1号记店租/员工薪资/老板薪资；炭火每3天进一笔货（进货成本）
 //   node auto_fixed_expense.js backfill  8月补记：8/26-8/31 共6天，店租+员工薪资按天折算
 //   node auto_fixed_expense.js list      列出已自动记账的记录（验证用）
 
@@ -14,9 +14,14 @@ const FIXED = {
   rent:        { name: '店租',     type: '租金',     amount: 1800 },
   staffSalary: { name: '员工薪资', type: '员工',     amount: 1800 },
   bossSalary:  { name: '老板薪资', type: '老板薪资', amount: 3000 },
-  charcoal:    { name: '炭火',     type: '炭火',     amount: 38 },
 };
-const CHARCOAL_START = '2026-09-01'; // 炭火起始日，每3天记一笔
+// 炭火算进货成本，走 stock_in_log（进货入库），不再记业务开销 expense_records
+const CHARCOAL = {
+  logName: '炭火进货',
+  qty: 10, unit: 'KG', unitPrice: 3.8, total: 38,
+  supplierId: 9, warehouseItemId: 30,
+};
+const CHARCOAL_START = '2026-09-01'; // 炭火进货起始日，每3天进一笔
 const CHARCOAL_INTERVAL = 3;
 // ---------- 配置结束 ----------
 
@@ -112,6 +117,43 @@ async function record(name, type, amount, periodDate, datetimeIso) {
   return true;
 }
 
+// 炭火进货入库（幂等：先占 fixed_expense_log 日志位，再写 stock_in_log，失败回滚）
+async function recordCharcoalStock(periodDate, datetimeIso) {
+  const name = CHARCOAL.logName;
+  let exist;
+  try { exist = await logExists(name, periodDate); }
+  catch (e) { console.error(`  ✗ ${e.message}，跳过：${name} ${periodDate}`); return false; }
+  if (exist) { console.log(`  - 已进过货，跳过：${name} ${periodDate}`); return true; }
+
+  // 1. 占日志位（UNIQUE 幂等）
+  const logResp = await api('POST', 'fixed_expense_log', {
+    expense_name: name, expense_type: '进货', amount_myr: CHARCOAL.total, period_date: periodDate,
+  });
+  if (!logResp.ok) { console.error(`  ✗ 日志占位失败：${name} ${periodDate} -> ${logResp.status}`); return false; }
+
+  // 2. 写进货入库 stock_in_log（触发器会自动加库存）
+  const body = {
+    supplier_id: CHARCOAL.supplierId,
+    in_items: [{ qty: CHARCOAL.qty, unit: CHARCOAL.unit, unit_price: CHARCOAL.unitPrice, warehouse_item_id: CHARCOAL.warehouseItemId }],
+    total_cost_myr: CHARCOAL.total,
+    cost_currency: 'MYR',
+    pay_method: 'cash',
+    transaction_ref: '',
+    payment_status: 'unpaid',
+    operate_staff_id: 1,
+    transaction_datetime: datetimeIso,
+    notes: '自动记账',
+  };
+  const recResp = await api('POST', 'stock_in_log', body);
+  if (!recResp.ok) {
+    await api('DELETE', `fixed_expense_log?expense_name=eq.${encodeURIComponent(name)}&period_date=eq.${periodDate}`);
+    console.error(`  ✗ 炭火进货失败：${periodDate} -> ${recResp.status} ${await recResp.text()}（日志已回滚）`);
+    return false;
+  }
+  console.log(`  ✓ 已进货：炭火 ${CHARCOAL.qty}${CHARCOAL.unit} RM${CHARCOAL.total} @ ${periodDate}`);
+  return true;
+}
+
 async function main() {
   const mode = process.argv[2] || 'daily';
 
@@ -148,10 +190,10 @@ async function main() {
     await record(FIXED.bossSalary.name, FIXED.bossSalary.type, FIXED.bossSalary.amount, t.str, `${t.str}T12:00:00+08:00`);
   }
 
-  // 炭火每3天（从 CHARCOAL_START 起）
+  // 炭火每3天进一笔货（进货成本，走 stock_in_log）
   const dd = daysBetween(CHARCOAL_START, t.str);
   if (dd >= 0 && dd % CHARCOAL_INTERVAL === 0) {
-    await record(FIXED.charcoal.name, FIXED.charcoal.type, FIXED.charcoal.amount, t.str, `${t.str}T12:00:00+08:00`);
+    await recordCharcoalStock(t.str, `${t.str}T12:00:00+08:00`);
   }
 
   console.log('完成');
