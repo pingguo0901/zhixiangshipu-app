@@ -925,19 +925,6 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                     OutlinedButton(onClick = { showQr = true }, modifier = Modifier.fillMaxWidth()) {
                         Text(t("显示二维码", "Show QR Code"), color = DiningColors.Primary)
                     }
-                    if (showQr) {
-                        val qr = when (method) {
-                            "duitnow" -> Res.drawable.duitnow_tng_qr
-                            "tng_ewallet" -> Res.drawable.duitnow_tng_qr
-                            else -> Res.drawable.alipay_qr
-                        }
-                        Image(
-                            painter = painterResource(qr),
-                            contentDescription = t("付款二维码", "Payment QR"),
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxWidth().height(340.dp)
-                        )
-                    }
                     OutlinedButton(onClick = { takePhoto() }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (receiptBitmap == null) t("📷 拍收据", "📷 Take Receipt") else t("📷 重拍收据", "📷 Retake Receipt"), color = DiningColors.Primary)
                     }
@@ -1042,6 +1029,42 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(t("取消", "Cancel"), color = DiningColors.TextMuted) } }
     )
+
+    // 付款二维码独立弹窗（底部「完成」返回结账弹窗）
+    if (showQr) {
+        val qr = when (method) {
+            "duitnow" -> Res.drawable.duitnow_tng_qr
+            "tng_ewallet" -> Res.drawable.duitnow_tng_qr
+            else -> Res.drawable.alipay_qr
+        }
+        AlertDialog(
+            onDismissRequest = { showQr = false },
+            containerColor = DiningColors.Surface,
+            shape = RoundedCornerShape(20.dp),
+            title = { Text(t("付款二维码", "Payment QR"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Image(
+                        painter = painterResource(qr),
+                        contentDescription = t("付款二维码", "Payment QR"),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxWidth().height(340.dp)
+                    )
+                    Button(
+                        onClick = { showQr = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(t("完成", "Done"), fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            },
+            confirmButton = {}
+        )
+    }
 }
 
 data class ReceiptLine(

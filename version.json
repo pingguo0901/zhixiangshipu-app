@@ -1,7 +1,7 @@
 {
-  "versionCode": 167,
-  "versionName": "1.2.51",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.51/zhixiangshipu-app.apk",
-  "changelog": "- 更换 DuitNow/TNG 付款二维码为新版 DuitNow 统一码",
+  "versionCode": 168,
+  "versionName": "1.2.52",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.52/zhixiangshipu-app.apk",
+  "changelog": "- 付款二维码改为独立弹窗显示，底部「完成」按钮返回结账弹窗",
   "buildDate": "2026-09-11"
 }
