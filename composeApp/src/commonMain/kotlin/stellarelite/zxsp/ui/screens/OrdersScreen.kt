@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -933,7 +934,8 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                         Image(
                             painter = painterResource(qr),
                             contentDescription = t("付款二维码", "Payment QR"),
-                            modifier = Modifier.fillMaxWidth().height(180.dp)
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxWidth().height(340.dp)
                         )
                     }
                     OutlinedButton(onClick = { takePhoto() }, modifier = Modifier.fillMaxWidth()) {
