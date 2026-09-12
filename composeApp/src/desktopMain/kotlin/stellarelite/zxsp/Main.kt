@@ -20,7 +20,11 @@ fun main() = application {
         App(
             useDesktopLayout = true,
             onCheckUpdate = { DesktopUpdater.checkForUpdate() },
-            onRequestUpdate = { info -> DesktopUpdater.openDownload(info.apkUrl) }
+            onApplyUpdate = { info, onProgress ->
+                val ok = DesktopUpdater.downloadAndApply(info.apkUrl, onProgress)
+                if (ok) exitApplication()
+                ok
+            }
         )
     }
 }

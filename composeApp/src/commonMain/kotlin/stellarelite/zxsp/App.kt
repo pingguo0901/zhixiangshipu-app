@@ -5,11 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
@@ -23,12 +25,16 @@ import stellarelite.zxsp.ui.theme.DiningColors
 @Composable
 fun App(
     onCheckUpdate: (suspend () -> VersionInfo?)? = null,
-    onRequestUpdate: ((VersionInfo) -> Unit)? = null,
+    onApplyUpdate: (suspend (VersionInfo, (Long, Long) -> Unit) -> Boolean)? = null,
     useDesktopLayout: Boolean = false
 ) {
     var currentTab by remember { mutableStateOf(DiningTab.Home) }
     var showUpdateDialog by remember { mutableStateOf(false) }
     var updateInfo by remember { mutableStateOf<VersionInfo?>(null) }
+    var updating by remember { mutableStateOf(false) }
+    var updateProgress by remember { mutableStateOf(0f) }
+    var updateError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     // Check for updates on launch
     LaunchedEffect(Unit) {
@@ -132,40 +138,86 @@ fun App(
 
     // Update Dialog
     if (showUpdateDialog && updateInfo != null) {
-        AlertDialog(
-            onDismissRequest = { showUpdateDialog = false },
-            containerColor = DiningColors.Surface,
-            title = {
-                Text(
-                    "发现新版本 v${updateInfo!!.versionName}",
-                    color = DiningColors.TextPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            },
-            text = {
-                Text(
-                    updateInfo!!.changelog.replace("- ", "• "),
-                    color = DiningColors.TextSecondary,
-                    fontSize = 14.sp,
-                    lineHeight = 22.sp
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showUpdateDialog = false
-                        onRequestUpdate?.invoke(updateInfo!!)
+        if (updating) {
+            AlertDialog(
+                onDismissRequest = {},
+                containerColor = DiningColors.Surface,
+                title = {
+                    Text(
+                        "正在更新 v${updateInfo!!.versionName}",
+                        color = DiningColors.TextPrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text("正在下载新版本，请稍候…", color = DiningColors.TextSecondary, fontSize = 14.sp)
+                        LinearProgressIndicator(
+                            progress = { updateProgress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text("${(updateProgress * 100).toInt()}%", color = DiningColors.Primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     }
-                ) {
-                    Text("立即更新", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+                },
+                confirmButton = {}
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = { showUpdateDialog = false },
+                containerColor = DiningColors.Surface,
+                title = {
+                    Text(
+                        "发现新版本 v${updateInfo!!.versionName}",
+                        color = DiningColors.TextPrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            updateInfo!!.changelog.replace("- ", "• "),
+                            color = DiningColors.TextSecondary,
+                            fontSize = 14.sp,
+                            lineHeight = 22.sp
+                        )
+                        if (updateError != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("⚠️ $updateError", color = DiningColors.Error, fontSize = 13.sp)
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            updateError = null
+                            updating = true
+                            updateProgress = 0f
+                            scope.launch {
+                                val ok = onApplyUpdate?.invoke(updateInfo!!) { done, total ->
+                                    if (total > 0) updateProgress = done.toFloat() / total.toFloat()
+                                } ?: false
+                                if (!ok) {
+                                    updating = false
+                                    updateError = "更新失败，请检查网络后重试"
+                                }
+                            }
+                        }
+                    ) {
+                        Text("立即更新", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showUpdateDialog = false }) {
+                        Text("稍后", color = DiningColors.TextMuted)
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showUpdateDialog = false }) {
-                    Text("稍后", color = DiningColors.TextMuted)
-                }
-            }
-        )
+            )
+        }
     }
 }
