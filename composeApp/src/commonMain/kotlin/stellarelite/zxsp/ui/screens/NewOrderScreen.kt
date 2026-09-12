@@ -33,7 +33,7 @@ import stellarelite.zxsp.ui.theme.DiningColors
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
+fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Boolean = false) {
     val scope = rememberCoroutineScope()
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
@@ -246,7 +246,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null) {
                 item {
                     Text(t("选择菜品", "Select Items"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    MenuGrid(menuItems, onSelect = { selectedItem = it })
+                    MenuGrid(menuItems, columns = if (compact) 2 else 4, onSelect = { selectedItem = it })
                 }
 
                 if (error != null) {
@@ -387,11 +387,12 @@ private fun displayTableNo(tableNo: String): String =
 
 // 2排4个方形按钮（最多8格，多余的先空着）
 @Composable
-private fun MenuGrid(items: List<MenuItem>, onSelect: (MenuItem) -> Unit) {
+private fun MenuGrid(items: List<MenuItem>, columns: Int = 4, onSelect: (MenuItem) -> Unit) {
     val gridItems = items.take(8)
-    val rows = gridItems.chunked(4)
+    val rows = gridItems.chunked(columns)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(2) { rowIdx ->
+        val maxRows = if (columns <= 2) 4 else 2
+        repeat(maxRows) { rowIdx ->
             val row = rows.getOrNull(rowIdx) ?: emptyList()
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -402,7 +403,7 @@ private fun MenuGrid(items: List<MenuItem>, onSelect: (MenuItem) -> Unit) {
                         MenuGridButton(item, onClick = { onSelect(item) })
                     }
                 }
-                repeat(4 - row.size) {
+                repeat(columns - row.size) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
             }
@@ -571,7 +572,7 @@ private fun StepperBtn(label: String, enabled: Boolean, onClick: () -> Unit) {
 // ============ 加单页面（购物车模式，跟新建订单页面一致） ============
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, onDone: () -> Unit) {
+fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, onDone: () -> Unit, compact: Boolean = false) {
     val scope = rememberCoroutineScope()
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -695,7 +696,7 @@ fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, o
                 item {
                     Text(t("选择菜品", "Select Items"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    MenuGrid(menuItems, onSelect = { selectedItem = it })
+                    MenuGrid(menuItems, columns = if (compact) 2 else 4, onSelect = { selectedItem = it })
                 }
 
                 if (error != null) {

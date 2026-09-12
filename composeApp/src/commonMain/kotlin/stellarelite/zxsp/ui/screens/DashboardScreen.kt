@@ -80,7 +80,7 @@ fun DashboardScreen() {
 }
 
 @Composable
-private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit) {
+private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0) {
     val scope = rememberCoroutineScope()
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -97,7 +97,7 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
         }
     }
 
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(refreshKey) { load() }
 
     val dineInTables = tables.filter { !it.table_no.startsWith("外卖") }
     val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
@@ -358,4 +358,205 @@ private fun parseOrderItems(items: JsonElement): List<String> {
 }
 
 // ============ 加单弹窗（已改为 AddItemsScreen 页面，见 NewOrderScreen.kt） ============
+
+// ============ 桌面版工作台（左右分栏布局） ============
+private sealed interface DashboardPanel {
+    data object Empty : DashboardPanel
+    data class NewOrder(val tableId: Long?) : DashboardPanel
+    data class TableDetail(val table: TableList) : DashboardPanel
+    data class AddItems(val order: CustomerOrder, val table: TableList) : DashboardPanel
+}
+
+@Composable
+fun DesktopDashboardScreen() {
+    var panel by remember { mutableStateOf<DashboardPanel>(DashboardPanel.Empty) }
+    var refreshKey by remember { mutableStateOf(0) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DiningColors.Background)
+    ) {
+        // 左侧 3/4：桌台看板
+        Box(modifier = Modifier.weight(3f).fillMaxHeight()) {
+            DashboardView(
+                onNewOrder = { panel = DashboardPanel.NewOrder(null) },
+                onTableClick = { table ->
+                    if (table.table_status == "occupied") {
+                        panel = DashboardPanel.TableDetail(table)
+                    } else {
+                        panel = DashboardPanel.NewOrder(table.id)
+                    }
+                },
+                refreshKey = refreshKey
+            )
+        }
+
+        VerticalDivider(
+            modifier = Modifier.fillMaxHeight(),
+            thickness = 1.dp,
+            color = DiningColors.TextMuted.copy(alpha = 0.15f)
+        )
+
+        // 右侧 1/4：操作面板
+        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            when (val p = panel) {
+                is DashboardPanel.NewOrder -> NewOrderScreen(
+                    onBack = { panel = DashboardPanel.Empty; refreshKey++ },
+                    initialTableId = p.tableId,
+                    compact = true
+                )
+                is DashboardPanel.TableDetail -> TableDetailPanel(
+                    table = p.table,
+                    onAddItems = { order -> panel = DashboardPanel.AddItems(order, p.table) },
+                    onClear = { panel = DashboardPanel.Empty; refreshKey++ }
+                )
+                is DashboardPanel.AddItems -> AddItemsScreen(
+                    order = p.order,
+                    tableNo = p.table.table_no,
+                    onBack = { panel = DashboardPanel.TableDetail(p.table) },
+                    onDone = { panel = DashboardPanel.Empty; refreshKey++ },
+                    compact = true
+                )
+                DashboardPanel.Empty -> EmptyPanel()
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyPanel() {
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("🪑", fontSize = 40.sp)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                t("点击左侧桌台", "Tap a table"),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DiningColors.TextPrimary
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                t("空闲桌台 → 新建订单", "Free → New Order"),
+                fontSize = 12.sp,
+                color = DiningColors.TextMuted
+            )
+            Text(
+                t("占用桌台 → 加单 / 结账", "Occupied → Add / Checkout"),
+                fontSize = 12.sp,
+                color = DiningColors.TextMuted
+            )
+        }
+    }
+}
+
+// 右侧面板：占用桌台详情（订单信息 + 加单/结账）
+@Composable
+private fun TableDetailPanel(table: TableList, onAddItems: (CustomerOrder) -> Unit, onClear: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var order by remember { mutableStateOf<CustomerOrder?>(null) }
+    var loading by remember { mutableStateOf(true) }
+    var showPayment by remember { mutableStateOf(false) }
+    var showReceipt by remember { mutableStateOf(false) }
+    var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
+
+    fun loadOrder() {
+        scope.launch {
+            loading = true
+            order = runCatching { SupabaseClient.fetchActiveOrderByTable(table.id) }.getOrNull()
+            loading = false
+        }
+    }
+    LaunchedEffect(table.id) { loadOrder() }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onClear, modifier = Modifier.align(Alignment.CenterStart)) {
+                Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary)
+            }
+            Text(
+                displayTableNo(table.table_no),
+                modifier = Modifier.align(Alignment.Center),
+                fontSize = 18.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary
+            )
+        }
+
+        when {
+            loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = DiningColors.Primary)
+            }
+            order == null -> Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                Text(t("该桌台暂无未结账订单", "No active order on this table"), color = DiningColors.TextMuted, fontSize = 14.sp)
+            }
+            else -> {
+                val o = order!!
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    OrderInfoRow(t("订单号", "Order No."), o.order_no)
+                    OrderInfoRow(t("收据号", "Receipt No."), o.receipt_no)
+                    OrderInfoRow(t("顾客", "Customer"), o.customer_name ?: "—")
+                    OrderInfoRow(t("电话", "Phone"), o.customer_phone ?: "—")
+                    OrderInfoRow(t("状态", "Status"), when (o.payment_status) {
+                        "paid" -> t("已付清", "Paid"); "partial" -> t("部分付", "Partial"); else -> t("未付", "Unpaid")
+                    })
+                    HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                    Text(t("订单明细", "Items"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    parseOrderItems(o.order_items).forEach { line ->
+                        Text("• $line", fontSize = 12.sp, color = DiningColors.TextSecondary)
+                    }
+                    HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+                    OrderInfoRow(t("总金额", "Total"), "RM%.2f".format(o.total_amount_myr))
+                }
+
+                // 底部按钮：加单 / 结账
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { onAddItems(o) },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(t("加单", "Add Items"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+                    }
+                    Button(
+                        onClick = { showPayment = true },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
+                    ) {
+                        Text(t("结账", "Checkout"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+
+    if (showPayment && order != null) {
+        PaymentDialog(
+            order = order!!,
+            onDismiss = { showPayment = false },
+            onPaid = { data ->
+                showPayment = false
+                receiptData = data
+                showReceipt = true
+            }
+        )
+    }
+    if (showReceipt && receiptData != null) {
+        ReceiptDialog(
+            data = receiptData!!,
+            onPrint = { printReceiptText(receiptData!!.toReceiptText()) },
+            onDone = { showReceipt = false; onClear() }
+        )
+    }
+}
 

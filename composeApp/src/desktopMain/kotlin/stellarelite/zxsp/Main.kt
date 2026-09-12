@@ -18,7 +18,7 @@ fun main() = application {
         state = state
     ) {
         App(
-            useSideNav = true,
+            useDesktopLayout = true,
             onCheckUpdate = { DesktopUpdater.checkForUpdate() },
             onRequestUpdate = { info -> DesktopUpdater.openDownload(info.apkUrl) }
         )

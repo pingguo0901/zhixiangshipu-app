@@ -14,7 +14,6 @@ import kotlinx.datetime.Clock
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.components.BottomNavBar
-import stellarelite.zxsp.ui.components.SideNavBar
 import stellarelite.zxsp.util.decodeJwtExp
 import stellarelite.zxsp.util.decodeJwtSub
 import stellarelite.zxsp.ui.components.DiningTab
@@ -25,7 +24,7 @@ import stellarelite.zxsp.ui.theme.DiningColors
 fun App(
     onCheckUpdate: (suspend () -> VersionInfo?)? = null,
     onRequestUpdate: ((VersionInfo) -> Unit)? = null,
-    useSideNav: Boolean = false
+    useDesktopLayout: Boolean = false
 ) {
     var currentTab by remember { mutableStateOf(DiningTab.Home) }
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -107,53 +106,28 @@ fun App(
         }
     }
 
-    if (useSideNav) {
-        Row(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DiningColors.Background)
+            .statusBarsPadding()
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(DiningColors.Background)
+                .weight(1f)
+                .fillMaxWidth()
         ) {
-            SideNavBar(currentTab = currentTab, onTabSelected = { currentTab = it })
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-            ) {
-                AnimatedContent(targetState = currentTab) { tab ->
-                    when (tab) {
-                        DiningTab.Home -> DashboardScreen()
-                        DiningTab.Orders -> OrdersScreen()
-                        DiningTab.Warehouse -> WarehouseScreen()
-                        DiningTab.Finance -> FinanceScreen()
-                        DiningTab.More -> MoreScreen()
-                    }
+            AnimatedContent(targetState = currentTab) { tab ->
+                when (tab) {
+                    DiningTab.Home -> if (useDesktopLayout) DesktopDashboardScreen() else DashboardScreen()
+                    DiningTab.Orders -> OrdersScreen()
+                    DiningTab.Warehouse -> WarehouseScreen()
+                    DiningTab.Finance -> FinanceScreen()
+                    DiningTab.More -> MoreScreen()
                 }
             }
         }
-    } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DiningColors.Background)
-                .statusBarsPadding()
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
-                AnimatedContent(targetState = currentTab) { tab ->
-                    when (tab) {
-                        DiningTab.Home -> DashboardScreen()
-                        DiningTab.Orders -> OrdersScreen()
-                        DiningTab.Warehouse -> WarehouseScreen()
-                        DiningTab.Finance -> FinanceScreen()
-                        DiningTab.More -> MoreScreen()
-                    }
-                }
-            }
-            BottomNavBar(currentTab = currentTab, onTabSelected = { currentTab = it })
-        }
+        BottomNavBar(currentTab = currentTab, onTabSelected = { currentTab = it })
     }
 
     // Update Dialog
