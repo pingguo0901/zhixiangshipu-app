@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.DeliveryDining
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import stellarelite.zxsp.ui.theme.DiningColors
 
 enum class DiningTab(val label: String, val icon: ImageVector) {
     Home("工作台", Icons.Outlined.Home),
+    Takeaway("外卖工作台", Icons.Outlined.DeliveryDining),
     Orders("订单", Icons.Outlined.ReceiptLong),
     Warehouse("仓库", Icons.Outlined.Inventory2),
     Finance("记账", Icons.Outlined.AccountBalanceWallet),
@@ -35,6 +37,7 @@ enum class DiningTab(val label: String, val icon: ImageVector) {
 // 底部标签显示文案（跟随全局语言）
 internal fun tabLabel(tab: DiningTab): String = when (tab) {
     DiningTab.Home -> t("工作台", "Dashboard")
+    DiningTab.Takeaway -> t("外卖工作台", "Delivery")
     DiningTab.Orders -> t("订单", "Orders")
     DiningTab.Warehouse -> t("仓库", "Warehouse")
     DiningTab.Finance -> t("记账", "Finance")

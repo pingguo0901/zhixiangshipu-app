@@ -303,6 +303,24 @@ object SupabaseClient {
     suspend fun insertMeatProcessLog(m: MeatProcessLog): MeatProcessLog? = insert("meat_process_log", m)
     suspend fun insertExpense(e: ExpenseRecord): ExpenseRecord? = insert("expense_records", e)
     suspend fun insertTable(t: TableList): TableList? = insert("table_list", t)
+
+    // 幂等创建三个平台外卖号（Facebook/Grabfood/Foodpanda 各 20 个）
+    suspend fun ensurePlatformTakeawayTables(): Boolean {
+        val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖")
+        val existing = fetchTables().map { it.table_no }.toSet()
+        var ok = true
+        platforms.forEach { platform ->
+            for (i in 1..20) {
+                val name = "$platform$i"
+                if (name !in existing) {
+                    if (insertTable(TableList(table_no = name, table_status = "free")) == null) {
+                        ok = false
+                    }
+                }
+            }
+        }
+        return ok
+    }
     suspend fun insertSupplier(s: Supplier): Supplier? = insert("supplier", s)
     suspend fun insertWarehouseItem(w: WarehouseItem): WarehouseItem? = insert("warehouse_items", w)
     suspend fun insertMenuItem(m: MenuItem): MenuItem? = insert("menu_items", m)

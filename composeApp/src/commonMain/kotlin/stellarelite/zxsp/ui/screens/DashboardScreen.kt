@@ -99,7 +99,7 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 
     LaunchedEffect(refreshKey) { load() }
 
-    val dineInTables = tables.filter { !it.table_no.startsWith("外卖") }
+    val dineInTables = tables.filter { !it.table_no.contains("外卖") }
     val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
     val occupiedCount = dineInTables.count { it.table_status == "occupied" }
     val freeCount = dineInTables.count { it.table_status == "free" }
@@ -404,33 +404,46 @@ fun DesktopDashboardScreen() {
 
         // 右侧 1/4：操作面板
         Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-            when (val p = panel) {
-                is DashboardPanel.NewOrder -> NewOrderScreen(
-                    onBack = { panel = DashboardPanel.Empty; refreshKey++ },
-                    initialTableId = p.tableId,
-                    compact = true
-                )
-                is DashboardPanel.TableDetail -> TableDetailPanel(
-                    table = p.table,
-                    onAddItems = { order -> panel = DashboardPanel.AddItems(order, p.table) },
-                    onCheckout = { order -> panel = DashboardPanel.Checkout(order, p.table) },
-                    onClear = { panel = DashboardPanel.Empty; refreshKey++ }
-                )
-                is DashboardPanel.Checkout -> CheckoutPanel(
-                    order = p.order,
-                    onBack = { panel = DashboardPanel.TableDetail(p.table) },
-                    onDone = { panel = DashboardPanel.Empty; refreshKey++ }
-                )
-                is DashboardPanel.AddItems -> AddItemsScreen(
-                    order = p.order,
-                    tableNo = p.table.table_no,
-                    onBack = { panel = DashboardPanel.TableDetail(p.table) },
-                    onDone = { panel = DashboardPanel.Empty; refreshKey++ },
-                    compact = true
-                )
-                DashboardPanel.Empty -> EmptyPanel()
-            }
+            DashboardRightPanel(
+                panel = panel,
+                onPanel = { panel = it },
+                onRefresh = { refreshKey++ }
+            )
         }
+    }
+}
+
+@Composable
+private fun DashboardRightPanel(
+    panel: DashboardPanel,
+    onPanel: (DashboardPanel) -> Unit,
+    onRefresh: () -> Unit
+) {
+    when (panel) {
+        is DashboardPanel.NewOrder -> NewOrderScreen(
+            onBack = { onPanel(DashboardPanel.Empty); onRefresh() },
+            initialTableId = panel.tableId,
+            compact = true
+        )
+        is DashboardPanel.TableDetail -> TableDetailPanel(
+            table = panel.table,
+            onAddItems = { order -> onPanel(DashboardPanel.AddItems(order, panel.table)) },
+            onCheckout = { order -> onPanel(DashboardPanel.Checkout(order, panel.table)) },
+            onClear = { onPanel(DashboardPanel.Empty); onRefresh() }
+        )
+        is DashboardPanel.Checkout -> CheckoutPanel(
+            order = panel.order,
+            onBack = { onPanel(DashboardPanel.TableDetail(panel.table)) },
+            onDone = { onPanel(DashboardPanel.Empty); onRefresh() }
+        )
+        is DashboardPanel.AddItems -> AddItemsScreen(
+            order = panel.order,
+            tableNo = panel.table.table_no,
+            onBack = { onPanel(DashboardPanel.TableDetail(panel.table)) },
+            onDone = { onPanel(DashboardPanel.Empty); onRefresh() },
+            compact = true
+        )
+        DashboardPanel.Empty -> EmptyPanel()
     }
 }
 
@@ -545,6 +558,146 @@ private fun TableDetailPanel(table: TableList, onAddItems: (CustomerOrder) -> Un
                 }
             }
         }
+    }
+}
+
+// ============ 外卖工作台（三个平台外卖号，桌面版分栏） ============
+@Composable
+fun TakeawayDashboardScreen() {
+    var panel by remember { mutableStateOf<DashboardPanel>(DashboardPanel.Empty) }
+    var refreshKey by remember { mutableStateOf(0) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(DiningColors.Background)
+    ) {
+        // 左侧 3/4：外卖平台看板
+        Box(modifier = Modifier.weight(3f).fillMaxHeight()) {
+            TakeawayBoard(
+                onNewOrder = { panel = DashboardPanel.NewOrder(null) },
+                onTableClick = { table ->
+                    if (table.table_status == "occupied") {
+                        panel = DashboardPanel.TableDetail(table)
+                    } else {
+                        panel = DashboardPanel.NewOrder(table.id)
+                    }
+                },
+                refreshKey = refreshKey
+            )
+        }
+
+        VerticalDivider(
+            modifier = Modifier.fillMaxHeight(),
+            thickness = 1.dp,
+            color = DiningColors.TextMuted.copy(alpha = 0.15f)
+        )
+
+        // 右侧 1/4：操作面板（复用工作台面板逻辑）
+        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            DashboardRightPanel(
+                panel = panel,
+                onPanel = { panel = it },
+                onRefresh = { refreshKey++ }
+            )
+        }
+    }
+}
+
+// 外卖平台看板：Facebook/Grabfood/Foodpanda 各 20 个号，小按钮一屏显示
+@Composable
+private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0) {
+    val scope = rememberCoroutineScope()
+    var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+
+    fun load() {
+        scope.launch {
+            loading = true
+            runCatching { SupabaseClient.ensurePlatformTakeawayTables() }
+            runCatching { SupabaseClient.fetchTables() }
+                .onSuccess { tables = it }
+            loading = false
+        }
+    }
+    LaunchedEffect(refreshKey) { load() }
+
+    val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // 顶部标题 + 新建订单
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(t("外卖工作台", "Delivery"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            Button(
+                onClick = onNewOrder,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
+            ) {
+                Text(t("＋ 新建订单", "＋ New Order"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (loading) {
+            Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = DiningColors.Primary)
+            }
+        } else {
+            platforms.forEach { platform ->
+                val platformTables = tables.filter { it.table_no.startsWith(platform) }.sortedBy { it.table_no }
+                Text(platform, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                if (platformTables.isEmpty()) {
+                    Text(t("暂无外卖号", "No delivery no."), fontSize = 12.sp, color = DiningColors.TextMuted)
+                } else {
+                    val rows = platformTables.chunked(10)
+                    rows.forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            row.forEach { table ->
+                                SmallTableBadge(table, platform, onClick = { onTableClick(table) }, modifier = Modifier.weight(1f))
+                            }
+                            repeat(10 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 外卖号小按钮：显示号（去掉平台前缀）
+@Composable
+private fun SmallTableBadge(table: TableList, platform: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val bg = when (table.table_status) {
+        "occupied" -> DiningColors.Primary
+        "cleaning" -> DiningColors.Warning
+        else -> DiningColors.Surface
+    }
+    val fg = when (table.table_status) {
+        "free" -> DiningColors.TextPrimary
+        else -> DiningColors.Surface
+    }
+    val label = table.table_no.removePrefix(platform)
+    Box(
+        modifier = modifier
+            .height(36.dp)
+            .background(bg, RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg, maxLines = 1)
     }
 }
 

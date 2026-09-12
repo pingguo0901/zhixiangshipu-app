@@ -130,6 +130,7 @@ fun App(
             AnimatedContent(targetState = currentTab) { tab ->
                 when (tab) {
                     DiningTab.Home -> if (useDesktopLayout) DesktopDashboardScreen() else DashboardScreen()
+                    DiningTab.Takeaway -> if (useDesktopLayout) TakeawayDashboardScreen() else DashboardScreen()
                     DiningTab.Orders -> if (useDesktopLayout) DesktopOrdersScreen() else OrdersScreen()
                     DiningTab.Warehouse -> WarehouseScreen()
                     DiningTab.Finance -> FinanceScreen()

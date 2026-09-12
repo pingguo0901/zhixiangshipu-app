@@ -15,7 +15,8 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = "炙巷食铺 · ZHI XIANG FOOD ENTERPRISE",
-        state = state
+        state = state,
+        undecorated = true
     ) {
         App(
             useDesktopLayout = true,

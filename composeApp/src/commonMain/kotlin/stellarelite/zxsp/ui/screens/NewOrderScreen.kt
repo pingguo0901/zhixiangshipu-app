@@ -63,13 +63,13 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
             val t = tables.firstOrNull { it.id == initialTableId }
             if (t != null) {
                 tableId = t.id
-                isTakeaway = t.table_no.startsWith("外卖")
+                isTakeaway = t.table_no.contains("外卖")
             }
         }
     }
 
-    val dineInTables = tables.filter { !it.table_no.startsWith("外卖") }
-    val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
+    val dineInTables = tables.filter { !it.table_no.contains("外卖") }
+    val takeawayTables = tables.filter { it.table_no.contains("外卖") }
 
     // 购物车合计（含外卖费）
     val cartTotal = cart.sumOf { line ->
