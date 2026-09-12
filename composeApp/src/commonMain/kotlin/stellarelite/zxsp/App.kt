@@ -25,7 +25,7 @@ import stellarelite.zxsp.ui.theme.DiningColors
 @Composable
 fun App(
     onCheckUpdate: (suspend () -> VersionInfo?)? = null,
-    onApplyUpdate: (suspend (VersionInfo, (Long, Long) -> Unit) -> Boolean)? = null,
+    onApplyUpdate: (suspend (VersionInfo, (Long, Long) -> Unit) -> String?)? = null,
     useDesktopLayout: Boolean = false
 ) {
     var currentTab by remember { mutableStateOf(DiningTab.Home) }
@@ -199,12 +199,12 @@ fun App(
                             updating = true
                             updateProgress = 0f
                             scope.launch {
-                                val ok = onApplyUpdate?.invoke(updateInfo!!) { done, total ->
+                                val err = onApplyUpdate?.invoke(updateInfo!!) { done, total ->
                                     if (total > 0) updateProgress = done.toFloat() / total.toFloat()
-                                } ?: false
-                                if (!ok) {
+                                } ?: "更新功能不可用"
+                                if (err != null) {
                                     updating = false
-                                    updateError = "更新失败，请检查网络后重试"
+                                    updateError = err
                                 }
                             }
                         }

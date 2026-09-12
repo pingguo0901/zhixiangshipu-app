@@ -13,10 +13,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 // 桌面版更新器：检测 GitHub Releases 里 tag 以 -desktop 结尾的最新版本，
-// 支持程序内下载 zip → 解压到 update_new → 写 update.bat → 启动脚本。
-// 调用方在 downloadAndApply 返回 true 后退出主程序，脚本会在主程序退出后替换文件并重启（无需跳浏览器下载页）
+// 支持程序内下载 zip → 解压 → 写替换脚本 → 退出由脚本替换并重启（无需跳浏览器下载页）
 object DesktopUpdater {
-    const val CURRENT_VERSION = "1.2.46"
+    const val CURRENT_VERSION = "1.2.47"
     private const val RELEASES_URL = "https://api.github.com/repos/pingguo0901/zhixiangshipu-app/releases"
 
     suspend fun checkForUpdate(): VersionInfo? = withContext(Dispatchers.IO) {
@@ -55,40 +54,61 @@ object DesktopUpdater {
     }
 
     // 程序内更新：下载 zip → 解压 → 写替换脚本 → 启动脚本。
-    // 返回 true 表示已准备好替换（脚本已启动），调用方应退出主程序让脚本接管。
-    suspend fun downloadAndApply(url: String, onProgress: ((Long, Long) -> Unit)? = null): Boolean = withContext(Dispatchers.IO) {
-        if (url.isBlank()) return@withContext false
+    // 返回 null 表示成功（脚本已启动，调用方应退出主程序让脚本接管）；返回非 null 是错误信息。
+    suspend fun downloadAndApply(url: String, onProgress: ((Long, Long) -> Unit)? = null): String? = withContext(Dispatchers.IO) {
+        if (url.isBlank()) return@withContext "更新地址无效"
         try {
-            val appDir = File(System.getProperty("user.dir"))
-            val zipFile = File(appDir, "update.zip")
+            // 程序目录（exe 所在目录，比 user.dir 更可靠，避免快捷方式/工作目录不可写）
+            val appDir = currentAppDir()
+
+            // 临时目录（系统临时目录总是可写）
+            val tmpDir = File(System.getProperty("java.io.tmpdir"), "zxsp_update")
+            if (!tmpDir.exists()) tmpDir.mkdirs()
+            val zipFile = File(tmpDir, "update.zip")
 
             // 1. 下载
-            if (!download(url, zipFile, onProgress)) return@withContext false
+            if (!download(url, zipFile, onProgress)) {
+                return@withContext "下载失败（网络中断或写入受限），请重试"
+            }
 
-            // 2. 解压到 update_new（去掉 zip 顶层目录）
-            val updateDir = File(appDir, "update_new")
-            updateDir.deleteRecursively()
-            updateDir.mkdirs()
-            unzip(zipFile, updateDir)
+            // 2. 解压到 new 子目录（去掉 zip 顶层目录）
+            val newDir = File(tmpDir, "new")
+            newDir.deleteRecursively()
+            newDir.mkdirs()
+            unzip(zipFile, newDir)
             zipFile.delete()
 
-            // 3. 写替换脚本
-            val bat = File(appDir, "update.bat")
-            bat.writeText(buildBatScript())
+            // 3. 写替换脚本（硬编码目标目录与新文件目录）
+            val bat = File(tmpDir, "update.bat")
+            bat.writeText(buildBatScript(appDir.absolutePath, newDir.absolutePath))
 
             // 4. 启动脚本
             Runtime.getRuntime().exec(arrayOf("cmd", "/c", "start", "", bat.absolutePath))
-            true
+            null
         } catch (e: Exception) {
-            false
+            "更新出错：" + (e.message ?: "未知错误")
+        }
+    }
+
+    private fun currentAppDir(): File {
+        return try {
+            val exePath = ProcessHandle.current().info().command().orElse(null)
+            if (!exePath.isNullOrBlank()) {
+                val parent = File(exePath).parentFile
+                if (parent != null && parent.exists()) parent else File(System.getProperty("user.dir"))
+            } else {
+                File(System.getProperty("user.dir"))
+            }
+        } catch (e: Exception) {
+            File(System.getProperty("user.dir"))
         }
     }
 
     private fun download(url: String, dest: File, onProgress: ((Long, Long) -> Unit)?): Boolean {
         try {
             val conn = URL(url).openConnection() as HttpURLConnection
-            conn.connectTimeout = 10000
-            conn.readTimeout = 120000
+            conn.connectTimeout = 15000
+            conn.readTimeout = 300000
             conn.instanceFollowRedirects = true
             conn.setRequestProperty("Accept", "application/octet-stream")
             conn.setRequestProperty("User-Agent", "ZhiXiangFood-Updater")
@@ -138,19 +158,21 @@ object DesktopUpdater {
         }
     }
 
-    private fun buildBatScript(): String = """
+    private fun buildBatScript(appDir: String, newDir: String): String = """
         @echo off
         setlocal
-        REM ZhiXiangFood auto-updater
+        set "APP_DIR=$appDir"
+        set "NEW_DIR=$newDir"
+        REM 等待主程序退出
         :waitloop
         tasklist /FI "IMAGENAME eq ZhiXiangFood.exe" 2>nul | find /I "ZhiXiangFood.exe" >nul
         if not errorlevel 1 (
             timeout /t 1 /nobreak >nul
             goto waitloop
         )
-        xcopy /E /Y /Q "%~dp0update_new\*" "%~dp0" >nul
-        start "" "%~dp0ZhiXiangFood.exe"
-        rmdir /S /Q "%~dp0update_new"
+        xcopy /E /Y /Q "%NEW_DIR%\*" "%APP_DIR%" >nul
+        start "" "%APP_DIR%\ZhiXiangFood.exe"
+        rmdir /S /Q "%NEW_DIR%"
         del "%~f0"
         endlocal
     """.trimIndent()
