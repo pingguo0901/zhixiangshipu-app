@@ -1,7 +1,7 @@
 package stellarelite.zxsp
 
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import stellarelite.zxsp.data.LanguageManager
@@ -11,7 +11,7 @@ fun main() = application {
     SessionManager.load()
     LanguageManager.load()
 
-    val state = rememberWindowState(width = 1280.dp, height = 820.dp)
+    val state = rememberWindowState(placement = WindowPlacement.Fullscreen)
     Window(
         onCloseRequest = ::exitApplication,
         title = "炙巷食铺 · ZHI XIANG FOOD ENTERPRISE",

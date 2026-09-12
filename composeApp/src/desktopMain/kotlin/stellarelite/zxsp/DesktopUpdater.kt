@@ -16,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 // 支持程序内下载 zip → 解压到 update_new → 写 update.bat → 启动脚本。
 // 调用方在 downloadAndApply 返回 true 后退出主程序，脚本会在主程序退出后替换文件并重启（无需跳浏览器下载页）
 object DesktopUpdater {
-    const val CURRENT_VERSION = "1.2.45"
+    const val CURRENT_VERSION = "1.2.46"
     private const val RELEASES_URL = "https://api.github.com/repos/pingguo0901/zhixiangshipu-app/releases"
 
     suspend fun checkForUpdate(): VersionInfo? = withContext(Dispatchers.IO) {
