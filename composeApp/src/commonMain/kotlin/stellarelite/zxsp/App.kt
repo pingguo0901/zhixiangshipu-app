@@ -121,9 +121,7 @@ fun App(
             .background(DiningColors.Background)
             .statusBarsPadding()
     ) {
-        if (useDesktopLayout) {
-            DesktopTopBar()
-        }
+        DesktopTopBar()
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -203,15 +201,24 @@ fun App(
                     TextButton(
                         onClick = {
                             updateError = null
-                            updating = true
-                            updateProgress = 0f
                             scope.launch {
-                                val err = onApplyUpdate?.invoke(updateInfo!!) { done, total ->
-                                    if (total > 0) updateProgress = done.toFloat() / total.toFloat()
-                                } ?: "更新功能不可用"
-                                if (err != null) {
-                                    updating = false
-                                    updateError = err
+                                val fn = onApplyUpdate
+                                if (fn == null) {
+                                    updateError = "更新功能不可用"
+                                } else {
+                                    updating = true
+                                    updateProgress = 0f
+                                    val err = fn.invoke(updateInfo!!) { done, total ->
+                                        if (total > 0) updateProgress = done.toFloat() / total.toFloat()
+                                    }
+                                    if (err != null) {
+                                        updating = false
+                                        updateError = err
+                                    } else {
+                                        // 成功：桌面端在 onApplyUpdate 内部退出；手机端交给系统下载后关闭弹窗
+                                        showUpdateDialog = false
+                                        updating = false
+                                    }
                                 }
                             }
                         }

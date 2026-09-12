@@ -63,7 +63,8 @@ fun DashboardScreen() {
                 newOrderTableId = table.id
                 showNewOrder = true
             }
-        }
+        },
+        showGreeting = false
     )
 
     orderDialogTable?.let { table ->
@@ -99,8 +100,12 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 
     LaunchedEffect(refreshKey) { load() }
 
-    val dineInTables = tables.filter { !it.table_no.contains("外卖") }
-    val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
+    val platformPrefixes = listOf("Facebook", "Grabfood", "Foodpanda")
+    fun isPlatform(no: String) = platformPrefixes.any { no.startsWith(it) }
+    // 堂食桌台：不含"外卖"且不是三个平台号
+    val dineInTables = tables.filter { !it.table_no.contains("外卖") && !isPlatform(it.table_no) }
+    // 外卖号：含"外卖"（普通外卖号）或三个平台号
+    val takeawayTables = tables.filter { it.table_no.contains("外卖") || isPlatform(it.table_no) }
     val occupiedCount = dineInTables.count { it.table_status == "occupied" }
     val freeCount = dineInTables.count { it.table_status == "free" }
 
