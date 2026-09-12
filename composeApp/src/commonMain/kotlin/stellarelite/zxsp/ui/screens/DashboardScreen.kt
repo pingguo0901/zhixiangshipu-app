@@ -365,6 +365,7 @@ private sealed interface DashboardPanel {
     data class NewOrder(val tableId: Long?) : DashboardPanel
     data class TableDetail(val table: TableList) : DashboardPanel
     data class AddItems(val order: CustomerOrder, val table: TableList) : DashboardPanel
+    data class Checkout(val order: CustomerOrder, val table: TableList) : DashboardPanel
 }
 
 @Composable
@@ -409,7 +410,13 @@ fun DesktopDashboardScreen() {
                 is DashboardPanel.TableDetail -> TableDetailPanel(
                     table = p.table,
                     onAddItems = { order -> panel = DashboardPanel.AddItems(order, p.table) },
+                    onCheckout = { order -> panel = DashboardPanel.Checkout(order, p.table) },
                     onClear = { panel = DashboardPanel.Empty; refreshKey++ }
+                )
+                is DashboardPanel.Checkout -> CheckoutPanel(
+                    order = p.order,
+                    onBack = { panel = DashboardPanel.TableDetail(p.table) },
+                    onDone = { panel = DashboardPanel.Empty; refreshKey++ }
                 )
                 is DashboardPanel.AddItems -> AddItemsScreen(
                     order = p.order,
@@ -453,13 +460,10 @@ private fun EmptyPanel() {
 
 // 右侧面板：占用桌台详情（订单信息 + 加单/结账）
 @Composable
-private fun TableDetailPanel(table: TableList, onAddItems: (CustomerOrder) -> Unit, onClear: () -> Unit) {
+private fun TableDetailPanel(table: TableList, onAddItems: (CustomerOrder) -> Unit, onCheckout: (CustomerOrder) -> Unit, onClear: () -> Unit) {
     val scope = rememberCoroutineScope()
     var order by remember { mutableStateOf<CustomerOrder?>(null) }
     var loading by remember { mutableStateOf(true) }
-    var showPayment by remember { mutableStateOf(false) }
-    var showReceipt by remember { mutableStateOf(false) }
-    var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
 
     fun loadOrder() {
         scope.launch {
@@ -528,7 +532,7 @@ private fun TableDetailPanel(table: TableList, onAddItems: (CustomerOrder) -> Un
                         Text(t("加单", "Add Items"), color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
                     }
                     Button(
-                        onClick = { showPayment = true },
+                        onClick = { onCheckout(o) },
                         modifier = Modifier.weight(1f).height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
@@ -538,25 +542,6 @@ private fun TableDetailPanel(table: TableList, onAddItems: (CustomerOrder) -> Un
                 }
             }
         }
-    }
-
-    if (showPayment && order != null) {
-        PaymentDialog(
-            order = order!!,
-            onDismiss = { showPayment = false },
-            onPaid = { data ->
-                showPayment = false
-                receiptData = data
-                showReceipt = true
-            }
-        )
-    }
-    if (showReceipt && receiptData != null) {
-        ReceiptDialog(
-            data = receiptData!!,
-            onPrint = { printReceiptText(receiptData!!.toReceiptText()) },
-            onDone = { showReceipt = false; onClear() }
-        )
     }
 }
 

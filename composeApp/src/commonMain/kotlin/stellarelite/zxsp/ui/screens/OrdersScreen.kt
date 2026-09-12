@@ -79,7 +79,7 @@ fun OrdersScreen() {
 }
 
 @Composable
-private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) {
+private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, refreshKey: Int = 0) {
     val scope = rememberCoroutineScope()
     var orders by remember { mutableStateOf<List<CustomerOrder>>(emptyList()) }
     var tableMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
@@ -100,7 +100,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit) 
         }
     }
 
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(refreshKey) { load() }
 
     val filtered = when (filter) {
         "paid" -> orders.filter { it.payment_status == "paid" }
@@ -1422,4 +1422,344 @@ fun ReceiptDialog(data: ReceiptData, onPrint: () -> Unit, onDone: () -> Unit) {
             }
         }
     )
+}
+
+// ============ 桌面版：结账面板（右侧 1/4 面板内，二维码/收据保留弹窗） ============
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun CheckoutPanel(order: CustomerOrder, onBack: () -> Unit, onDone: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var method by remember { mutableStateOf("cash") }
+    var cashReceived by remember { mutableStateOf("") }
+    var discount by remember { mutableStateOf(if (order.discount > 0) order.discount.toString() else "") }
+    var receiptBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var showQr by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
+    var showReceipt by remember { mutableStateOf(false) }
+
+    val lines = parseOrderLines(order.order_items)
+    val total = order.total_amount_myr
+    val discountVal = discount.toDoubleOrNull() ?: 0.0
+    val finalTotal = (total - discountVal).coerceAtLeast(0.0)
+    val received = cashReceived.toDoubleOrNull() ?: 0.0
+    val change = (received - finalTotal).coerceAtLeast(0.0)
+    val canSave = !saving && when (method) {
+        "cash" -> received >= finalTotal
+        else -> true
+    }
+
+    val takePhoto = rememberCamera { bitmap -> receiptBitmap = bitmap }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
+                Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary)
+            }
+            Text(
+                t("结账", "Checkout"),
+                modifier = Modifier.align(Alignment.Center),
+                fontSize = 18.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // 付款方式
+            Text(t("付款方式", "Payment Method"), fontSize = 12.sp, color = DiningColors.TextSecondary)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("cash" to t("现金", "Cash"), "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to t("支付宝", "Alipay")).forEach { (v, l) ->
+                    FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
+                }
+            }
+
+            // 订单明细
+            HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+            Text(t("订单明细", "Order Items"), fontSize = 12.sp, color = DiningColors.TextSecondary)
+            lines.forEach { line ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        if (LanguageManager.isEnglish) line.nameEn.ifBlank { line.name } else line.name,
+                        modifier = Modifier.weight(1f),
+                        fontSize = 14.sp,
+                        color = DiningColors.TextPrimary
+                    )
+                    Text("${line.qty} × RM%.2f".format(line.unitPrice), fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("RM%.2f".format(line.amount), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = DiningColors.TextPrimary)
+                }
+            }
+
+            // 总价格
+            HorizontalDivider(color = DiningColors.TextMuted.copy(alpha = 0.2f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(t("总价格", "Total"), fontSize = 14.sp, color = DiningColors.TextSecondary)
+                Text("RM%.2f".format(total), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+            }
+
+            // 折扣输入框
+            OutlinedTextField(
+                value = discount,
+                onValueChange = { discount = it },
+                label = { Text(t("折扣 (RM)", "Discount (RM)")) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (discountVal > 0.0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(t("折后应付", "Amount Due"), fontSize = 14.sp, color = DiningColors.TextSecondary)
+                    Text("RM%.2f".format(finalTotal), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                }
+            }
+
+            if (method == "cash") {
+                OutlinedTextField(
+                    value = cashReceived,
+                    onValueChange = { cashReceived = it },
+                    label = { Text(t("顾客给多少 (RM)", "Cash Received (RM)")) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    if (received >= finalTotal) t("需找零", "Change") + "：RM%.2f".format(change) else t("还需收", "Still Due") + " RM%.2f".format(finalTotal - received),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (received >= finalTotal) DiningColors.Success else DiningColors.Error
+                )
+            } else {
+                // 显示二维码按钮
+                OutlinedButton(onClick = { showQr = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text(t("显示二维码", "Show QR Code"), color = DiningColors.Primary)
+                }
+                OutlinedButton(onClick = { takePhoto() }, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (receiptBitmap == null) t("📷 拍收据", "📷 Take Receipt") else t("📷 重拍收据", "📷 Retake Receipt"), color = DiningColors.Primary)
+                }
+                receiptBitmap?.let {
+                    Image(it, contentDescription = t("收据", "Receipt"), modifier = Modifier.fillMaxWidth().height(120.dp))
+                }
+            }
+
+            if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
+            if (saving) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = DiningColors.Primary)
+        }
+
+        // 底部确认结账按钮
+        Button(
+            onClick = {
+                scope.launch {
+                    saving = true
+                    error = null
+                    var receiptUrl: String? = null
+                    if (method != "cash" && receiptBitmap != null) {
+                        val bytes = receiptBitmap!!.toJpegBytes()
+                        if (bytes != null) {
+                            val path = "receipt_${order.id}_${Clock.System.now().toEpochMilliseconds()}.jpg"
+                            receiptUrl = SupabaseClient.uploadFile("receipts", path, bytes)
+                        }
+                    }
+                    val payMode = mapPayMode(method)
+                    val now = currentIso()
+                    val amountReceived = if (method == "cash") received else finalTotal
+                    val changeGiven = if (method == "cash") change else 0.0
+
+                    val master = ReceiptMaster(
+                        trans_datetime = now,
+                        sub_total = total,
+                        discount = discountVal,
+                        total_amount = finalTotal,
+                        payment_mode = payMode,
+                        amount_received = amountReceived,
+                        change_given = changeGiven,
+                        operator = SessionManager.staffName,
+                        remark = order.order_no
+                    )
+                    val m = SupabaseClient.insertReceiptMaster(master)
+                    if (m == null) {
+                        saving = false
+                        error = t("收款失败", "Payment failed") + "：${SupabaseClient.lastError ?: t("未知原因", "unknown")}"
+                        return@launch
+                    }
+                    val receiptNo = m.receipt_no
+
+                    lines.forEach { line ->
+                        SupabaseClient.insertReceiptItem(
+                            ReceiptItem(
+                                receipt_no = receiptNo,
+                                item_name = line.name,
+                                qty = line.qty,
+                                unit_price = line.unitPrice,
+                                item_amount = line.amount
+                            )
+                        )
+                    }
+
+                    val p = PaymentRecord(
+                        order_id = order.id,
+                        pay_amount_myr = finalTotal,
+                        pay_method = method,
+                        transaction_ref = "",
+                        receipt_attachment_url = receiptUrl,
+                        received_by_staff_id = SupabaseClient.currentStaffId(),
+                        transaction_datetime = now
+                    )
+                    SupabaseClient.updateOrderDiscount(order.id, discountVal)
+                    val r = SupabaseClient.insertPayment(p)
+                    saving = false
+                    if (r != null) {
+                        if (order.table_id != null) {
+                            SupabaseClient.setTableStatus(order.table_id!!, "free")
+                        }
+                        receiptData = ReceiptData(
+                            receiptNo = receiptNo,
+                            transDatetime = now,
+                            items = lines,
+                            subTotal = total,
+                            discount = discountVal,
+                            total = finalTotal,
+                            paymentMode = payMode,
+                            amountReceived = amountReceived,
+                            changeGiven = changeGiven
+                        )
+                        showReceipt = true
+                    } else {
+                        error = t("收款失败", "Payment failed") + "：${SupabaseClient.lastError ?: t("未知原因", "unknown")}"
+                    }
+                }
+            },
+            enabled = canSave,
+            modifier = Modifier.fillMaxWidth().padding(16.dp).height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = DiningColors.Primary,
+                disabledContainerColor = DiningColors.TextMuted.copy(alpha = 0.3f)
+            )
+        ) {
+            Text(
+                if (saving) t("结账中…", "Processing…") else t("确认结账", "Checkout") + " · RM%.2f".format(finalTotal),
+                color = DiningColors.Surface, fontWeight = FontWeight.Bold
+            )
+        }
+    }
+
+    // 付款二维码独立弹窗（保留弹窗）
+    if (showQr) {
+        val qr = when (method) {
+            "duitnow" -> Res.drawable.duitnow_tng_qr
+            "tng_ewallet" -> Res.drawable.duitnow_tng_qr
+            else -> Res.drawable.alipay_qr
+        }
+        AlertDialog(
+            onDismissRequest = { showQr = false },
+            containerColor = DiningColors.Surface,
+            shape = RoundedCornerShape(20.dp),
+            title = { Text(t("付款二维码", "Payment QR"), fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Image(
+                        painter = painterResource(qr),
+                        contentDescription = t("付款二维码", "Payment QR"),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxWidth().height(340.dp)
+                    )
+                    Button(
+                        onClick = { showQr = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(t("完成", "Done"), fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
+    // 收据弹窗（保留弹窗）
+    if (showReceipt && receiptData != null) {
+        ReceiptDialog(
+            data = receiptData!!,
+            onPrint = { printReceiptText(receiptData!!.toReceiptText()) },
+            onDone = { showReceipt = false; onDone() }
+        )
+    }
+}
+
+// ============ 桌面版：订单管理分栏（左 2/4 列表，右 2/4 详情） ============
+private sealed interface OrdersPanel {
+    data object Empty : OrdersPanel
+    data object NewOrder : OrdersPanel
+    data class Detail(val order: CustomerOrder) : OrdersPanel
+}
+
+@Composable
+fun DesktopOrdersScreen() {
+    var panel by remember { mutableStateOf<OrdersPanel>(OrdersPanel.Empty) }
+    var refreshKey by remember { mutableStateOf(0) }
+
+    Row(modifier = Modifier.fillMaxSize().background(DiningColors.Background)) {
+        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            OrderListView(
+                onNew = { panel = OrdersPanel.NewOrder },
+                onDetail = { panel = OrdersPanel.Detail(it) },
+                refreshKey = refreshKey
+            )
+        }
+
+        VerticalDivider(
+            modifier = Modifier.fillMaxHeight(),
+            thickness = 1.dp,
+            color = DiningColors.TextMuted.copy(alpha = 0.15f)
+        )
+
+        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            when (val p = panel) {
+                is OrdersPanel.Detail -> OrderDetailScreen(
+                    order = p.order,
+                    onBack = { panel = OrdersPanel.Empty; refreshKey++ }
+                )
+                is OrdersPanel.NewOrder -> NewOrderScreen(
+                    onBack = { panel = OrdersPanel.Empty; refreshKey++ }
+                )
+                OrdersPanel.Empty -> OrdersEmptyPanel()
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrdersEmptyPanel() {
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("🧾", fontSize = 40.sp)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                t("点击左侧订单查看详情", "Tap an order to view details"),
+                fontSize = 14.sp,
+                color = DiningColors.TextMuted
+            )
+        }
+    }
 }

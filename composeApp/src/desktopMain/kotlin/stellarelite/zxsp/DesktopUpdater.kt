@@ -14,7 +14,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 // 桌面版更新检测（查 GitHub Releases 里 tag 以 -desktop 结尾的最新版本）
 object DesktopUpdater {
-    const val CURRENT_VERSION = "1.2.43"
+    const val CURRENT_VERSION = "1.2.44"
     private const val RELEASES_URL = "https://api.github.com/repos/pingguo0901/zhixiangshipu-app/releases"
 
     suspend fun checkForUpdate(): VersionInfo? = withContext(Dispatchers.IO) {
