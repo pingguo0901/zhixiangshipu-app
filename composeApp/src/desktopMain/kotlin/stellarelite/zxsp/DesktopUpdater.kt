@@ -16,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 // 桌面版更新器：检测 GitHub Releases 里 tag 以 -desktop 结尾的最新版本，
 // 支持程序内下载 zip → 解压 → 写替换脚本 → 退出由脚本替换并重启（无需跳浏览器下载页）
 object DesktopUpdater {
-    const val CURRENT_VERSION = "1.2.51"
+    const val CURRENT_VERSION = "1.2.52"
     private const val RELEASES_URL = "https://api.github.com/repos/pingguo0901/zhixiangshipu-app/releases"
 
     suspend fun checkForUpdate(): VersionInfo? = withContext(Dispatchers.IO) {
@@ -92,6 +92,10 @@ object DesktopUpdater {
     }
 
     private fun currentAppDir(): File {
+        // 临时硬编码：董事长电脑实际安装目录（OneDrive 路径）。优先用这个，存在才生效。
+        val hardcoded = File("C:\\Users\\pingg\\OneDrive\\zxsp-desktop-windows\\ZhiXiangFood")
+        if (hardcoded.exists()) return hardcoded
+        // 回退：动态检测 exe 路径（打包成 exe 后 command() 常返回 java.exe 或 null，不可靠）
         return try {
             val exePath = ProcessHandle.current().info().command().orElse(null)
             if (!exePath.isNullOrBlank()) {
