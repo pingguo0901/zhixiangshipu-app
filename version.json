@@ -1,7 +1,7 @@
 {
-  "versionCode": 171,
-  "versionName": "1.2.55",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.55/zhixiangshipu-app.apk",
+  "versionCode": 172,
+  "versionName": "1.2.56",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.56/zhixiangshipu-app.apk",
   "changelog": "- 修复手机版更新提示「更新功能不可用」\n- 工作台顶部改为名称（职位）+ 日期时间（吉隆坡时区）\n- 总桌台统计不再计入三个外卖平台号",
   "buildDate": "2026-09-13"
 }
