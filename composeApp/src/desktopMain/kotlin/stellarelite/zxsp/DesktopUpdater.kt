@@ -3,6 +3,7 @@ package stellarelite.zxsp
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.charset.Charset
 import java.util.zip.ZipFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 // 桌面版更新器：检测 GitHub Releases 里 tag 以 -desktop 结尾的最新版本，
 // 支持程序内下载 zip → 解压 → 写替换脚本 → 退出由脚本替换并重启（无需跳浏览器下载页）
 object DesktopUpdater {
-    const val CURRENT_VERSION = "1.2.48"
+    const val CURRENT_VERSION = "1.2.49"
     private const val RELEASES_URL = "https://api.github.com/repos/pingguo0901/zhixiangshipu-app/releases"
 
     suspend fun checkForUpdate(): VersionInfo? = withContext(Dispatchers.IO) {
@@ -80,10 +81,10 @@ object DesktopUpdater {
 
             // 3. 写替换脚本（硬编码目标目录与新文件目录）
             val bat = File(tmpDir, "update.bat")
-            bat.writeText(buildBatScript(appDir.absolutePath, newDir.absolutePath))
+            bat.writeText(buildBatScript(appDir.absolutePath, newDir.absolutePath), Charset.forName("GBK"))
 
             // 4. 启动脚本
-            Runtime.getRuntime().exec(arrayOf("cmd", "/c", "start", "", bat.absolutePath))
+            Runtime.getRuntime().exec(arrayOf("cmd", "/c", "start", "", "\"" + bat.absolutePath + "\""))
             null
         } catch (e: Exception) {
             "更新出错：" + (e.message ?: "未知错误")
@@ -163,7 +164,6 @@ object DesktopUpdater {
         setlocal
         set "APP_DIR=$appDir"
         set "NEW_DIR=$newDir"
-        REM 等待主程序退出
         :waitloop
         tasklist /FI "IMAGENAME eq ZhiXiangFood.exe" 2>nul | find /I "ZhiXiangFood.exe" >nul
         if not errorlevel 1 (
