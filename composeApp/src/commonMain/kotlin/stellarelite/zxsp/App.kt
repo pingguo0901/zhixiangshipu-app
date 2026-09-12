@@ -19,6 +19,7 @@ import stellarelite.zxsp.ui.components.BottomNavBar
 import stellarelite.zxsp.ui.components.DesktopTopBar
 import stellarelite.zxsp.util.decodeJwtExp
 import stellarelite.zxsp.util.decodeJwtSub
+import stellarelite.zxsp.platform.PrintNotifier
 import stellarelite.zxsp.ui.components.DiningTab
 import stellarelite.zxsp.ui.screens.*
 import stellarelite.zxsp.ui.theme.DiningColors
@@ -36,6 +37,7 @@ fun App(
     var updateProgress by remember { mutableStateOf(0f) }
     var updateError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val printMsg by PrintNotifier.message
 
     // Check for updates on launch
     LaunchedEffect(Unit) {
@@ -224,5 +226,34 @@ fun App(
                 }
             )
         }
+    }
+
+    // Print Result Dialog（内置弹窗，替代桌面端原生 JOptionPane，避免窗口被压到任务栏）
+    if (printMsg != null) {
+        AlertDialog(
+            onDismissRequest = { PrintNotifier.dismiss() },
+            containerColor = DiningColors.Surface,
+            title = {
+                Text(
+                    "打印",
+                    color = DiningColors.TextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Text(
+                    printMsg ?: "",
+                    color = DiningColors.TextSecondary,
+                    fontSize = 14.sp,
+                    lineHeight = 22.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { PrintNotifier.dismiss() }) {
+                    Text("确定", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
     }
 }

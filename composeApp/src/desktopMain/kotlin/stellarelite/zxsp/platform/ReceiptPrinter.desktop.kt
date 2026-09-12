@@ -5,7 +5,6 @@ import java.nio.charset.Charset
 import javax.print.DocFlavor
 import javax.print.PrintServiceLookup
 import javax.print.SimpleDoc
-import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 
 // 桌面端：USB 热敏打印机（ESC/POS 字节流），通过 Java Print Service 下发
@@ -17,9 +16,7 @@ actual fun printReceiptText(text: String) {
         } catch (e: Exception) {
             "打印失败：${e.message}"
         }
-        SwingUtilities.invokeLater {
-            JOptionPane.showMessageDialog(null, msg, "打印", JOptionPane.INFORMATION_MESSAGE)
-        }
+        SwingUtilities.invokeLater { PrintNotifier.show(msg) }
     }.apply { isDaemon = true }.start()
 }
 
@@ -31,9 +28,7 @@ actual fun printTableQrSticker(tableNo: String, qrUrl: String) {
         } catch (e: Exception) {
             "打印失败：${e.message}"
         }
-        SwingUtilities.invokeLater {
-            JOptionPane.showMessageDialog(null, msg, "打印", JOptionPane.INFORMATION_MESSAGE)
-        }
+        SwingUtilities.invokeLater { PrintNotifier.show(msg) }
     }.apply { isDaemon = true }.start()
 }
 
