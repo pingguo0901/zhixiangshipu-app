@@ -1,7 +1,7 @@
 {
-  "versionCode": 173,
-  "versionName": "1.2.57",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.57/zhixiangshipu-app.apk",
-  "changelog": "- 工作台「外卖」只显示普通外卖号，三个平台号移到外卖工作台\n- 外卖工作台顶部新增统计卡片（占用中 + 三平台数量）",
+  "versionCode": 174,
+  "versionName": "1.2.58",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.58/zhixiangshipu-app.apk",
+  "changelog": "- 手机版外卖工作台三平台号码按钮改成跟堂食桌台一样大",
   "buildDate": "2026-09-13"
 }

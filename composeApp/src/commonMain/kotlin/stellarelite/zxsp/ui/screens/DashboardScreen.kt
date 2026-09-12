@@ -638,7 +638,8 @@ fun PhoneTakeawayScreen() {
                 newOrderTableId = table.id
                 showNewOrder = true
             }
-        }
+        },
+        bigBadges = true
     )
 
     orderDialogTable?.let { table ->
@@ -654,9 +655,10 @@ fun PhoneTakeawayScreen() {
     }
 }
 
-// 外卖平台看板：Facebook/Grabfood/Foodpanda 各 20 个号，小按钮一屏显示
+// 外卖平台看板：Facebook/Grabfood/Foodpanda 各 20 个号
+// bigBadges=true 时用大按钮（跟堂食桌台一样大，4 个一排），手机版用；false 用紧凑小按钮（桌面版分栏用）
 @Composable
-private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0) {
+private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0, bigBadges: Boolean = false) {
     val scope = rememberCoroutineScope()
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -732,6 +734,21 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 Text(platform, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                 if (platformTables.isEmpty()) {
                     Text(t("暂无外卖号", "No delivery no."), fontSize = 12.sp, color = DiningColors.TextMuted)
+                } else if (bigBadges) {
+                    val rows = platformTables.chunked(4)
+                    rows.forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row.forEach { table ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    TakeawayBigBadge(table, platform, onClick = { onTableClick(table) })
+                                }
+                            }
+                            repeat(4 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                        }
+                    }
                 } else {
                     val rows = platformTables.chunked(10)
                     rows.forEach { row ->
@@ -773,6 +790,36 @@ private fun SmallTableBadge(table: TableList, platform: String, onClick: () -> U
         contentAlignment = Alignment.Center
     ) {
         Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg, maxLines = 1)
+    }
+}
+
+// 外卖号大按钮：跟堂食桌台按钮一样大，显示号（去前缀）+ 状态
+@Composable
+private fun TakeawayBigBadge(table: TableList, platform: String, onClick: () -> Unit) {
+    val bg = when (table.table_status) {
+        "occupied" -> DiningColors.Primary
+        "cleaning" -> DiningColors.Warning
+        else -> DiningColors.Surface
+    }
+    val fg = when (table.table_status) {
+        "free" -> DiningColors.TextPrimary
+        else -> DiningColors.Surface
+    }
+    val status = when (table.table_status) {
+        "occupied" -> t("占用", "Occupied")
+        "cleaning" -> t("清理", "Cleaning")
+        else -> t("空闲", "Free")
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(bg, RoundedCornerShape(10.dp))
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(table.table_no.removePrefix(platform), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = fg)
+        Text(status, fontSize = 10.sp, color = fg.copy(alpha = 0.8f))
     }
 }
 
