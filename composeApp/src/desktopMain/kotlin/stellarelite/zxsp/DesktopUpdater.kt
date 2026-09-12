@@ -16,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 // 桌面版更新器：检测 GitHub Releases 里 tag 以 -desktop 结尾的最新版本，
 // 支持程序内下载 zip → 解压 → 写替换脚本 → 退出由脚本替换并重启（无需跳浏览器下载页）
 object DesktopUpdater {
-    const val CURRENT_VERSION = "1.2.57"
+    const val CURRENT_VERSION = "1.2.58"
     private const val RELEASES_URL = "https://api.github.com/repos/pingguo0901/zhixiangshipu-app/releases"
 
     suspend fun checkForUpdate(): VersionInfo? = withContext(Dispatchers.IO) {
@@ -92,27 +92,37 @@ object DesktopUpdater {
     }
 
     private fun currentAppDir(): File {
-        // 首选：jpackage 注入的 exe 完整路径（打包成 exe 后最可靠，不依赖硬编码）
-        val appPath = System.getProperty("jpackage.app-path")
-        if (!appPath.isNullOrBlank()) {
-            val parent = File(appPath).parentFile
-            if (parent != null && parent.exists()) return parent
+        // 关键：不信任任何单一来源，而是收集多个候选目录，
+        // 校验目录里确实存在 ZhiXiangFood.exe 才采用（比硬编码/单属性可靠得多）。
+        val candidates = mutableListOf<File>()
+
+        // 1. jpackage.app-path：打包后指向启动器 exe（若 jpackage 注入了该属性）
+        System.getProperty("jpackage.app-path")?.let { p ->
+            File(p).parentFile?.let { candidates.add(it) }
         }
-        // 回退：硬编码路径（存在才生效）
-        val hardcoded = File("C:\\Users\\pingg\\OneDrive\\zxsp-desktop-windows\\ZhiXiangFood")
-        if (hardcoded.exists()) return hardcoded
-        // 最后回退：动态检测 exe 路径（command() 常返回 java.exe 或 null，不可靠）
-        return try {
-            val exePath = ProcessHandle.current().info().command().orElse(null)
-            if (!exePath.isNullOrBlank()) {
-                val parent = File(exePath).parentFile
-                if (parent != null && parent.exists()) parent else File(System.getProperty("user.dir"))
-            } else {
-                File(System.getProperty("user.dir"))
+
+        // 2. java.home 的父目录：jpackage/Compose Desktop 打包后 JRE 固定放在 <app>\runtime，
+        //    所以 java.home = <app>\runtime，父目录就是程序目录。这是最可靠的信号。
+        System.getProperty("java.home")?.let { h ->
+            File(h).parentFile?.let { candidates.add(it) }
+        }
+
+        // 3. ProcessHandle command：运行中的 JVM 是 <app>\runtime\bin\java.exe，往上 3 层是程序目录
+        runCatching { ProcessHandle.current().info().command().orElse(null) }
+            .getOrNull()?.let { cmd ->
+                var f = File(cmd)
+                repeat(3) { f = f.parentFile ?: return@let }
+                candidates.add(f)
             }
-        } catch (e: Exception) {
-            File(System.getProperty("user.dir"))
-        }
+
+        // 4. 硬编码兜底 + 5. user.dir 兜底
+        candidates.add(File("C:\\Users\\pingg\\OneDrive\\zxsp-desktop-windows\\ZhiXiangFood"))
+        candidates.add(File(System.getProperty("user.dir")))
+
+        // 返回第一个「确实含 exe」的目录；都没有就取第一个存在的目录；再退到第一个候选
+        return candidates.firstOrNull { c ->
+            c.isDirectory && c.exists() && File(c, "ZhiXiangFood.exe").exists()
+        } ?: candidates.firstOrNull { it.isDirectory && it.exists() } ?: candidates.first()
     }
 
     private fun download(url: String, dest: File, onProgress: ((Long, Long) -> Unit)?): Boolean {
