@@ -1,7 +1,7 @@
 {
-  "versionCode": 169,
-  "versionName": "1.2.53",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.53/zhixiangshipu-app.apk",
-  "changelog": "- 外卖工作台独立成竖版三平台看板（Facebook/Grabfood/Foodpanda 各 20 号）",
+  "versionCode": 170,
+  "versionName": "1.2.54",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.54/zhixiangshipu-app.apk",
+  "changelog": "- 新建订单用餐方式新增 Facebook/Grabfood/Foodpanda 分类号码\n- 外卖工作台号码按数字排序（1-20 顺序正确）",
   "buildDate": "2026-09-13"
 }

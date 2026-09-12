@@ -700,7 +700,8 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
             }
         } else {
             platforms.forEach { platform ->
-                val platformTables = tables.filter { it.table_no.startsWith(platform) }.sortedBy { it.table_no }
+                val platformTables = tables.filter { it.table_no.startsWith(platform) }
+                    .sortedBy { it.table_no.removePrefix(platform).toIntOrNull() ?: Int.MAX_VALUE }
                 Text(platform, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                 if (platformTables.isEmpty()) {
                     Text(t("暂无外卖号", "No delivery no."), fontSize = 12.sp, color = DiningColors.TextMuted)

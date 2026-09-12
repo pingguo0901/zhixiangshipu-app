@@ -31,6 +31,15 @@ import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.ui.theme.DiningColors
 
+// 用餐方式：堂食 / 到店外卖 / 三平台外卖（Facebook/Grabfood/Foodpanda）
+private enum class DiningMode(val platformPrefix: String? = null) {
+    DineIn,
+    Takeaway,
+    Facebook("Facebook外卖"),
+    Grabfood("Grabfood外卖"),
+    Foodpanda("Foodpanda外卖")
+}
+
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Boolean = false) {
@@ -40,7 +49,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
     var loading by remember { mutableStateOf(true) }
 
     var tableId by remember { mutableStateOf<Long?>(null) }
-    var isTakeaway by remember { mutableStateOf(false) }
+    var diningMode by remember { mutableStateOf(DiningMode.DineIn) }
     val cart = remember { mutableStateListOf<CartLine>() }
     var selectedItem by remember { mutableStateOf<MenuItem?>(null) }
     var saving by remember { mutableStateOf(false) }
@@ -63,13 +72,32 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
             val t = tables.firstOrNull { it.id == initialTableId }
             if (t != null) {
                 tableId = t.id
-                isTakeaway = t.table_no.contains("外卖")
+                diningMode = when {
+                    t.table_no.startsWith("Facebook外卖") -> DiningMode.Facebook
+                    t.table_no.startsWith("Grabfood外卖") -> DiningMode.Grabfood
+                    t.table_no.startsWith("Foodpanda外卖") -> DiningMode.Foodpanda
+                    t.table_no.contains("外卖") -> DiningMode.Takeaway
+                    else -> DiningMode.DineIn
+                }
             }
         }
     }
 
     val dineInTables = tables.filter { !it.table_no.contains("外卖") }
-    val takeawayTables = tables.filter { it.table_no.contains("外卖") }
+    val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }.sortedBy { it.table_no.removePrefix("外卖").toIntOrNull() ?: Int.MAX_VALUE }
+    val facebookTables = tables.filter { it.table_no.startsWith("Facebook外卖") }.sortedBy { it.table_no.removePrefix("Facebook外卖").toIntOrNull() ?: Int.MAX_VALUE }
+    val grabfoodTables = tables.filter { it.table_no.startsWith("Grabfood外卖") }.sortedBy { it.table_no.removePrefix("Grabfood外卖").toIntOrNull() ?: Int.MAX_VALUE }
+    val foodpandaTables = tables.filter { it.table_no.startsWith("Foodpanda外卖") }.sortedBy { it.table_no.removePrefix("Foodpanda外卖").toIntOrNull() ?: Int.MAX_VALUE }
+
+    // 外卖费：除堂食外（到店外卖 + 三平台外卖）均收 +RM1
+    val isTakeaway = diningMode != DiningMode.DineIn
+    val currentModeTables = when (diningMode) {
+        DiningMode.DineIn -> dineInTables
+        DiningMode.Takeaway -> takeawayTables
+        DiningMode.Facebook -> facebookTables
+        DiningMode.Grabfood -> grabfoodTables
+        DiningMode.Foodpanda -> foodpandaTables
+    }
 
     // 购物车合计（含外卖费）
     val cartTotal = cart.sumOf { line ->
@@ -102,69 +130,70 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // 堂食/外卖
+                // 用餐方式：堂食 / 外卖 / Facebook / Grabfood / Foodpanda
                 item {
                     Text(t("用餐方式", "Dining Mode"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         FilterChip(
-                            selected = !isTakeaway,
-                            onClick = { isTakeaway = false; tableId = dineInTables.firstOrNull()?.id },
+                            selected = diningMode == DiningMode.DineIn,
+                            onClick = { diningMode = DiningMode.DineIn; tableId = dineInTables.firstOrNull()?.id },
                             label = { Text(t("堂食", "Dine-in")) }
                         )
                         FilterChip(
-                            selected = isTakeaway,
-                            onClick = { isTakeaway = true; tableId = takeawayTables.firstOrNull()?.id },
+                            selected = diningMode == DiningMode.Takeaway,
+                            onClick = { diningMode = DiningMode.Takeaway; tableId = takeawayTables.firstOrNull()?.id },
                             label = { Text(t("外卖", "Takeaway")) }
+                        )
+                        FilterChip(
+                            selected = diningMode == DiningMode.Facebook,
+                            onClick = { diningMode = DiningMode.Facebook; tableId = facebookTables.firstOrNull()?.id },
+                            label = { Text("Facebook") }
+                        )
+                        FilterChip(
+                            selected = diningMode == DiningMode.Grabfood,
+                            onClick = { diningMode = DiningMode.Grabfood; tableId = grabfoodTables.firstOrNull()?.id },
+                            label = { Text("Grabfood") }
+                        )
+                        FilterChip(
+                            selected = diningMode == DiningMode.Foodpanda,
+                            onClick = { diningMode = DiningMode.Foodpanda; tableId = foodpandaTables.firstOrNull()?.id },
+                            label = { Text("Foodpanda") }
                         )
                     }
                 }
 
-                // 桌台选择（堂食）
-                if (!isTakeaway) {
-                    item {
-                        Text(t("选择桌台", "Select Table"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (dineInTables.isEmpty()) {
-                            Text(t("暂无空闲桌台", "No free tables"), fontSize = 13.sp, color = DiningColors.TextMuted)
-                        } else {
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                dineInTables.forEach { t ->
-                                    FilterChip(
-                                        selected = tableId == t.id,
-                                        onClick = { tableId = t.id },
-                                        label = { Text(displayTableNo(t.table_no)) }
-                                    )
-                                }
-                            }
-                        }
+                // 号码/桌台选择（按用餐方式分类）
+                item {
+                    val title = when (diningMode) {
+                        DiningMode.DineIn -> t("选择桌台", "Select Table")
+                        DiningMode.Takeaway -> t("外卖号（自动分配，可手动改）", "Takeaway No. (auto-assigned)")
+                        else -> t("外卖号（自动分配，可手动改）", "Delivery No. (auto-assigned)")
                     }
-                }
-
-                // 外卖号选择（外卖，自动分配可手动改）
-                if (isTakeaway) {
-                    item {
-                        Text(t("外卖号（自动分配，可手动改）", "Takeaway No. (auto-assigned)"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        if (takeawayTables.isEmpty()) {
-                            Text(t("暂无空闲外卖号", "No free takeaway no."), fontSize = 13.sp, color = DiningColors.TextMuted)
-                        } else {
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                takeawayTables.forEach { t ->
-                                    FilterChip(
-                                        selected = tableId == t.id,
-                                        onClick = { tableId = t.id },
-                                        label = { Text(displayTableNo(t.table_no)) }
-                                    )
-                                }
+                    val emptyHint = when (diningMode) {
+                        DiningMode.DineIn -> t("暂无空闲桌台", "No free tables")
+                        else -> t("暂无空闲外卖号", "No free delivery no.")
+                    }
+                    Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (currentModeTables.isEmpty()) {
+                        Text(emptyHint, fontSize = 13.sp, color = DiningColors.TextMuted)
+                    } else {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            currentModeTables.forEach { t ->
+                                FilterChip(
+                                    selected = tableId == t.id,
+                                    onClick = { tableId = t.id },
+                                    label = { Text(diningNoLabel(t, diningMode)) }
+                                )
                             }
                         }
                     }
@@ -384,6 +413,14 @@ private fun unitLabel(unit: String): String =
 // 桌台号显示：英文界面「外卖XX」转「TA-XX」
 private fun displayTableNo(tableNo: String): String =
     if (LanguageManager.isEnglish && tableNo.startsWith("外卖")) "TA-" + tableNo.removePrefix("外卖") else tableNo
+
+// 用餐方式号码显示：平台号只显示数字（去掉 Facebook/Grabfood/Foodpanda 前缀）
+private fun diningNoLabel(table: TableList, mode: DiningMode): String = when (mode) {
+    DiningMode.Facebook -> table.table_no.removePrefix("Facebook外卖")
+    DiningMode.Grabfood -> table.table_no.removePrefix("Grabfood外卖")
+    DiningMode.Foodpanda -> table.table_no.removePrefix("Foodpanda外卖")
+    else -> displayTableNo(table.table_no)
+}
 
 // 2排4个方形按钮（最多8格，多余的先空着）
 @Composable
