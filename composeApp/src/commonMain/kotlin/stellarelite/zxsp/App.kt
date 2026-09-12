@@ -16,6 +16,7 @@ import kotlinx.datetime.Clock
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.components.BottomNavBar
+import stellarelite.zxsp.ui.components.DesktopTopBar
 import stellarelite.zxsp.util.decodeJwtExp
 import stellarelite.zxsp.util.decodeJwtSub
 import stellarelite.zxsp.ui.components.DiningTab
@@ -118,6 +119,9 @@ fun App(
             .background(DiningColors.Background)
             .statusBarsPadding()
     ) {
+        if (useDesktopLayout) {
+            DesktopTopBar()
+        }
         Box(
             modifier = Modifier
                 .weight(1f)

@@ -80,7 +80,7 @@ fun DashboardScreen() {
 }
 
 @Composable
-private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0) {
+private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0, showGreeting: Boolean = true) {
     val scope = rememberCoroutineScope()
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -119,7 +119,9 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
         ) {
             Column {
                 Text(t("工作台", "Dashboard"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-                Text(t("你好", "Hello") + "，" + SessionManager.staffName, fontSize = 14.sp, color = DiningColors.TextSecondary)
+                if (showGreeting) {
+                    Text(t("你好", "Hello") + "，" + SessionManager.staffName, fontSize = 14.sp, color = DiningColors.TextSecondary)
+                }
             }
             Button(
                 onClick = onNewOrder,
@@ -389,7 +391,8 @@ fun DesktopDashboardScreen() {
                         panel = DashboardPanel.NewOrder(table.id)
                     }
                 },
-                refreshKey = refreshKey
+                refreshKey = refreshKey,
+                showGreeting = false
             )
         }
 
