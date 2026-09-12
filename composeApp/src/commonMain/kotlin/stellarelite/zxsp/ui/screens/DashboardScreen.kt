@@ -604,6 +604,53 @@ fun TakeawayDashboardScreen() {
     }
 }
 
+// ============ 手机版外卖工作台（三平台竖版看板，非桌面） ============
+@Composable
+fun PhoneTakeawayScreen() {
+    var showNewOrder by remember { mutableStateOf(false) }
+    var newOrderTableId by remember { mutableStateOf<Long?>(null) }
+    var orderDialogTable by remember { mutableStateOf<TableList?>(null) }
+    var addItemsOrder by remember { mutableStateOf<CustomerOrder?>(null) }
+    var addItemsTableNo by remember { mutableStateOf<String?>(null) }
+
+    if (showNewOrder) {
+        NewOrderScreen(onBack = { showNewOrder = false }, initialTableId = newOrderTableId)
+        return
+    }
+    if (addItemsOrder != null) {
+        AddItemsScreen(
+            order = addItemsOrder!!,
+            tableNo = addItemsTableNo,
+            onBack = { addItemsOrder = null },
+            onDone = { addItemsOrder = null }
+        )
+        return
+    }
+    TakeawayBoard(
+        onNewOrder = { newOrderTableId = null; showNewOrder = true },
+        onTableClick = { table ->
+            if (table.table_status == "occupied") {
+                orderDialogTable = table
+            } else {
+                newOrderTableId = table.id
+                showNewOrder = true
+            }
+        }
+    )
+
+    orderDialogTable?.let { table ->
+        TableOrderDialog(
+            table = table,
+            onDismiss = { orderDialogTable = null },
+            onAddItems = { order ->
+                orderDialogTable = null
+                addItemsOrder = order
+                addItemsTableNo = table.table_no
+            }
+        )
+    }
+}
+
 // 外卖平台看板：Facebook/Grabfood/Foodpanda 各 20 个号，小按钮一屏显示
 @Composable
 private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0) {

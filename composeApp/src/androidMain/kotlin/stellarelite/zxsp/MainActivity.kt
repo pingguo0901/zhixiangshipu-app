@@ -30,8 +30,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             App(
                 onCheckUpdate = { UpdateManager.checkForUpdate() },
-                onRequestUpdate = { info ->
+                onApplyUpdate = { info, _ ->
                     UpdateManager.downloadAndInstall(this, info.apkUrl)
+                    null
                 }
             )
         }

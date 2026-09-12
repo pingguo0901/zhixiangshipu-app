@@ -1,7 +1,7 @@
 {
-  "versionCode": 168,
-  "versionName": "1.2.52",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.52/zhixiangshipu-app.apk",
-  "changelog": "- 付款二维码改为独立弹窗显示，底部「完成」按钮返回结账弹窗",
-  "buildDate": "2026-09-11"
+  "versionCode": 169,
+  "versionName": "1.2.53",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.53/zhixiangshipu-app.apk",
+  "changelog": "- 外卖工作台独立成竖版三平台看板（Facebook/Grabfood/Foodpanda 各 20 号）",
+  "buildDate": "2026-09-13"
 }
