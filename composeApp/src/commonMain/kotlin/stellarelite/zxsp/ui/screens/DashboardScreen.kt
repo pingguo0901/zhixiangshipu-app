@@ -100,12 +100,10 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 
     LaunchedEffect(refreshKey) { load() }
 
-    val platformPrefixes = listOf("Facebook", "Grabfood", "Foodpanda")
-    fun isPlatform(no: String) = platformPrefixes.any { no.startsWith(it) }
-    // 堂食桌台：不含"外卖"且不是三个平台号
-    val dineInTables = tables.filter { !it.table_no.contains("外卖") && !isPlatform(it.table_no) }
-    // 外卖号：含"外卖"（普通外卖号）或三个平台号
-    val takeawayTables = tables.filter { it.table_no.contains("外卖") || isPlatform(it.table_no) }
+    // 堂食桌台：不含"外卖"
+    val dineInTables = tables.filter { !it.table_no.contains("外卖") }
+    // 外卖号：以"外卖"开头（普通外卖号，不含三个平台号）
+    val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
     val occupiedCount = dineInTables.count { it.table_status == "occupied" }
     val freeCount = dineInTables.count { it.table_status == "free" }
 
@@ -676,6 +674,13 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 
     val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖")
 
+    // 三平台统计
+    val platformTables = tables.filter { t -> platforms.any { t.table_no.startsWith(it) } }
+    val occupiedPlatform = platformTables.count { it.table_status == "occupied" }
+    val fbCount = tables.count { it.table_no.startsWith("Facebook外卖") }
+    val gfCount = tables.count { it.table_no.startsWith("Grabfood外卖") }
+    val fpCount = tables.count { it.table_no.startsWith("Foodpanda外卖") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -696,6 +701,23 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
             ) {
                 Text(t("＋ 新建订单", "＋ New Order"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        // 统计卡片：占用中 + 三平台数量
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = DiningColors.Primary)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StatItem(Icons.Outlined.Restaurant, "$occupiedPlatform", t("占用中", "Occupied"))
+                StatItem(Icons.Outlined.DeliveryDining, "$fbCount", "Facebook")
+                StatItem(Icons.Outlined.DeliveryDining, "$gfCount", "Grabfood")
+                StatItem(Icons.Outlined.DeliveryDining, "$fpCount", "Foodpanda")
             }
         }
 
