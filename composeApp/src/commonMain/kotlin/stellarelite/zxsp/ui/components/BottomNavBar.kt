@@ -116,8 +116,8 @@ fun SideNavBar(
         modifier = modifier
             .fillMaxHeight()
             .background(DiningColors.NavBar)
-            .padding(horizontal = 10.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 8.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         DiningTab.entries.forEach { tab ->
             SideNavItem(
@@ -144,21 +144,21 @@ private fun SideNavItem(
             .clip(RoundedCornerShape(10.dp))
             .background(bg)
             .clickable { onClick() }
-            .padding(vertical = 14.dp),
+            .padding(horizontal = 12.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Start
     ) {
         Icon(
             tab.icon,
             contentDescription = tabLabel(tab),
             tint = fg,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(10.dp))
         Text(
             tabLabel(tab),
             color = fg,
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }

@@ -152,11 +152,11 @@ fun App(
                 SideNavBar(
                     currentTab = currentTab,
                     onTabSelected = { currentTab = it },
-                    modifier = Modifier.weight(3f)
+                    modifier = Modifier.width(200.dp)
                 )
                 Box(
                     modifier = Modifier
-                        .weight(5f)
+                        .weight(1f)
                         .fillMaxHeight()
                 ) {
                     TabContent(currentTab, useDesktopLayout)
