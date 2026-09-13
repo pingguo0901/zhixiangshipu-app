@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.ReceiptLong
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -98,6 +100,65 @@ private fun NavTabItem(
             tabLabel(tab),
             color = if (isSelected) DiningColors.Primary else DiningColors.TextMuted,
             fontSize = 10.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+// 桌面版左侧竖排快捷栏（F1~F6 切换）
+@Composable
+fun SideNavBar(
+    currentTab: DiningTab,
+    onTabSelected: (DiningTab) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .background(DiningColors.NavBar)
+            .padding(horizontal = 10.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        DiningTab.entries.forEach { tab ->
+            SideNavItem(
+                tab = tab,
+                isSelected = currentTab == tab,
+                onClick = { onTabSelected(tab) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun SideNavItem(
+    tab: DiningTab,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bg = if (isSelected) DiningColors.Primary else Color.Transparent
+    val fg = if (isSelected) DiningColors.Surface else DiningColors.TextPrimary
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(bg)
+            .clickable { onClick() }
+            .padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            tab.icon,
+            contentDescription = tabLabel(tab),
+            tint = fg,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            tabLabel(tab),
+            color = fg,
+            fontSize = 13.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }

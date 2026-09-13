@@ -1,7 +1,7 @@
 {
-  "versionCode": 174,
-  "versionName": "1.2.58",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.58/zhixiangshipu-app.apk",
-  "changelog": "- 手机版外卖工作台三平台号码按钮改成跟堂食桌台一样大",
+  "versionCode": 175,
+  "versionName": "1.2.59",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.59/zhixiangshipu-app.apk",
+  "changelog": "- 桌面端快捷栏移到最左侧竖排 + F1~F6 快捷键切换页面",
   "buildDate": "2026-09-13"
 }

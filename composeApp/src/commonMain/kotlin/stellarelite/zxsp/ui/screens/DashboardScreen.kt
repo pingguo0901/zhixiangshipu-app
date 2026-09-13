@@ -406,7 +406,7 @@ fun DesktopDashboardScreen() {
         )
 
         // 右侧 1/4：操作面板
-        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+        Box(modifier = Modifier.weight(2f).fillMaxHeight()) {
             DashboardRightPanel(
                 panel = panel,
                 onPanel = { panel = it },
@@ -597,7 +597,7 @@ fun TakeawayDashboardScreen() {
         )
 
         // 右侧 1/4：操作面板（复用工作台面板逻辑）
-        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+        Box(modifier = Modifier.weight(2f).fillMaxHeight()) {
             DashboardRightPanel(
                 panel = panel,
                 onPanel = { panel = it },

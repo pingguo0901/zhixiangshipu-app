@@ -1720,7 +1720,7 @@ fun DesktopOrdersScreen() {
     var refreshKey by remember { mutableStateOf(0) }
 
     Row(modifier = Modifier.fillMaxSize().background(DiningColors.Background)) {
-        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+        Box(modifier = Modifier.weight(3f).fillMaxHeight()) {
             OrderListView(
                 onNew = { panel = OrdersPanel.NewOrder },
                 onDetail = { panel = OrdersPanel.Detail(it) },
@@ -1734,7 +1734,7 @@ fun DesktopOrdersScreen() {
             color = DiningColors.TextMuted.copy(alpha = 0.15f)
         )
 
-        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+        Box(modifier = Modifier.weight(2f).fillMaxHeight()) {
             when (val p = panel) {
                 is OrdersPanel.Detail -> OrderDetailScreen(
                     order = p.order,

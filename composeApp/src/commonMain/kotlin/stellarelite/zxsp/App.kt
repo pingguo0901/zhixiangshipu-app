@@ -8,6 +8,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -17,6 +22,7 @@ import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.ui.components.BottomNavBar
 import stellarelite.zxsp.ui.components.DesktopTopBar
+import stellarelite.zxsp.ui.components.SideNavBar
 import stellarelite.zxsp.util.decodeJwtExp
 import stellarelite.zxsp.util.decodeJwtSub
 import stellarelite.zxsp.platform.PrintNotifier
@@ -120,25 +126,52 @@ fun App(
             .fillMaxSize()
             .background(DiningColors.Background)
             .statusBarsPadding()
+            .then(
+                if (useDesktopLayout) Modifier.onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown) {
+                        when (event.key) {
+                            Key.F1 -> { currentTab = DiningTab.Home; true }
+                            Key.F2 -> { currentTab = DiningTab.Takeaway; true }
+                            Key.F3 -> { currentTab = DiningTab.Orders; true }
+                            Key.F4 -> { currentTab = DiningTab.Warehouse; true }
+                            Key.F5 -> { currentTab = DiningTab.Finance; true }
+                            Key.F6 -> { currentTab = DiningTab.More; true }
+                            else -> false
+                        }
+                    } else false
+                } else Modifier
+            )
     ) {
         DesktopTopBar()
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            AnimatedContent(targetState = currentTab) { tab ->
-                when (tab) {
-                    DiningTab.Home -> if (useDesktopLayout) DesktopDashboardScreen() else DashboardScreen()
-                    DiningTab.Takeaway -> if (useDesktopLayout) TakeawayDashboardScreen() else PhoneTakeawayScreen()
-                    DiningTab.Orders -> if (useDesktopLayout) DesktopOrdersScreen() else OrdersScreen()
-                    DiningTab.Warehouse -> WarehouseScreen()
-                    DiningTab.Finance -> FinanceScreen()
-                    DiningTab.More -> MoreScreen()
+        if (useDesktopLayout) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                SideNavBar(
+                    currentTab = currentTab,
+                    onTabSelected = { currentTab = it },
+                    modifier = Modifier.weight(3f)
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(5f)
+                        .fillMaxHeight()
+                ) {
+                    TabContent(currentTab, useDesktopLayout)
                 }
             }
+        } else {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                TabContent(currentTab, useDesktopLayout)
+            }
+            BottomNavBar(currentTab = currentTab, onTabSelected = { currentTab = it })
         }
-        BottomNavBar(currentTab = currentTab, onTabSelected = { currentTab = it })
     }
 
     // Update Dialog
@@ -262,5 +295,19 @@ fun App(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun TabContent(currentTab: DiningTab, useDesktopLayout: Boolean) {
+    AnimatedContent(targetState = currentTab) { tab ->
+        when (tab) {
+            DiningTab.Home -> if (useDesktopLayout) DesktopDashboardScreen() else DashboardScreen()
+            DiningTab.Takeaway -> if (useDesktopLayout) TakeawayDashboardScreen() else PhoneTakeawayScreen()
+            DiningTab.Orders -> if (useDesktopLayout) DesktopOrdersScreen() else OrdersScreen()
+            DiningTab.Warehouse -> WarehouseScreen()
+            DiningTab.Finance -> FinanceScreen()
+            DiningTab.More -> MoreScreen()
+        }
     }
 }
