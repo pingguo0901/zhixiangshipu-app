@@ -2,11 +2,14 @@ package stellarelite.zxsp
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -44,6 +47,7 @@ fun App(
     var updateError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val printMsg by PrintNotifier.message
+    val focusRequester = remember { FocusRequester() }
 
     // Check for updates on launch
     LaunchedEffect(Unit) {
@@ -121,11 +125,19 @@ fun App(
         }
     }
 
+    // 让根布局持有焦点，确保 F1~F6 快捷键能收到键盘事件（否则无焦点时按键无效）
+    LaunchedEffect(Unit) {
+        delay(100)
+        focusRequester.requestFocus()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(DiningColors.Background)
             .statusBarsPadding()
+            .focusable()
+            .focusRequester(focusRequester)
             .then(
                 if (useDesktopLayout) Modifier.onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown) {

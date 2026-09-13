@@ -1,7 +1,7 @@
 {
-  "versionCode": 176,
-  "versionName": "1.2.60",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.60/zhixiangshipu-app.apk",
-  "changelog": "- 桌面端左侧快捷栏改小为普通侧边栏（固定 200dp 宽度，图标文字紧凑左对齐）",
+  "versionCode": 177,
+  "versionName": "1.2.61",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.61/zhixiangshipu-app.apk",
+  "changelog": "- 桌面端左侧快捷栏改小为普通侧边栏（固定 200dp）\n- 修复桌面端 F1~F6 快捷键无焦点时无效的问题",
   "buildDate": "2026-09-14"
 }
