@@ -3,38 +3,25 @@ package stellarelite.zxsp.platform
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.widget.Toast
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 import java.util.UUID
 
 private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
-// ESC/POS 蓝牙热敏打印（Zy808，80mm，GBK 中文）
+// ESC/POS 蓝牙热敏打印（Zy808，80mm，GBK 中文）（无感打印，不弹提示）
 actual fun printReceiptText(text: String) {
     Thread {
-        val msg = try {
+        try {
             val adapter = BluetoothAdapter.getDefaultAdapter()
-            if (adapter == null) {
-                "此设备不支持蓝牙"
-            } else {
+            if (adapter != null) {
                 val devices = bondedDevices(adapter)
                 val printer = pickPrinter(devices)
-                if (printer == null) {
-                    "未找到已配对的蓝牙打印机，请先在系统蓝牙里配对 Zy808"
-                } else {
+                if (printer != null) {
                     printToDevice(printer, text)
-                    "已发送到打印机：${printer.name ?: "未知"}"
                 }
             }
-        } catch (e: Exception) {
-            "打印失败：${e.message}"
-        }
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(AppContext.context, msg, Toast.LENGTH_LONG).show()
-        }
+        } catch (_: Exception) { }
     }.start()
 }
 
@@ -93,26 +80,16 @@ private fun buildEscPos(text: String): ByteArray {
 // ============ 桌台下单二维码贴纸打印 ============
 actual fun printTableQrSticker(tableNo: String, qrUrl: String) {
     Thread {
-        val msg = try {
+        try {
             val adapter = BluetoothAdapter.getDefaultAdapter()
-            if (adapter == null) {
-                "此设备不支持蓝牙"
-            } else {
+            if (adapter != null) {
                 val devices = bondedDevices(adapter)
                 val printer = pickPrinter(devices)
-                if (printer == null) {
-                    "未找到已配对的蓝牙打印机，请先在系统蓝牙里配对 Zy808"
-                } else {
+                if (printer != null) {
                     printBytesToDevice(printer, buildTableQrStickerBytesEnglish(tableNo, qrUrl))
-                    "已发送到打印机：${printer.name ?: "未知"}"
                 }
             }
-        } catch (e: Exception) {
-            "打印失败：${e.message}"
-        }
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(AppContext.context, msg, Toast.LENGTH_LONG).show()
-        }
+        } catch (_: Exception) { }
     }.start()
 }
 

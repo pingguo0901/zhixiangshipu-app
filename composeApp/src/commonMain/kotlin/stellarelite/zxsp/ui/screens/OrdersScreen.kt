@@ -460,20 +460,8 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
         )
     }
 
-    // 厨房单预览
+    // 厨房单预览（统一英文版）
     if (showKitchen) {
-        val kitchenZh = remember(currentOrder, tableNo) {
-            buildKitchenOrder(
-                orderNo = currentOrder.order_no,
-                tableNo = tableNo ?: "外卖",
-                time = formatDateTimeMy(currentOrder.order_datetime ?: ""),
-                items = lines.map { line ->
-                    val (item, remark) = splitItemName(line.name)
-                    KitchenLine(line.qty, item, remark)
-                },
-                note = currentOrder.notes
-            )
-        }
         val kitchenEn = remember(currentOrder, tableNo) {
             buildKitchenOrderEnglish(
                 orderNo = currentOrder.order_no,
@@ -488,8 +476,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             )
         }
         KitchenOrderDialog(
-            textZh = kitchenZh,
-            textEn = kitchenEn,
+            text = kitchenEn,
             onPrint = { text -> printReceiptText(text) },
             onDone = { showKitchen = false }
         )
@@ -772,13 +759,14 @@ private fun OrderEditDialog(
 // 未付款收据（用订单数据构造，无付款信息）
 private fun buildUnpaidReceipt(order: CustomerOrder): ReceiptData {
     val lines = parseOrderLines(order.order_items)
+    val discount = order.discount
     return ReceiptData(
         receiptNo = order.receipt_no.ifBlank { order.order_no },
         transDatetime = order.order_datetime ?: "",
         items = lines,
         subTotal = order.total_amount_myr,
-        discount = 0.0,
-        total = order.total_amount_myr,
+        discount = discount,
+        total = (order.total_amount_myr - discount).coerceAtLeast(0.0),
         paymentMode = "UNPAID",
         amountReceived = 0.0,
         changeGiven = 0.0
@@ -1082,17 +1070,6 @@ internal data class KitchenLine(
     val remark: String
 )
 
-// 把菜品名拆成「菜品」+「口味备注」，如「五花肉串（香辣）」→ 五花肉串 + 香辣
-internal fun splitItemName(name: String): Pair<String, String> {
-    val idx = name.indexOf('（')
-    if (idx > 0) {
-        val item = name.substring(0, idx)
-        val remark = name.substring(idx + 1).removeSuffix("）")
-        return item to remark
-    }
-    return name to ""
-}
-
 // 英文名拆「菜品」+「口味」，如 "Pork Belly Skewer (Spicy)" → Pork Belly Skewer + Spicy
 internal fun splitItemNameEn(nameEn: String): Pair<String, String> {
     val idx = nameEn.indexOf('(')
@@ -1102,40 +1079,6 @@ internal fun splitItemNameEn(nameEn: String): Pair<String, String> {
         return item to remark
     }
     return nameEn.trim() to ""
-}
-
-// 生成厨房出单文本（48 列）
-internal fun buildKitchenOrder(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
-    val W = ReceiptFormatter.TOTAL_WIDTH
-    val r = mutableListOf<String>()
-
-    r.add("=".repeat(W))
-    r.add(ReceiptFormatter.padCenter("KITCHEN ORDER", W))
-    r.add(ReceiptFormatter.padCenter("厨房出单", W))
-    r.add("")
-    r.add(ReceiptFormatter.padRight("Order No: $orderNo", W))
-    r.add(ReceiptFormatter.padRight("Table No: $tableNo", W))
-    r.add(ReceiptFormatter.padRight("Time: $time", W))
-    r.add("=".repeat(W))
-
-    r.add(ReceiptFormatter.padRight("QTY", 6) + ReceiptFormatter.padRight("ITEM", 22) + ReceiptFormatter.padRight("REMARK", 20))
-    r.add("-".repeat(W))
-
-    items.forEach { line ->
-        r.add(ReceiptFormatter.generateKitchenRow(line.qty.toString(), line.item, line.remark))
-    }
-    r.add("-".repeat(W))
-
-    r.add("【特殊指令】")
-    r.add(note?.takeIf { it.isNotBlank() } ?: "无")
-    r.add("=".repeat(W))
-
-    r.add(ReceiptFormatter.padRight("份数：1份", W))
-    r.add(ReceiptFormatter.padRight("打印:$time", W))
-    r.add("=".repeat(W))
-    r.add("\n\n\n")
-
-    return r.joinToString("\n")
 }
 
 // 生成厨房出单英文版文本（48 列）
@@ -1172,9 +1115,7 @@ internal fun buildKitchenOrderEnglish(orderNo: String, tableNo: String, time: St
 }
 
 @Composable
-internal fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
-    var lang by remember { mutableStateOf("zh") }
-    val text = if (lang == "zh") textZh else textEn
+internal fun KitchenOrderDialog(text: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
@@ -1184,11 +1125,6 @@ internal fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text(t("中文版", "Chinese")) })
-                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text(t("英文版", "English")) })
-                }
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text,
                     fontSize = 11.sp,
@@ -1210,28 +1146,6 @@ internal fun KitchenOrderDialog(textZh: String, textEn: String, onPrint: (String
             }
         }
     )
-}
-
-// 生成厨房追加单文本（48 列，只含新增菜品）
-internal fun buildKitchenAddOnOrder(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>): String {
-    val W = ReceiptFormatter.TOTAL_WIDTH
-    val r = mutableListOf<String>()
-    r.add("=".repeat(W))
-    r.add(ReceiptFormatter.padCenter("KITCHEN ORDER 【追加加单】", W))
-    r.add("")
-    r.add(ReceiptFormatter.padRight("Parent Order No: $orderNo", W))
-    r.add(ReceiptFormatter.padRight("Table No: $tableNo", W))
-    r.add(ReceiptFormatter.padRight("Time: $time", W))
-    r.add("=".repeat(W))
-    r.add(ReceiptFormatter.padRight("QTY", 6) + ReceiptFormatter.padRight("ITEM", 22) + ReceiptFormatter.padRight("REMARK", 20))
-    r.add("-".repeat(W))
-    items.forEach { line ->
-        r.add(ReceiptFormatter.generateKitchenRow(line.qty.toString(), line.item, line.remark))
-    }
-    r.add("-".repeat(W))
-    r.add("=".repeat(W))
-    r.add("\n\n\n")
-    return r.joinToString("\n")
 }
 
 // 生成厨房追加单英文版文本（48 列，只含新增菜品）
@@ -1257,9 +1171,7 @@ internal fun buildKitchenAddOnOrderEnglish(orderNo: String, tableNo: String, tim
 }
 
 @Composable
-internal fun KitchenAddOnDialog(textZh: String, textEn: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
-    var lang by remember { mutableStateOf("zh") }
-    val text = if (lang == "zh") textZh else textEn
+internal fun KitchenAddOnDialog(text: String, onPrint: (String) -> Unit, onDone: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDone,
         containerColor = DiningColors.Surface,
@@ -1269,11 +1181,6 @@ internal fun KitchenAddOnDialog(textZh: String, textEn: String, onPrint: (String
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = lang == "zh", onClick = { lang = "zh" }, label = { Text(t("中文版", "Chinese")) })
-                    FilterChip(selected = lang == "en", onClick = { lang = "en" }, label = { Text(t("英文版", "English")) })
-                }
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text,
                     fontSize = 11.sp,

@@ -28,7 +28,6 @@ import stellarelite.zxsp.ui.components.DesktopTopBar
 import stellarelite.zxsp.ui.components.SideNavBar
 import stellarelite.zxsp.util.decodeJwtExp
 import stellarelite.zxsp.util.decodeJwtSub
-import stellarelite.zxsp.platform.PrintNotifier
 import stellarelite.zxsp.ui.components.DiningTab
 import stellarelite.zxsp.ui.screens.*
 import stellarelite.zxsp.ui.theme.DiningColors
@@ -46,7 +45,6 @@ fun App(
     var updateProgress by remember { mutableStateOf(0f) }
     var updateError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val printMsg by PrintNotifier.message
     val focusRequester = remember { FocusRequester() }
 
     // Check for updates on launch
@@ -71,7 +69,8 @@ fun App(
                 val ns = rt?.let { SupabaseClient.refreshSession(it).getOrNull() }
                 if (ns != null) {
                     SessionManager.updateTokens(ns.access_token, ns.refresh_token)
-                } else {
+                } else if (!useDesktopLayout) {
+                    // 桌面端保持登录，不自动登出（保证后台自动出单永远在线）
                     SessionManager.clear()
                 }
             }
@@ -84,7 +83,7 @@ fun App(
             if (staff != null) {
                 if (staff.is_active) {
                     SessionManager.setSession(SessionManager.accessToken, staff.id, staff.staff_name, staff.role, uid, canPrintDaily = staff.can_print_daily, canPrintQr = staff.can_print_qr)
-                } else {
+                } else if (!useDesktopLayout) {
                     SessionManager.clear()
                 }
             }
@@ -278,35 +277,6 @@ fun App(
                 }
             )
         }
-    }
-
-    // Print Result Dialog（内置弹窗，替代桌面端原生 JOptionPane，避免窗口被压到任务栏）
-    if (printMsg != null) {
-        AlertDialog(
-            onDismissRequest = { PrintNotifier.dismiss() },
-            containerColor = DiningColors.Surface,
-            title = {
-                Text(
-                    "打印",
-                    color = DiningColors.TextPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            },
-            text = {
-                Text(
-                    printMsg ?: "",
-                    color = DiningColors.TextSecondary,
-                    fontSize = 14.sp,
-                    lineHeight = 22.sp
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { PrintNotifier.dismiss() }) {
-                    Text("确定", color = DiningColors.Primary, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        )
     }
 }
 

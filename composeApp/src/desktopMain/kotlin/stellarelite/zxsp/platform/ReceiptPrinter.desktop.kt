@@ -5,30 +5,23 @@ import java.nio.charset.Charset
 import javax.print.DocFlavor
 import javax.print.PrintServiceLookup
 import javax.print.SimpleDoc
-import javax.swing.SwingUtilities
 
-// 桌面端：USB 热敏打印机（ESC/POS 字节流），通过 Java Print Service 下发
+// 桌面端：USB 热敏打印机（ESC/POS 字节流），通过 Java Print Service 下发（无感打印，不弹提示）
 actual fun printReceiptText(text: String) {
     Thread {
-        val msg = try {
+        try {
             val bytes = buildEscPos(text)
             sendToPrinter(bytes)
-        } catch (e: Exception) {
-            "打印失败：${e.message}"
-        }
-        SwingUtilities.invokeLater { PrintNotifier.show(msg) }
+        } catch (_: Exception) { }
     }.apply { isDaemon = true }.start()
 }
 
 actual fun printTableQrSticker(tableNo: String, qrUrl: String) {
     Thread {
-        val msg = try {
+        try {
             val bytes = buildTableQrStickerBytesEnglish(tableNo, qrUrl)
             sendToPrinter(bytes)
-        } catch (e: Exception) {
-            "打印失败：${e.message}"
-        }
-        SwingUtilities.invokeLater { PrintNotifier.show(msg) }
+        } catch (_: Exception) { }
     }.apply { isDaemon = true }.start()
 }
 

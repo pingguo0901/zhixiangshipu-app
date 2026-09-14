@@ -311,30 +311,17 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
                                 val tno = tables.firstOrNull { it.id == r.table_id }?.table_no ?: "外卖"
                                 val time = formatDateTimeMy(r.order_datetime ?: "")
                                 val lines = parseOrderLines(r.order_items)
-                                val kitchenText = if (LanguageManager.isEnglish) {
-                                    buildKitchenOrderEnglish(
-                                        orderNo = r.order_no,
-                                        tableNo = if (tno == "外卖") "Takeaway" else tno,
-                                        time = time,
-                                        items = lines.map { line ->
-                                            val en = line.nameEn.ifBlank { line.name }
-                                            val (name, remark) = splitItemNameEn(en)
-                                            KitchenLine(line.qty, name, remark)
-                                        },
-                                        note = r.notes
-                                    )
-                                } else {
-                                    buildKitchenOrder(
-                                        orderNo = r.order_no,
-                                        tableNo = tno,
-                                        time = time,
-                                        items = lines.map { line ->
-                                            val (name, remark) = splitItemName(line.name)
-                                            KitchenLine(line.qty, name, remark)
-                                        },
-                                        note = r.notes
-                                    )
-                                }
+                                val kitchenText = buildKitchenOrderEnglish(
+                                    orderNo = r.order_no,
+                                    tableNo = if (tno == "外卖") "Takeaway" else tno,
+                                    time = time,
+                                    items = lines.map { line ->
+                                        val en = line.nameEn.ifBlank { line.name }
+                                        val (name, remark) = splitItemNameEn(en)
+                                        KitchenLine(line.qty, name, remark)
+                                    },
+                                    note = r.notes
+                                )
                                 printReceiptText(kitchenText)
                                 onBack()
                             } else {
@@ -618,7 +605,6 @@ fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, o
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var discount by remember { mutableStateOf("") }
-    var addOnTextZh by remember { mutableStateOf<String?>(null) }
     var addOnTextEn by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
@@ -758,20 +744,17 @@ fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, o
                             val ok = SupabaseClient.updateOrderItems(order.id, merged, newSubTotal, newDiscount)
                             saving = false
                             if (ok) {
-                                // 厨房追加单：只打印本次新增
-                                val addedLinesZh = mutableListOf<KitchenLine>()
+                                // 厨房追加单：只打印本次新增（统一英文版）
                                 val addedLinesEn = mutableListOf<KitchenLine>()
                                 cart.forEach { line ->
                                     val en = line.item.name_en?.takeIf { it.isNotBlank() } ?: line.item.item_name
-                                    if (line.qtyNoSpicy > 0) { addedLinesZh.add(KitchenLine(line.qtyNoSpicy, line.item.item_name, "不辣")); addedLinesEn.add(KitchenLine(line.qtyNoSpicy, en, "No Spicy")) }
-                                    if (line.qtySpicy > 0) { addedLinesZh.add(KitchenLine(line.qtySpicy, line.item.item_name, "香辣")); addedLinesEn.add(KitchenLine(line.qtySpicy, en, "Spicy")) }
-                                    if (line.qtyExtra > 0) { addedLinesZh.add(KitchenLine(line.qtyExtra, line.item.item_name, "加辣")); addedLinesEn.add(KitchenLine(line.qtyExtra, en, "Spicy+")) }
+                                    if (line.qtyNoSpicy > 0) { addedLinesEn.add(KitchenLine(line.qtyNoSpicy, en, "No Spicy")) }
+                                    if (line.qtySpicy > 0) { addedLinesEn.add(KitchenLine(line.qtySpicy, en, "Spicy")) }
+                                    if (line.qtyExtra > 0) { addedLinesEn.add(KitchenLine(line.qtyExtra, en, "Spicy+")) }
                                 }
-                                if (addedLinesZh.isNotEmpty()) {
+                                if (addedLinesEn.isNotEmpty()) {
                                     val time = formatDateTimeMy(currentIso())
-                                    val tblZh = tableNo ?: t("外卖", "Takeaway")
                                     val tblEn = if (tableNo == null || tableNo == "外卖") "Takeaway" else tableNo
-                                    addOnTextZh = buildKitchenAddOnOrder(orderNo = order.order_no, tableNo = tblZh, time = time, items = addedLinesZh)
                                     addOnTextEn = buildKitchenAddOnOrderEnglish(orderNo = order.order_no, tableNo = tblEn, time = time, items = addedLinesEn)
                                 } else {
                                     onDone()
@@ -821,12 +804,11 @@ fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, o
     }
 
     // 加单成功后弹厨房追加单
-    addOnTextZh?.let { zh ->
+    addOnTextEn?.let { en ->
         KitchenAddOnDialog(
-            textZh = zh,
-            textEn = addOnTextEn ?: zh,
+            text = en,
             onPrint = { printReceiptText(it) },
-            onDone = { addOnTextZh = null; addOnTextEn = null; onDone() }
+            onDone = { addOnTextEn = null; onDone() }
         )
     }
 }
