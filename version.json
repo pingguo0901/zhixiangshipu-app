@@ -1,7 +1,7 @@
 {
-  "versionCode": 178,
-  "versionName": "1.2.62",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.62/zhixiangshipu-app.apk",
-  "changelog": "- 厨房出单取消中文版，统一英文版\n- 修复未付款收据折扣显示 0 的问题\n- 桌面端不再自动退出账号\n- 所有打印改为无感打印（去掉打印成功/失败提示）",
+  "versionCode": 179,
+  "versionName": "1.2.63",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.63/zhixiangshipu-app.apk",
+  "changelog": "- 桌面端退出快捷键改为 F12\n- ESC 键在任意页面/弹窗返回到上一页",
   "buildDate": "2026-09-14"
 }

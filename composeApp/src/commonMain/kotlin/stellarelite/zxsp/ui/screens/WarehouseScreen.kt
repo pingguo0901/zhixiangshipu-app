@@ -33,6 +33,7 @@ import stellarelite.zxsp.network.StockInLog
 import stellarelite.zxsp.network.Supplier
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.WarehouseItem
+import stellarelite.zxsp.ui.components.BackHandler
 import stellarelite.zxsp.util.ItemNames
 import stellarelite.zxsp.ui.theme.DiningColors
 
@@ -45,6 +46,7 @@ private sealed class WarehouseNav {
 @Composable
 fun WarehouseScreen() {
     var nav by remember { mutableStateOf<WarehouseNav>(WarehouseNav.Stock) }
+    BackHandler(enabled = nav != WarehouseNav.Stock) { nav = WarehouseNav.Stock }
     when (val n = nav) {
         is WarehouseNav.Stock -> StockListView(
             onFridge = { nav = WarehouseNav.Fridge },

@@ -31,6 +31,7 @@ import stellarelite.zxsp.network.CustomerOrder
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.platform.printReceiptText
+import stellarelite.zxsp.ui.components.BackHandler
 import stellarelite.zxsp.ui.theme.DiningColors
 
 @Composable
@@ -377,6 +378,17 @@ private sealed interface DashboardPanel {
 fun DesktopDashboardScreen() {
     var panel by remember { mutableStateOf<DashboardPanel>(DashboardPanel.Empty) }
     var refreshKey by remember { mutableStateOf(0) }
+    BackHandler(enabled = panel != DashboardPanel.Empty) {
+        val back = when (val p = panel) {
+            is DashboardPanel.Checkout -> DashboardPanel.TableDetail(p.table)
+            is DashboardPanel.AddItems -> DashboardPanel.TableDetail(p.table)
+            is DashboardPanel.TableDetail -> DashboardPanel.Empty
+            is DashboardPanel.NewOrder -> DashboardPanel.Empty
+            DashboardPanel.Empty -> DashboardPanel.Empty
+        }
+        panel = back
+        if (back == DashboardPanel.Empty) refreshKey++
+    }
 
     Row(
         modifier = Modifier
@@ -569,6 +581,17 @@ private fun TableDetailPanel(table: TableList, onAddItems: (CustomerOrder) -> Un
 fun TakeawayDashboardScreen() {
     var panel by remember { mutableStateOf<DashboardPanel>(DashboardPanel.Empty) }
     var refreshKey by remember { mutableStateOf(0) }
+    BackHandler(enabled = panel != DashboardPanel.Empty) {
+        val back = when (val p = panel) {
+            is DashboardPanel.Checkout -> DashboardPanel.TableDetail(p.table)
+            is DashboardPanel.AddItems -> DashboardPanel.TableDetail(p.table)
+            is DashboardPanel.TableDetail -> DashboardPanel.Empty
+            is DashboardPanel.NewOrder -> DashboardPanel.Empty
+            DashboardPanel.Empty -> DashboardPanel.Empty
+        }
+        panel = back
+        if (back == DashboardPanel.Empty) refreshKey++
+    }
 
     Row(
         modifier = Modifier

@@ -49,6 +49,7 @@ import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.toImageBitmap
 import stellarelite.zxsp.platform.toJpegBytes
+import stellarelite.zxsp.ui.components.BackHandler
 import stellarelite.zxsp.ui.theme.DiningColors
 import stellarelite.zxsp.util.ItemNames
 import stellarelite.zxsp.util.ReceiptFormatter
@@ -63,6 +64,7 @@ private sealed class FinanceNav {
 fun FinanceScreen() {
     // 员工角色直接进入报表统计页面，老板进入开销记账页面
     var nav by remember { mutableStateOf<FinanceNav>(if (SessionManager.isAdmin) FinanceNav.Expense else FinanceNav.Report) }
+    BackHandler(enabled = nav is FinanceNav.Report && SessionManager.isAdmin) { nav = FinanceNav.Expense }
     // 进入页面时刷新角色，修复旧会话 role 缓存导致 Admin 按钮消失
     LaunchedEffect(Unit) {
         val uid = SessionManager.authUid ?: decodeJwtSub(SessionManager.accessToken ?: "")
@@ -88,6 +90,7 @@ private fun ExpenseListView(onReport: () -> Unit) {
     var editing by remember { mutableStateOf<ExpenseRecord?>(null) }
     var actionRecord by remember { mutableStateOf<ExpenseRecord?>(null) }
     var viewingDetail by remember { mutableStateOf<ExpenseRecord?>(null) }
+    BackHandler(enabled = showAdd || editing != null) { if (showAdd) showAdd = false else editing = null }
 
     fun load() {
         scope.launch {

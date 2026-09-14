@@ -29,6 +29,7 @@ import stellarelite.zxsp.network.MenuItem
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
 import stellarelite.zxsp.platform.printReceiptText
+import stellarelite.zxsp.ui.components.BackHandler
 import stellarelite.zxsp.ui.theme.DiningColors
 
 // 用餐方式：堂食 / 到店外卖 / 三平台外卖（Facebook/Grabfood/Foodpanda）
@@ -44,6 +45,7 @@ private enum class DiningMode(val platformPrefix: String? = null) {
 @Composable
 fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Boolean = false) {
     val scope = rememberCoroutineScope()
+    BackHandler { onBack() }
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -597,6 +599,7 @@ private fun StepperBtn(label: String, enabled: Boolean, onClick: () -> Unit) {
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, onDone: () -> Unit, compact: Boolean = false) {
+    BackHandler { onBack() }
     val scope = rememberCoroutineScope()
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }

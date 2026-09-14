@@ -20,6 +20,7 @@ fun main() = application {
     ) {
         App(
             useDesktopLayout = true,
+            onExit = ::exitApplication,
             onCheckUpdate = { DesktopUpdater.checkForUpdate() },
             onApplyUpdate = { info, onProgress ->
                 val err = DesktopUpdater.downloadAndApply(info.apkUrl, onProgress)

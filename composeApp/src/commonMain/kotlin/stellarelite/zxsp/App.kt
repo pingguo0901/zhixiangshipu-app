@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
+import stellarelite.zxsp.ui.components.BackHandlerOwner
 import stellarelite.zxsp.ui.components.BottomNavBar
 import stellarelite.zxsp.ui.components.DesktopTopBar
 import stellarelite.zxsp.ui.components.SideNavBar
@@ -36,7 +37,8 @@ import stellarelite.zxsp.ui.theme.DiningColors
 fun App(
     onCheckUpdate: (suspend () -> VersionInfo?)? = null,
     onApplyUpdate: (suspend (VersionInfo, (Long, Long) -> Unit) -> String?)? = null,
-    useDesktopLayout: Boolean = false
+    useDesktopLayout: Boolean = false,
+    onExit: () -> Unit = {}
 ) {
     var currentTab by remember { mutableStateOf(DiningTab.Home) }
     var showUpdateDialog by remember { mutableStateOf(false) }
@@ -147,6 +149,8 @@ fun App(
                             Key.F4 -> { currentTab = DiningTab.Warehouse; true }
                             Key.F5 -> { currentTab = DiningTab.Finance; true }
                             Key.F6 -> { currentTab = DiningTab.More; true }
+                            Key.F12 -> { onExit(); true }
+                            Key.Escape -> { BackHandlerOwner.dispatchBack() }
                             else -> false
                         }
                     } else false

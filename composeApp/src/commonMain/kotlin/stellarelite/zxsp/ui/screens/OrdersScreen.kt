@@ -54,6 +54,7 @@ import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.toImageBitmap
 import stellarelite.zxsp.platform.toJpegBytes
+import stellarelite.zxsp.ui.components.BackHandler
 import stellarelite.zxsp.ui.theme.DiningColors
 import stellarelite.zxsp.util.ReceiptFormatter
 import stellarelite.zxsp.util.decodeJwtSub
@@ -67,6 +68,7 @@ private sealed class OrdersNav {
 @Composable
 fun OrdersScreen() {
     var nav by remember { mutableStateOf<OrdersNav>(OrdersNav.List) }
+    BackHandler(enabled = nav != OrdersNav.List) { nav = OrdersNav.List }
 
     when (val n = nav) {
         is OrdersNav.List -> OrderListView(
@@ -1625,6 +1627,7 @@ private sealed interface OrdersPanel {
 fun DesktopOrdersScreen() {
     var panel by remember { mutableStateOf<OrdersPanel>(OrdersPanel.Empty) }
     var refreshKey by remember { mutableStateOf(0) }
+    BackHandler(enabled = panel != OrdersPanel.Empty) { panel = OrdersPanel.Empty; refreshKey++ }
 
     Row(modifier = Modifier.fillMaxSize().background(DiningColors.Background)) {
         Box(modifier = Modifier.weight(3f).fillMaxHeight()) {
