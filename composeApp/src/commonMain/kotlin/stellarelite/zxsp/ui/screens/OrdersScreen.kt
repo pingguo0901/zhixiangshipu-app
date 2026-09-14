@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
@@ -89,20 +90,25 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
     var error by remember { mutableStateOf<String?>(null) }
     var filter by remember { mutableStateOf("all") } // all / paid / unpaid
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
-            error = null
+            if (!silent) { loading = true; error = null }
             runCatching { SupabaseClient.fetchOrders() }
                 .onSuccess { orders = it }
-                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
+                .onFailure { if (!silent) error = it.message ?: t("加载失败", "Load failed") }
             runCatching { SupabaseClient.fetchTables() }
                 .onSuccess { tableMap = it.associate { t -> t.id to t.table_no } }
-            loading = false
+            if (!silent) loading = false
         }
     }
 
-    LaunchedEffect(refreshKey) { load() }
+    LaunchedEffect(refreshKey) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     val filtered = when (filter) {
         "paid" -> orders.filter { it.payment_status == "paid" }

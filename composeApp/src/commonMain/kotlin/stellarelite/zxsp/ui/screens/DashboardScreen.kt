@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
@@ -88,18 +89,23 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
-            error = null
+            if (!silent) { loading = true; error = null }
             runCatching { SupabaseClient.fetchTables() }
                 .onSuccess { tables = it }
-                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
-            loading = false
+                .onFailure { if (!silent) error = it.message ?: t("加载失败", "Load failed") }
+            if (!silent) loading = false
         }
     }
 
-    LaunchedEffect(refreshKey) { load() }
+    LaunchedEffect(refreshKey) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     // 堂食桌台：不含"外卖"
     val dineInTables = tables.filter { !it.table_no.contains("外卖") }
@@ -686,16 +692,22 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
+            if (!silent) loading = true
             runCatching { SupabaseClient.ensurePlatformTakeawayTables() }
             runCatching { SupabaseClient.fetchTables() }
                 .onSuccess { tables = it }
-            loading = false
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(refreshKey) { load() }
+    LaunchedEffect(refreshKey) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖")
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -284,14 +285,20 @@ private fun MenuManageScreen(onBack: () -> Unit) {
     var showAdd by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<MenuItem?>(null) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
+            if (!silent) loading = true
             runCatching { SupabaseClient.fetchMenuItems() }.onSuccess { menuItems = it }
-            loading = false
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -442,14 +449,20 @@ private fun TableManageScreen(onBack: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
     var showAdd by remember { mutableStateOf(false) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
+            if (!silent) loading = true
             runCatching { SupabaseClient.fetchTables() }.onSuccess { tables = it }
-            loading = false
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -550,14 +563,20 @@ private fun SupplierManageScreen(onBack: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
     var showAdd by remember { mutableStateOf(false) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
+            if (!silent) loading = true
             runCatching { SupabaseClient.fetchSuppliers() }.onSuccess { suppliers = it }
-            loading = false
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     var editing by remember { mutableStateOf<Supplier?>(null) }
 
@@ -683,14 +702,20 @@ private fun StaffManageScreen(onBack: () -> Unit) {
     var staffs by remember { mutableStateOf<List<Staff>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
+            if (!silent) loading = true
             runCatching { SupabaseClient.fetchStaffs() }.onSuccess { staffs = it }
-            loading = false
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -748,17 +773,23 @@ private fun StaffLogScreen(onBack: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
     var selected by remember { mutableStateOf<AuditLog?>(null) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
+            if (!silent) loading = true
             runCatching {
                 staffMap = SupabaseClient.fetchStaffs().associate { it.id to it.staff_name }
                 logs = SupabaseClient.fetchAuditLogs()
             }
-            loading = false
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {

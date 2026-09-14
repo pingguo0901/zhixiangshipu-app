@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
@@ -92,17 +93,22 @@ private fun ExpenseListView(onReport: () -> Unit) {
     var viewingDetail by remember { mutableStateOf<ExpenseRecord?>(null) }
     BackHandler(enabled = showAdd || editing != null) { if (showAdd) showAdd = false else editing = null }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
-            error = null
+            if (!silent) { loading = true; error = null }
             runCatching { SupabaseClient.fetchExpenses() }
                 .onSuccess { expenses = it }
-                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
-            loading = false
+                .onFailure { if (!silent) error = it.message ?: t("加载失败", "Load failed") }
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     // 记一笔开销页面（全屏）
     if (showAdd) {

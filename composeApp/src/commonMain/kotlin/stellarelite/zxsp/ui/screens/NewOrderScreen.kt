@@ -442,16 +442,16 @@ private fun MenuGridButton(item: MenuItem, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(1f)
-            .background(DiningColors.Surface, RoundedCornerShape(12.dp))
+            .aspectRatio(1.4f)
+            .background(DiningColors.Surface, RoundedCornerShape(10.dp))
             .clickable { onClick() }
-            .padding(8.dp),
+            .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(menuName(item), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text("RM%.2f".format(item.sell_price_myr), fontSize = 12.sp, color = DiningColors.Primary)
+        Text(menuName(item), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
+        Spacer(modifier = Modifier.height(2.dp))
+        Text("RM%.2f".format(item.sell_price_myr), fontSize = 11.sp, color = DiningColors.Primary)
     }
 }
 

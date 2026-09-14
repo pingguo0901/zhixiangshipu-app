@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
@@ -68,17 +69,22 @@ private fun StockListView(onFridge: () -> Unit, onMeat: () -> Unit) {
     var actionItem by remember { mutableStateOf<WarehouseItem?>(null) }
     var viewingHistory by remember { mutableStateOf<WarehouseItem?>(null) }
 
-    fun load() {
+    fun load(silent: Boolean = false) {
         scope.launch {
-            loading = true
-            error = null
+            if (!silent) { loading = true; error = null }
             runCatching { SupabaseClient.fetchWarehouseItems() }
                 .onSuccess { items = it }
-                .onFailure { error = it.message ?: t("加载失败", "Load failed") }
-            loading = false
+                .onFailure { if (!silent) error = it.message ?: t("加载失败", "Load failed") }
+            if (!silent) loading = false
         }
     }
-    LaunchedEffect(Unit) { load() }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
 
     val lowCount = items.count { it.stock_qty < it.warning_qty }
 

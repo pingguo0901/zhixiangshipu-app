@@ -1,7 +1,7 @@
 {
-  "versionCode": 179,
-  "versionName": "1.2.63",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.63/zhixiangshipu-app.apk",
-  "changelog": "- 桌面端退出快捷键改为 F12\n- ESC 键在任意页面/弹窗返回到上一页",
-  "buildDate": "2026-09-14"
+  "versionCode": 180,
+  "versionName": "1.2.64",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.64/zhixiangshipu-app.apk",
+  "changelog": "- 所有列表页面自动实时刷新（无需手动换页刷新）\n- 桌面端新建订单菜品按钮改小",
+  "buildDate": "2026-09-15"
 }
