@@ -76,8 +76,8 @@ android {
         applicationId = "stellarelite.zxsp"
         minSdk = 24
         targetSdk = 35
-        versionCode = 188
-        versionName = "1.2.72"
+        versionCode = 189
+        versionName = "1.2.73"
     }
 
     compileOptions {
@@ -96,7 +96,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe)
             packageName = "ZhiXiangFood"
-            packageVersion = "1.2.72"
+            packageVersion = "1.2.73"
         }
     }
 }

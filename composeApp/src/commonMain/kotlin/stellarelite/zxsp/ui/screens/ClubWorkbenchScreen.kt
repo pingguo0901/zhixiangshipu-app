@@ -245,7 +245,7 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = DiningColors.Card)
             ) {
-                Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.Top) {
+                Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max).padding(10.dp), verticalAlignment = Alignment.Top) {
                     // ---- 左侧片区：F + FB + SVIP1-3（F5-1/FB6-3 像右侧 FA/SVIP 一样排）----
                     Column(modifier = Modifier.weight(1.2f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -270,24 +270,30 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                             VCell("F1", byName, onTableClick, Modifier.weight(1f), short = true)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Spacer(modifier = Modifier.weight(1f))
                             FloorTable("FB2", byName["FB2"], onTableClick, Modifier.weight(1f))
                             FloorTable("FB1", byName["FB1"], onTableClick, Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Spacer(modifier = Modifier.weight(1f))
-                            Spacer(modifier = Modifier.weight(1f))
                             FloorTable("SVIP3", byName["SVIP3"], onTableClick, Modifier.weight(1f))
+                            FloorTable("SVIP2", byName["SVIP2"], onTableClick, Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Spacer(modifier = Modifier.weight(1f))
                             FloorTable("SVIP1", byName["SVIP1"], onTableClick, Modifier.weight(1f))
-                            FloorTable("SVIP2", byName["SVIP2"], onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
 
                     Column(
-                        modifier = Modifier.width(18.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.width(18.dp).fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Bottom
                     ) {
                         Text("楼\n梯", fontSize = 11.sp, color = DiningColors.TextMuted, textAlign = TextAlign.Center, lineHeight = 13.sp)
                         Spacer(modifier = Modifier.height(10.dp))
