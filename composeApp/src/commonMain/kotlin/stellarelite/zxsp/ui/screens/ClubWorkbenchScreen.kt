@@ -246,25 +246,40 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                 colors = CardDefaults.cardColors(containerColor = DiningColors.Card)
             ) {
                 Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.Top) {
-                    // ---- 左侧片区：F + FB + SVIP1-3 ----
-                    // F 列（竖的）
-                    TableColumn(listOf("F5", "F4", "F3", "F2", "F1"), byName, onTableClick, Modifier.weight(0.7f), vertical = true, short = true, horizontalAlignment = Alignment.End)
-                    Spacer(modifier = Modifier.width(2.dp))
-                    // FB + SVIP1-3 列
-                    Column(modifier = Modifier.weight(1.0f), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.Start) {
-                        FloorTable("FB6", byName["FB6"], onTableClick, Modifier.width(42.dp), vertical = true)
-                        FloorTable("FB5", byName["FB5"], onTableClick, Modifier.width(42.dp), vertical = true)
-                        FloorTable("FB4", byName["FB4"], onTableClick, Modifier.width(42.dp), vertical = true)
-                        FloorTable("FB3", byName["FB3"], onTableClick, Modifier.width(42.dp), vertical = true)
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // ---- 左侧片区：F + FB + SVIP1-3（F5-1/FB6-3 像右侧 FA/SVIP 一样排）----
+                    Column(modifier = Modifier.weight(1.2f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            VCell("F5", byName, onTableClick, Modifier.weight(1f), short = true)
+                            VCell("FB6", byName, onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            VCell("F4", byName, onTableClick, Modifier.weight(1f), short = true)
+                            VCell("FB5", byName, onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            VCell("F3", byName, onTableClick, Modifier.weight(1f), short = true)
+                            VCell("FB4", byName, onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            VCell("F2", byName, onTableClick, Modifier.weight(1f), short = true)
+                            VCell("FB3", byName, onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            VCell("F1", byName, onTableClick, Modifier.weight(1f), short = true)
                             FloorTable("FB2", byName["FB2"], onTableClick, Modifier.weight(1f))
                             FloorTable("FB1", byName["FB1"], onTableClick, Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Spacer(modifier = Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
                             FloorTable("SVIP3", byName["SVIP3"], onTableClick, Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Spacer(modifier = Modifier.weight(1f))
                             FloorTable("SVIP1", byName["SVIP1"], onTableClick, Modifier.weight(1f))
                             FloorTable("SVIP2", byName["SVIP2"], onTableClick, Modifier.weight(1f))
                         }
@@ -285,9 +300,9 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                         FloorGridRow(null, "FA6", "SVIP6", byName, onTableClick)
                         FloorGridRow(null, "SVIP9", "SVIP5", byName, onTableClick)
                         FloorGridRow(null, "SVIP8", "SVIP4", byName, onTableClick)
-                        FloorGridRow("FA3", "FA5", null, byName, onTableClick, horizontal = true)
-                        FloorGridRow("FA2", "FA4", null, byName, onTableClick, horizontal = true)
-                        FloorGridRow("FA1", null, null, byName, onTableClick, horizontal = true)
+                        FloorGridRow(null, "FA5", "FA4", byName, onTableClick, horizontal = true)
+                        FloorGridRow(null, "FA3", "FA2", byName, onTableClick, horizontal = true)
+                        FloorGridRow(null, "FA1", null, byName, onTableClick, horizontal = true)
                     }
                 }
             }
@@ -331,6 +346,13 @@ private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onC
         horizontalAlignment = horizontalAlignment
     ) {
         names.forEach { n -> FloorTable(n, byName[n], onClick, if (vertical) Modifier.width(42.dp) else Modifier.fillMaxWidth(), vertical, short) }
+    }
+}
+
+@Composable
+private fun VCell(label: String, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, short: Boolean = false) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        FloorTable(label, byName[label], onClick, Modifier.width(42.dp), vertical = true, short = short)
     }
 }
 

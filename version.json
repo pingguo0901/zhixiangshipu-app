@@ -1,7 +1,7 @@
 {
-  "versionCode": 187,
-  "versionName": "1.2.71",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.71/zhixiangshipu-app.apk",
-  "changelog": "- Topone 二楼：FB 贴近 F + 中间空位标注「楼梯/入口」",
+  "versionCode": 188,
+  "versionName": "1.2.72",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.72/zhixiangshipu-app.apk",
+  "changelog": "- Topone 二楼：F5-1/FB6-3 改 2列网格对齐 + FA5-1 移到 SVIP8/4 下面",
   "buildDate": "2026-09-16"
 }
