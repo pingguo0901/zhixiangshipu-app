@@ -1,7 +1,7 @@
 {
-  "versionCode": 190,
-  "versionName": "1.2.74",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.74/zhixiangshipu-app.apk",
-  "changelog": "- Topone 二楼：FB2-1/SVIP 移到最左边 + SVIP 重编号（3→1、2→3、1→2）",
+  "versionCode": 191,
+  "versionName": "1.2.75",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.75/zhixiangshipu-app.apk",
+  "changelog": "- 更多页新增「打印外卖二维码」按钮，自动排号直接打印",
   "buildDate": "2026-09-16"
 }
