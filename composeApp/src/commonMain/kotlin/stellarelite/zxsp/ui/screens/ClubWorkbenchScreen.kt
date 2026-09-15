@@ -246,22 +246,42 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                 colors = CardDefaults.cardColors(containerColor = DiningColors.Card)
             ) {
                 Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.Top) {
-                    // 左侧片区：F + FB
-                    TableColumn(listOf("F5", "F4", "F3", "F2", "F1"), byName, onTableClick, Modifier.weight(0.8f))
+                    // ---- 左侧片区：F + FB + SVIP1-3 ----
+                    // F 列（竖的）
+                    TableColumn(listOf("F5", "F4", "F3", "F2", "F1"), byName, onTableClick, Modifier.weight(0.7f), vertical = true)
                     Spacer(modifier = Modifier.width(4.dp))
-                    TableColumn(listOf("FB6", "FB5", "FB4", "FB3", "FB2", "FB1"), byName, onTableClick, Modifier.weight(0.8f))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    // 右侧片区：FA（右上 FA7 FA6，右下 FA1~FA5）
-                    Column(modifier = Modifier.weight(1.4f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        TableRow(listOf("FA7", "FA6"), byName, onTableClick)
-                        TableRow(listOf("FA1", "FA2", "FA3", "FA4", "FA5"), byName, onTableClick)
+                    // FB + SVIP1-3 列
+                    Column(modifier = Modifier.weight(1.0f), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        FloorTable("FB6", byName["FB6"], onTableClick, Modifier.width(42.dp), vertical = true)
+                        FloorTable("FB5", byName["FB5"], onTableClick, Modifier.width(42.dp), vertical = true)
+                        FloorTable("FB4", byName["FB4"], onTableClick, Modifier.width(42.dp), vertical = true)
+                        FloorTable("FB3", byName["FB3"], onTableClick, Modifier.width(42.dp), vertical = true)
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FloorTable("FB2", byName["FB2"], onTableClick, Modifier.weight(1f))
+                            FloorTable("FB1", byName["FB1"], onTableClick, Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FloorTable("SVIP3", byName["SVIP3"], onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FloorTable("SVIP1", byName["SVIP1"], onTableClick, Modifier.weight(1f))
+                            FloorTable("SVIP2", byName["SVIP2"], onTableClick, Modifier.weight(1f))
+                        }
                     }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    // 右侧竖排 SVIP
-                    TableColumn(listOf("SVIP7", "SVIP6", "SVIP9", "SVIP5", "SVIP8", "SVIP4"), byName, onTableClick, Modifier.weight(0.9f))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    // 左下角 SVIP
-                    TableColumn(listOf("SVIP1", "SVIP3", "SVIP2"), byName, onTableClick, Modifier.weight(0.9f))
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // ---- 右侧片区：FA + SVIP4-9（3列网格，竖的）----
+                    Column(modifier = Modifier.weight(1.4f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FloorGridRow(null, "FA7", "SVIP7", byName, onTableClick)
+                        FloorGridRow(null, "FA6", "SVIP6", byName, onTableClick)
+                        FloorGridRow(null, "SVIP9", "SVIP5", byName, onTableClick)
+                        FloorGridRow(null, "SVIP8", "SVIP4", byName, onTableClick)
+                        FloorGridRow("FA3", "FA5", null, byName, onTableClick)
+                        FloorGridRow("FA2", "FA4", null, byName, onTableClick)
+                        FloorGridRow("FA1", null, null, byName, onTableClick)
+                    }
                 }
             }
         }
@@ -304,6 +324,21 @@ private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onC
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         names.forEach { n -> FloorTable(n, byName[n], onClick, if (vertical) Modifier.width(42.dp) else Modifier.fillMaxWidth(), vertical) }
+    }
+}
+
+@Composable
+private fun FloorGridRow(left: String?, mid: String?, right: String?, byName: Map<String, TableList>, onClick: (TableList) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        listOf(left, mid, right).forEach { label ->
+            if (label != null) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    FloorTable(label, byName[label], onClick, Modifier.width(42.dp), vertical = true)
+                }
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
     }
 }
 
