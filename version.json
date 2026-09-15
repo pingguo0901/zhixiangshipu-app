@@ -1,7 +1,7 @@
 {
-  "versionCode": 191,
-  "versionName": "1.2.75",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.75/zhixiangshipu-app.apk",
-  "changelog": "- 更多页新增「打印外卖二维码」按钮，自动排号直接打印",
+  "versionCode": 192,
+  "versionName": "1.2.76",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.76/zhixiangshipu-app.apk",
+  "changelog": "- 新建订单：外卖/Facebook 改为自动排号（无需选号）",
   "buildDate": "2026-09-16"
 }

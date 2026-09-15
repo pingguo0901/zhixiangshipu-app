@@ -171,9 +171,11 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
 
                 // 号码/桌台选择（按用餐方式分类）
                 item {
+                    val autoMode = diningMode == DiningMode.Takeaway || diningMode == DiningMode.Facebook
                     val title = when (diningMode) {
                         DiningMode.DineIn -> t("选择桌台", "Select Table")
-                        DiningMode.Takeaway -> t("外卖号（自动分配，可手动改）", "Takeaway No. (auto-assigned)")
+                        DiningMode.Takeaway -> t("外卖号（自动排号）", "Takeaway No. (auto-assigned)")
+                        DiningMode.Facebook -> t("Facebook 号（自动排号）", "Facebook No. (auto-assigned)")
                         else -> t("外卖号（自动分配，可手动改）", "Delivery No. (auto-assigned)")
                     }
                     val emptyHint = when (diningMode) {
@@ -182,7 +184,28 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
                     }
                     Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
-                    if (currentModeTables.isEmpty()) {
+                    if (autoMode) {
+                        // 外卖 / Facebook：自动排号，无需选号
+                        val assigned = currentModeTables.firstOrNull { it.id == tableId }
+                        if (assigned == null) {
+                            Text(emptyHint, fontSize = 13.sp, color = DiningColors.TextMuted)
+                        } else {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = DiningColors.Primary.copy(alpha = 0.1f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(t("已分配号", "Assigned No."), fontSize = 13.sp, color = DiningColors.TextSecondary)
+                                    Text(diningNoLabel(assigned, diningMode), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
+                                }
+                            }
+                        }
+                    } else if (currentModeTables.isEmpty()) {
                         Text(emptyHint, fontSize = 13.sp, color = DiningColors.TextMuted)
                     } else {
                         FlowRow(
