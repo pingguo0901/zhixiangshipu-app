@@ -1,7 +1,7 @@
 {
-  "versionCode": 181,
-  "versionName": "1.2.65",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.65/zhixiangshipu-app.apk",
-  "changelog": "- 工作台普通外卖号移动到「外卖工作台」页签",
+  "versionCode": 182,
+  "versionName": "1.2.66",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.66/zhixiangshipu-app.apk",
+  "changelog": "- 工作台新增 Lunar / Topone 酒吧入口\n- Topone 酒吧选座平面图（Ground Floor + Second Floor）",
   "buildDate": "2026-09-16"
 }

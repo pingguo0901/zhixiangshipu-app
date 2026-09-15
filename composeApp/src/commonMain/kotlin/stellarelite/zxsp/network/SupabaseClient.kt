@@ -321,6 +321,29 @@ object SupabaseClient {
         }
         return ok
     }
+    // 幂等创建 Topone 酒吧桌台（Ground + Second Floor 共 54 桌）
+    suspend fun ensureToponeTables(): Boolean {
+        val names = listOf(
+            "VIP1", "VIP2", "VIP3", "VIP4", "VIP5", "VIP6", "VIP7",
+            "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8",
+            "GA1", "GA2", "GA3", "GA4", "GA5", "GA6",
+            "GB1", "GB2", "GB3", "GB4", "GB5", "GB6",
+            "F1", "F2", "F3", "F4", "F5",
+            "FB1", "FB2", "FB3", "FB4", "FB5", "FB6",
+            "FA1", "FA2", "FA3", "FA4", "FA5", "FA6", "FA7",
+            "SVIP1", "SVIP2", "SVIP3", "SVIP4", "SVIP5", "SVIP6", "SVIP7", "SVIP8", "SVIP9"
+        )
+        val existing = fetchTables().map { it.table_no }.toSet()
+        var ok = true
+        names.forEach { n ->
+            val name = "Topone-$n"
+            if (name !in existing) {
+                if (insertTable(TableList(table_no = name, table_status = "free")) == null) ok = false
+            }
+        }
+        return ok
+    }
+
     suspend fun insertSupplier(s: Supplier): Supplier? = insert("supplier", s)
     suspend fun insertWarehouseItem(w: WarehouseItem): WarehouseItem? = insert("warehouse_items", w)
     suspend fun insertMenuItem(m: MenuItem): MenuItem? = insert("menu_items", m)

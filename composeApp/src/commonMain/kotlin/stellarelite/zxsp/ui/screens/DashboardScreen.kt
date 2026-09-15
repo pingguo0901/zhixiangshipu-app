@@ -42,7 +42,16 @@ fun DashboardScreen() {
     var orderDialogTable by remember { mutableStateOf<TableList?>(null) }
     var addItemsOrder by remember { mutableStateOf<CustomerOrder?>(null) }
     var addItemsTableNo by remember { mutableStateOf<String?>(null) }
+    var clubWorkbench by remember { mutableStateOf<String?>(null) } // null | "Topone" | "Lunar"
 
+    if (clubWorkbench == "Topone") {
+        ToponeWorkbenchScreen(onBack = { clubWorkbench = null })
+        return
+    }
+    if (clubWorkbench == "Lunar") {
+        LunarWorkbenchScreen(onBack = { clubWorkbench = null })
+        return
+    }
     if (showNewOrder) {
         NewOrderScreen(onBack = { showNewOrder = false }, initialTableId = newOrderTableId)
         return
@@ -66,6 +75,7 @@ fun DashboardScreen() {
                 showNewOrder = true
             }
         },
+        onClubClick = { clubWorkbench = it },
         showGreeting = false
     )
 
@@ -83,7 +93,7 @@ fun DashboardScreen() {
 }
 
 @Composable
-private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0, showGreeting: Boolean = true) {
+private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0, showGreeting: Boolean = true, onClubClick: (String) -> Unit = {}) {
     val scope = rememberCoroutineScope()
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -107,8 +117,8 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
         }
     }
 
-    // 堂食桌台：不含"外卖"
-    val dineInTables = tables.filter { !it.table_no.contains("外卖") }
+    // 堂食桌台：不含"外卖"，也不含酒吧（Topone/Lunar）
+    val dineInTables = tables.filter { !it.table_no.contains("外卖") && !it.table_no.startsWith("Topone-") && !it.table_no.startsWith("Lunar-") }
     val occupiedCount = dineInTables.count { it.table_status == "occupied" }
     val freeCount = dineInTables.count { it.table_status == "free" }
 
@@ -177,6 +187,28 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                     }
                 } else {
                     TableGrid(dineInTables, onTableClick)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 酒吧俱乐部入口
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(
+                        onClick = { onClubClick("Lunar") },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DiningColors.SurfaceVariant, contentColor = DiningColors.TextPrimary)
+                    ) {
+                        Text("Lunar", fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = { onClubClick("Topone") },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
+                    ) {
+                        Text("Topone", color = DiningColors.Surface, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -252,7 +284,7 @@ private fun TableBadge(table: TableList, onClick: () -> Unit) {
 
 // ============ 桌台订单弹窗 ============
 @Composable
-private fun TableOrderDialog(table: TableList, onDismiss: () -> Unit, onAddItems: (CustomerOrder) -> Unit) {
+fun TableOrderDialog(table: TableList, onDismiss: () -> Unit, onAddItems: (CustomerOrder) -> Unit) {
     val scope = rememberCoroutineScope()
     var order by remember { mutableStateOf<CustomerOrder?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -369,6 +401,15 @@ private sealed interface DashboardPanel {
 fun DesktopDashboardScreen() {
     var panel by remember { mutableStateOf<DashboardPanel>(DashboardPanel.Empty) }
     var refreshKey by remember { mutableStateOf(0) }
+    var clubWorkbench by remember { mutableStateOf<String?>(null) }
+    if (clubWorkbench == "Topone") {
+        ToponeWorkbenchScreen(onBack = { clubWorkbench = null })
+        return
+    }
+    if (clubWorkbench == "Lunar") {
+        LunarWorkbenchScreen(onBack = { clubWorkbench = null })
+        return
+    }
     BackHandler(enabled = panel != DashboardPanel.Empty) {
         val back = when (val p = panel) {
             is DashboardPanel.Checkout -> DashboardPanel.TableDetail(p.table)
@@ -398,7 +439,8 @@ fun DesktopDashboardScreen() {
                     }
                 },
                 refreshKey = refreshKey,
-                showGreeting = false
+                showGreeting = false,
+                onClubClick = { clubWorkbench = it }
             )
         }
 
