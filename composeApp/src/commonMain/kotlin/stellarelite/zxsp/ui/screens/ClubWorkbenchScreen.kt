@@ -248,10 +248,10 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                 Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.Top) {
                     // ---- 左侧片区：F + FB + SVIP1-3 ----
                     // F 列（竖的）
-                    TableColumn(listOf("F5", "F4", "F3", "F2", "F1"), byName, onTableClick, Modifier.weight(0.7f), vertical = true, short = true)
-                    Spacer(modifier = Modifier.width(4.dp))
+                    TableColumn(listOf("F5", "F4", "F3", "F2", "F1"), byName, onTableClick, Modifier.weight(0.7f), vertical = true, short = true, horizontalAlignment = Alignment.End)
+                    Spacer(modifier = Modifier.width(2.dp))
                     // FB + SVIP1-3 列
-                    Column(modifier = Modifier.weight(1.0f), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(modifier = Modifier.weight(1.0f), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.Start) {
                         FloorTable("FB6", byName["FB6"], onTableClick, Modifier.width(42.dp), vertical = true)
                         FloorTable("FB5", byName["FB5"], onTableClick, Modifier.width(42.dp), vertical = true)
                         FloorTable("FB4", byName["FB4"], onTableClick, Modifier.width(42.dp), vertical = true)
@@ -270,7 +270,14 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(
+                        modifier = Modifier.width(18.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("楼\n梯", fontSize = 11.sp, color = DiningColors.TextMuted, textAlign = TextAlign.Center, lineHeight = 13.sp)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("入\n口", fontSize = 11.sp, color = DiningColors.TextMuted, textAlign = TextAlign.Center, lineHeight = 13.sp)
+                    }
 
                     // ---- 右侧片区：FA + SVIP4-9（3列网格，竖的）----
                     Column(modifier = Modifier.weight(1.4f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -317,11 +324,11 @@ private fun TableRow(names: List<String>, byName: Map<String, TableList>, onClic
 }
 
 @Composable
-private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false, short: Boolean = false) {
+private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false, short: Boolean = false, horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = horizontalAlignment
     ) {
         names.forEach { n -> FloorTable(n, byName[n], onClick, if (vertical) Modifier.width(42.dp) else Modifier.fillMaxWidth(), vertical, short) }
     }
