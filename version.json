@@ -1,7 +1,7 @@
 {
-  "versionCode": 184,
-  "versionName": "1.2.68",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.68/zhixiangshipu-app.apk",
-  "changelog": "- Topone 二楼布局调整（F/FB/SVIP 竖排按钮 + FA/SVIP 重排）",
+  "versionCode": 185,
+  "versionName": "1.2.69",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.69/zhixiangshipu-app.apk",
+  "changelog": "- Topone 一楼 G6-8 / VIP5-7 顺序倒反（G8-6、VIP7-5）",
   "buildDate": "2026-09-16"
 }

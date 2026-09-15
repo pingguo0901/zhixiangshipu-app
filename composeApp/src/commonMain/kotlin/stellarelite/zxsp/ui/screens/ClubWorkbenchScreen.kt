@@ -222,11 +222,11 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                             TableRow(listOf("G3", "G4", "G5"), byName, onTableClick)
                         }
                         Spacer(modifier = Modifier.width(6.dp))
-                        // 右侧：G6 G7 G8（竖） | VIP5 VIP6 VIP7（竖）
+                        // 右侧：G8 G7 G6（竖） | VIP7 VIP6 VIP5（竖）
                         Row(modifier = Modifier.weight(1.0f)) {
-                            TableColumn(listOf("G6", "G7", "G8"), byName, onTableClick, Modifier.weight(1f), vertical = true)
+                            TableColumn(listOf("G8", "G7", "G6"), byName, onTableClick, Modifier.weight(1f), vertical = true)
                             Spacer(modifier = Modifier.width(4.dp))
-                            TableColumn(listOf("VIP5", "VIP6", "VIP7"), byName, onTableClick, Modifier.weight(1f), vertical = true)
+                            TableColumn(listOf("VIP7", "VIP6", "VIP5"), byName, onTableClick, Modifier.weight(1f), vertical = true)
                         }
                     }
 
