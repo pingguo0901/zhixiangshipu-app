@@ -248,7 +248,7 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                 Row(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.Top) {
                     // ---- 左侧片区：F + FB + SVIP1-3 ----
                     // F 列（竖的）
-                    TableColumn(listOf("F5", "F4", "F3", "F2", "F1"), byName, onTableClick, Modifier.weight(0.7f), vertical = true)
+                    TableColumn(listOf("F5", "F4", "F3", "F2", "F1"), byName, onTableClick, Modifier.weight(0.7f), vertical = true, short = true)
                     Spacer(modifier = Modifier.width(4.dp))
                     // FB + SVIP1-3 列
                     Column(modifier = Modifier.weight(1.0f), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -261,8 +261,8 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                             FloorTable("FB1", byName["FB1"], onTableClick, Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            FloorTable("SVIP3", byName["SVIP3"], onTableClick, Modifier.weight(1f))
                             Spacer(modifier = Modifier.weight(1f))
+                            FloorTable("SVIP3", byName["SVIP3"], onTableClick, Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             FloorTable("SVIP1", byName["SVIP1"], onTableClick, Modifier.weight(1f))
@@ -278,9 +278,9 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                         FloorGridRow(null, "FA6", "SVIP6", byName, onTableClick)
                         FloorGridRow(null, "SVIP9", "SVIP5", byName, onTableClick)
                         FloorGridRow(null, "SVIP8", "SVIP4", byName, onTableClick)
-                        FloorGridRow("FA3", "FA5", null, byName, onTableClick)
-                        FloorGridRow("FA2", "FA4", null, byName, onTableClick)
-                        FloorGridRow("FA1", null, null, byName, onTableClick)
+                        FloorGridRow("FA3", "FA5", null, byName, onTableClick, horizontal = true)
+                        FloorGridRow("FA2", "FA4", null, byName, onTableClick, horizontal = true)
+                        FloorGridRow("FA1", null, null, byName, onTableClick, horizontal = true)
                     }
                 }
             }
@@ -290,7 +290,7 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
 
 // 桌台按钮（横排里用 weight 撑满，竖排里 fillMaxWidth）
 @Composable
-private fun FloorTable(label: String, table: TableList?, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false) {
+private fun FloorTable(label: String, table: TableList?, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false, short: Boolean = false) {
     val status = table?.table_status ?: "free"
     val bg = when (status) {
         "occupied" -> DiningColors.Primary
@@ -300,7 +300,7 @@ private fun FloorTable(label: String, table: TableList?, onClick: (TableList) ->
     val fg = if (status == "free") DiningColors.TextPrimary else DiningColors.Surface
     Box(
         modifier = modifier
-            .height(if (vertical) 52.dp else 38.dp)
+            .height(if (vertical) (if (short) 40.dp else 52.dp) else 38.dp)
             .background(bg, RoundedCornerShape(6.dp))
             .clickable(enabled = table != null) { table?.let(onClick) },
         contentAlignment = Alignment.Center
@@ -317,23 +317,27 @@ private fun TableRow(names: List<String>, byName: Map<String, TableList>, onClic
 }
 
 @Composable
-private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false) {
+private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false, short: Boolean = false) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        names.forEach { n -> FloorTable(n, byName[n], onClick, if (vertical) Modifier.width(42.dp) else Modifier.fillMaxWidth(), vertical) }
+        names.forEach { n -> FloorTable(n, byName[n], onClick, if (vertical) Modifier.width(42.dp) else Modifier.fillMaxWidth(), vertical, short) }
     }
 }
 
 @Composable
-private fun FloorGridRow(left: String?, mid: String?, right: String?, byName: Map<String, TableList>, onClick: (TableList) -> Unit) {
+private fun FloorGridRow(left: String?, mid: String?, right: String?, byName: Map<String, TableList>, onClick: (TableList) -> Unit, horizontal: Boolean = false) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         listOf(left, mid, right).forEach { label ->
             if (label != null) {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    FloorTable(label, byName[label], onClick, Modifier.width(42.dp), vertical = true)
+                if (horizontal) {
+                    FloorTable(label, byName[label], onClick, Modifier.weight(1f))
+                } else {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        FloorTable(label, byName[label], onClick, Modifier.width(42.dp), vertical = true)
+                    }
                 }
             } else {
                 Spacer(modifier = Modifier.weight(1f))
