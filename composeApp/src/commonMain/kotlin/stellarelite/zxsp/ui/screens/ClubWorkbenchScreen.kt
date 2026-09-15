@@ -274,18 +274,18 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                             Spacer(modifier = Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Spacer(modifier = Modifier.weight(1f))
                             FloorTable("FB2", byName["FB2"], onTableClick, Modifier.weight(1f))
                             FloorTable("FB1", byName["FB1"], onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Spacer(modifier = Modifier.weight(1f))
-                            FloorTable("SVIP3", byName["SVIP3"], onTableClick, Modifier.weight(1f))
-                            FloorTable("SVIP2", byName["SVIP2"], onTableClick, Modifier.weight(1f))
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Spacer(modifier = Modifier.weight(1f))
                             FloorTable("SVIP1", byName["SVIP1"], onTableClick, Modifier.weight(1f))
+                            FloorTable("SVIP3", byName["SVIP3"], onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FloorTable("SVIP2", byName["SVIP2"], onTableClick, Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f))
                             Spacer(modifier = Modifier.weight(1f))
                         }
                     }
