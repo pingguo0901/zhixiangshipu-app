@@ -206,20 +206,28 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
                         Text("TOP ONE DJ STAGE", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = DiningColors.Surface, letterSpacing = 2.sp)
                     }
 
-                    // 主桌台集群：左列 / 中列 / 右列
+                    // 主桌台集群：左区 / 中区 / 右区
                     Row(verticalAlignment = Alignment.Top) {
-                        // 左侧：G1 G2 + VIP1 VIP2
-                        TableColumn(listOf("G1", "G2", "VIP1", "VIP2"), byName, onTableClick, Modifier.weight(0.8f))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        // 中间：GA 排 / G3 G4 G5 / GB 排
-                        Column(modifier = Modifier.weight(1.4f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            TableRow(listOf("GA1", "GA2", "GA3", "GA4", "GA5", "GA6"), byName, onTableClick)
-                            TableRow(listOf("G3", "G4", "G5"), byName, onTableClick)
-                            TableRow(listOf("GB1", "GB2", "GB3", "GB4", "GB5", "GB6"), byName, onTableClick)
+                        // 左侧：VIP1 VIP2（竖） | G1 G2（竖）
+                        Row(modifier = Modifier.weight(1.0f)) {
+                            TableColumn(listOf("VIP1", "VIP2"), byName, onTableClick, Modifier.weight(1f), vertical = true)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            TableColumn(listOf("G1", "G2"), byName, onTableClick, Modifier.weight(1f), vertical = true)
                         }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        // 右侧：G6 G7 G8 + VIP5 VIP6 VIP7
-                        TableColumn(listOf("G6", "G7", "G8", "VIP5", "VIP6", "VIP7"), byName, onTableClick, Modifier.weight(0.8f))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // 中间：GA（右→左）/ GB（右→左）/ G3 G4 G5
+                        Column(modifier = Modifier.weight(1.6f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TableRow(listOf("GA6", "GA5", "GA4", "GA3", "GA2", "GA1"), byName, onTableClick)
+                            TableRow(listOf("GB6", "GB5", "GB4", "GB3", "GB2", "GB1"), byName, onTableClick)
+                            TableRow(listOf("G3", "G4", "G5"), byName, onTableClick)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // 右侧：G6 G7 G8（竖） | VIP5 VIP6 VIP7（竖）
+                        Row(modifier = Modifier.weight(1.0f)) {
+                            TableColumn(listOf("G6", "G7", "G8"), byName, onTableClick, Modifier.weight(1f), vertical = true)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            TableColumn(listOf("VIP5", "VIP6", "VIP7"), byName, onTableClick, Modifier.weight(1f), vertical = true)
+                        }
                     }
 
                     // 中间偏下：VIP3（左）VIP4（右）
@@ -262,7 +270,7 @@ private fun ToponeBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick
 
 // 桌台按钮（横排里用 weight 撑满，竖排里 fillMaxWidth）
 @Composable
-private fun FloorTable(label: String, table: TableList?, onClick: (TableList) -> Unit, modifier: Modifier = Modifier) {
+private fun FloorTable(label: String, table: TableList?, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false) {
     val status = table?.table_status ?: "free"
     val bg = when (status) {
         "occupied" -> DiningColors.Primary
@@ -272,7 +280,7 @@ private fun FloorTable(label: String, table: TableList?, onClick: (TableList) ->
     val fg = if (status == "free") DiningColors.TextPrimary else DiningColors.Surface
     Box(
         modifier = modifier
-            .height(38.dp)
+            .height(if (vertical) 52.dp else 38.dp)
             .background(bg, RoundedCornerShape(6.dp))
             .clickable(enabled = table != null) { table?.let(onClick) },
         contentAlignment = Alignment.Center
@@ -289,9 +297,13 @@ private fun TableRow(names: List<String>, byName: Map<String, TableList>, onClic
 }
 
 @Composable
-private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        names.forEach { n -> FloorTable(n, byName[n], onClick, Modifier.fillMaxWidth()) }
+private fun TableColumn(names: List<String>, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        names.forEach { n -> FloorTable(n, byName[n], onClick, if (vertical) Modifier.width(42.dp) else Modifier.fillMaxWidth(), vertical) }
     }
 }
 

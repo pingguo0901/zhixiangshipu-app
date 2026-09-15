@@ -1,7 +1,7 @@
 {
-  "versionCode": 182,
-  "versionName": "1.2.66",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.66/zhixiangshipu-app.apk",
-  "changelog": "- 工作台新增 Lunar / Topone 酒吧入口\n- Topone 酒吧选座平面图（Ground Floor + Second Floor）",
+  "versionCode": 183,
+  "versionName": "1.2.67",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.67/zhixiangshipu-app.apk",
+  "changelog": "- Topone 平面图布局调整（VIP 位置 / GA GB 右到左 / G3-5 下移 / 竖排按钮）",
   "buildDate": "2026-09-16"
 }
