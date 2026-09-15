@@ -109,8 +109,6 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
 
     // 堂食桌台：不含"外卖"
     val dineInTables = tables.filter { !it.table_no.contains("外卖") }
-    // 外卖号：以"外卖"开头（普通外卖号，不含三个平台号）
-    val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }
     val occupiedCount = dineInTables.count { it.table_status == "occupied" }
     val freeCount = dineInTables.count { it.table_status == "free" }
 
@@ -155,7 +153,6 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 StatItem(Icons.Outlined.Chair, "$freeCount", t("空闲桌", "Free Tables"))
                 StatItem(Icons.Outlined.Restaurant, "$occupiedCount", t("占用中", "Occupied"))
                 StatItem(Icons.Outlined.TableRestaurant, "${dineInTables.size}", t("总桌台", "Total Tables"))
-                StatItem(Icons.Outlined.DeliveryDining, "${takeawayTables.size}", t("外卖号", "Takeaway"))
             }
         }
 
@@ -180,18 +177,6 @@ private fun DashboardView(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                     }
                 } else {
                     TableGrid(dineInTables, onTableClick)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(t("外卖", "Takeaway") + "（${takeawayTables.size}）", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                Spacer(modifier = Modifier.height(8.dp))
-                if (takeawayTables.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        Text(t("暂无外卖号", "No takeaway"), color = DiningColors.TextMuted, fontSize = 14.sp)
-                    }
-                } else {
-                    TableGrid(takeawayTables, onTableClick)
                 }
             }
         }
@@ -763,6 +748,42 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
                 CircularProgressIndicator(color = DiningColors.Primary)
             }
         } else {
+            // 普通外卖号（"外卖XX"，不含三平台）
+            val regularTakeaway = tables.filter { it.table_no.startsWith("外卖") }
+                .sortedBy { it.table_no.removePrefix("外卖").toIntOrNull() ?: Int.MAX_VALUE }
+            Text(t("外卖", "Takeaway") + "（${regularTakeaway.size}）", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+            if (regularTakeaway.isEmpty()) {
+                Text(t("暂无外卖号", "No takeaway"), fontSize = 12.sp, color = DiningColors.TextMuted)
+            } else if (bigBadges) {
+                val rows = regularTakeaway.chunked(4)
+                rows.forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        row.forEach { table ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                TakeawayBigBadge(table, "外卖", onClick = { onTableClick(table) })
+                            }
+                        }
+                        repeat(4 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                    }
+                }
+            } else {
+                val rows = regularTakeaway.chunked(10)
+                rows.forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        row.forEach { table ->
+                            SmallTableBadge(table, "外卖", onClick = { onTableClick(table) }, modifier = Modifier.weight(1f))
+                        }
+                        repeat(10 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                    }
+                }
+            }
+
             platforms.forEach { platform ->
                 val platformTables = tables.filter { it.table_no.startsWith(platform) }
                     .sortedBy { it.table_no.removePrefix(platform).toIntOrNull() ?: Int.MAX_VALUE }
