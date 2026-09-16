@@ -22,3 +22,5 @@
 === 每日固定开销记账 2026-09-16 ===
   ✗ 炭火进货失败：2026-09-16 -> 400 {"code":"PGRST204","details":null,"hint":null,"message":"Could not find the 'notes' column of 'stock_in_log' in the schema cache"}（日志已回滚）
 完成
+=== 每日固定开销记账 2026-09-17 ===
+完成

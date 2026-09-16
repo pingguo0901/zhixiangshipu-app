@@ -91,8 +91,10 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
     val grabfoodTables = tables.filter { it.table_no.startsWith("Grabfood外卖") }.sortedBy { it.table_no.removePrefix("Grabfood外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val foodpandaTables = tables.filter { it.table_no.startsWith("Foodpanda外卖") }.sortedBy { it.table_no.removePrefix("Foodpanda外卖").toIntOrNull() ?: Int.MAX_VALUE }
 
-    // 外卖费：除堂食外（到店外卖 + 三平台外卖）均收 +RM1
-    val isTakeaway = diningMode != DiningMode.DineIn
+    // 外带费：所有外卖（到店外卖 + 三平台外卖 + Topone/Lunar 酒吧）均收 +RM2
+    val selectedTableNo = tables.firstOrNull { it.id == tableId }?.table_no ?: ""
+    val isClub = selectedTableNo.startsWith("Topone-") || selectedTableNo.startsWith("Lunar-")
+    val isTakeaway = diningMode != DiningMode.DineIn || isClub
     val currentModeTables = when (diningMode) {
         DiningMode.DineIn -> dineInTables
         DiningMode.Takeaway -> takeawayTables
@@ -118,7 +120,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
     // 购物车合计（含外卖费）
     val cartTotal = cart.sumOf { line ->
         line.item.sell_price_myr * (line.qtyNoSpicy + line.qtySpicy + line.qtyExtra)
-    } + (if (isTakeaway) 1.0 else 0.0)
+    } + (if (isTakeaway) 2.0 else 0.0)
     val discountVal = discount.toDoubleOrNull() ?: 0.0
     val finalTotal = (cartTotal - discountVal).coerceAtLeast(0.0)
 
@@ -508,7 +510,7 @@ private fun MenuItemOrderDialog(
 
     val totalQty = qtyNoSpicy + qtySpicy + qtyExtra
     val subTotal = item.sell_price_myr * totalQty
-    val takeawayFee = if (isTakeaway) 1.0 else 0.0
+    val takeawayFee = if (isTakeaway) 2.0 else 0.0
     val total = subTotal + takeawayFee
 
     AlertDialog(
@@ -542,7 +544,7 @@ private fun MenuItemOrderDialog(
                     if (qtyNoSpicy > 0) Text("${flavorLabel("不辣")} × $qtyNoSpicy", fontSize = 13.sp, color = DiningColors.TextSecondary)
                     if (qtySpicy > 0) Text("${flavorLabel("香辣")} × $qtySpicy", fontSize = 13.sp, color = DiningColors.TextSecondary)
                     if (qtyExtra > 0) Text("${flavorLabel("加辣")} × $qtyExtra", fontSize = 13.sp, color = DiningColors.TextSecondary)
-                    if (isTakeaway) Text(t("外带费", "Takeaway Fee") + " +RM1.00", fontSize = 13.sp, color = DiningColors.TextSecondary)
+                    if (isTakeaway) Text(t("外带费", "Takeaway Fee") + " +RM2.00", fontSize = 13.sp, color = DiningColors.TextSecondary)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(t("合计", "Total") + " RM%.2f".format(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = DiningColors.Primary)
                 }
@@ -609,7 +611,7 @@ private fun buildCartItemsJson(cart: List<CartLine>, isTakeaway: Boolean): JsonE
                 put("item_name", JsonPrimitive("外带"))
                 put("name_en", JsonPrimitive("Take away"))
                 put("quantity", JsonPrimitive(1))
-                put("unit_price_myr", JsonPrimitive(1.0))
+                put("unit_price_myr", JsonPrimitive(2.0))
                 put("unit", JsonPrimitive("份"))
             })
         }

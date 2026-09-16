@@ -1,7 +1,7 @@
 {
-  "versionCode": 193,
-  "versionName": "1.2.77",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.77/zhixiangshipu-app.apk",
-  "changelog": "- 外卖工作台：取消号码，改为外卖/Facebook/Grabfood/Foodpanda 四个按钮，点击直接到新建订单自动排号",
-  "buildDate": "2026-09-16"
+  "versionCode": 194,
+  "versionName": "1.2.78",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.78/zhixiangshipu-app.apk",
+  "changelog": "- 外带费：所有外卖（含 Topone/Lunar 酒吧）统一自动 +RM2",
+  "buildDate": "2026-09-17"
 }
