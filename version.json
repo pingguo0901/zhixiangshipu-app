@@ -1,7 +1,7 @@
 {
-  "versionCode": 192,
-  "versionName": "1.2.76",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.76/zhixiangshipu-app.apk",
-  "changelog": "- 新建订单：外卖/Facebook 改为自动排号（无需选号）",
+  "versionCode": 193,
+  "versionName": "1.2.77",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.77/zhixiangshipu-app.apk",
+  "changelog": "- 外卖工作台：取消号码，改为外卖/Facebook/Grabfood/Foodpanda 四个按钮，点击直接到新建订单自动排号",
   "buildDate": "2026-09-16"
 }

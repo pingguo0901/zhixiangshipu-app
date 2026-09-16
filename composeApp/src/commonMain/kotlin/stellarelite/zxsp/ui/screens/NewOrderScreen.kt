@@ -33,7 +33,7 @@ import stellarelite.zxsp.ui.components.BackHandler
 import stellarelite.zxsp.ui.theme.DiningColors
 
 // 用餐方式：堂食 / 到店外卖 / 三平台外卖（Facebook/Grabfood/Foodpanda）
-private enum class DiningMode(val platformPrefix: String? = null) {
+enum class DiningMode(val platformPrefix: String? = null) {
     DineIn,
     Takeaway,
     Facebook("Facebook外卖"),
@@ -43,7 +43,7 @@ private enum class DiningMode(val platformPrefix: String? = null) {
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Boolean = false) {
+fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode: DiningMode? = null, compact: Boolean = false) {
     val scope = rememberCoroutineScope()
     BackHandler { onBack() }
     var menuItems by remember { mutableStateOf<List<MenuItem>>(emptyList()) }
@@ -99,6 +99,20 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
         DiningMode.Facebook -> facebookTables
         DiningMode.Grabfood -> grabfoodTables
         DiningMode.Foodpanda -> foodpandaTables
+    }
+
+    // 从外卖工作台按钮进入时，预选用餐方式并自动排号
+    LaunchedEffect(initialMode, tables) {
+        if (initialMode != null) {
+            diningMode = initialMode
+            tableId = when (initialMode) {
+                DiningMode.DineIn -> dineInTables.firstOrNull()?.id
+                DiningMode.Takeaway -> takeawayTables.firstOrNull()?.id
+                DiningMode.Facebook -> facebookTables.firstOrNull()?.id
+                DiningMode.Grabfood -> grabfoodTables.firstOrNull()?.id
+                DiningMode.Foodpanda -> foodpandaTables.firstOrNull()?.id
+            }
+        }
     }
 
     // 购物车合计（含外卖费）
@@ -171,12 +185,13 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
 
                 // 号码/桌台选择（按用餐方式分类）
                 item {
-                    val autoMode = diningMode == DiningMode.Takeaway || diningMode == DiningMode.Facebook
+                    val autoMode = diningMode != DiningMode.DineIn
                     val title = when (diningMode) {
                         DiningMode.DineIn -> t("选择桌台", "Select Table")
                         DiningMode.Takeaway -> t("外卖号（自动排号）", "Takeaway No. (auto-assigned)")
                         DiningMode.Facebook -> t("Facebook 号（自动排号）", "Facebook No. (auto-assigned)")
-                        else -> t("外卖号（自动分配，可手动改）", "Delivery No. (auto-assigned)")
+                        DiningMode.Grabfood -> t("Grabfood 号（自动排号）", "Grabfood No. (auto-assigned)")
+                        DiningMode.Foodpanda -> t("Foodpanda 号（自动排号）", "Foodpanda No. (auto-assigned)")
                     }
                     val emptyHint = when (diningMode) {
                         DiningMode.DineIn -> t("暂无空闲桌台", "No free tables")
@@ -185,7 +200,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, compact: Bo
                     Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     if (autoMode) {
-                        // 外卖 / Facebook：自动排号，无需选号
+                        // 外卖 / Facebook / Grabfood / Foodpanda：自动排号，无需选号
                         val assigned = currentModeTables.firstOrNull { it.id == tableId }
                         if (assigned == null) {
                             Text(emptyHint, fontSize = 13.sp, color = DiningColors.TextMuted)

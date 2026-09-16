@@ -391,7 +391,7 @@ private fun parseOrderItems(items: JsonElement): List<String> {
 // ============ 桌面版工作台（左右分栏布局） ============
 private sealed interface DashboardPanel {
     data object Empty : DashboardPanel
-    data class NewOrder(val tableId: Long?) : DashboardPanel
+    data class NewOrder(val tableId: Long?, val mode: DiningMode? = null) : DashboardPanel
     data class TableDetail(val table: TableList) : DashboardPanel
     data class AddItems(val order: CustomerOrder, val table: TableList) : DashboardPanel
     data class Checkout(val order: CustomerOrder, val table: TableList) : DashboardPanel
@@ -471,6 +471,7 @@ private fun DashboardRightPanel(
         is DashboardPanel.NewOrder -> NewOrderScreen(
             onBack = { onPanel(DashboardPanel.Empty); onRefresh() },
             initialTableId = panel.tableId,
+            initialMode = panel.mode,
             compact = true
         )
         is DashboardPanel.TableDetail -> TableDetailPanel(
@@ -634,14 +635,7 @@ fun TakeawayDashboardScreen() {
         // 左侧 3/4：外卖平台看板
         Box(modifier = Modifier.weight(3f).fillMaxHeight()) {
             TakeawayBoard(
-                onNewOrder = { panel = DashboardPanel.NewOrder(null) },
-                onTableClick = { table ->
-                    if (table.table_status == "occupied") {
-                        panel = DashboardPanel.TableDetail(table)
-                    } else {
-                        panel = DashboardPanel.NewOrder(table.id)
-                    }
-                },
+                onNewOrder = { mode -> panel = DashboardPanel.NewOrder(null, mode) },
                 refreshKey = refreshKey
             )
         }
@@ -663,58 +657,24 @@ fun TakeawayDashboardScreen() {
     }
 }
 
-// ============ 手机版外卖工作台（三平台竖版看板，非桌面） ============
+// ============ 手机版外卖工作台（四平台按钮，非桌面） ============
 @Composable
 fun PhoneTakeawayScreen() {
     var showNewOrder by remember { mutableStateOf(false) }
-    var newOrderTableId by remember { mutableStateOf<Long?>(null) }
-    var orderDialogTable by remember { mutableStateOf<TableList?>(null) }
-    var addItemsOrder by remember { mutableStateOf<CustomerOrder?>(null) }
-    var addItemsTableNo by remember { mutableStateOf<String?>(null) }
+    var newOrderMode by remember { mutableStateOf<DiningMode?>(null) }
 
     if (showNewOrder) {
-        NewOrderScreen(onBack = { showNewOrder = false }, initialTableId = newOrderTableId)
-        return
-    }
-    if (addItemsOrder != null) {
-        AddItemsScreen(
-            order = addItemsOrder!!,
-            tableNo = addItemsTableNo,
-            onBack = { addItemsOrder = null },
-            onDone = { addItemsOrder = null }
-        )
+        NewOrderScreen(onBack = { showNewOrder = false }, initialMode = newOrderMode)
         return
     }
     TakeawayBoard(
-        onNewOrder = { newOrderTableId = null; showNewOrder = true },
-        onTableClick = { table ->
-            if (table.table_status == "occupied") {
-                orderDialogTable = table
-            } else {
-                newOrderTableId = table.id
-                showNewOrder = true
-            }
-        },
-        bigBadges = true
+        onNewOrder = { mode -> newOrderMode = mode; showNewOrder = true }
     )
-
-    orderDialogTable?.let { table ->
-        TableOrderDialog(
-            table = table,
-            onDismiss = { orderDialogTable = null },
-            onAddItems = { order ->
-                orderDialogTable = null
-                addItemsOrder = order
-                addItemsTableNo = table.table_no
-            }
-        )
-    }
 }
 
-// 外卖平台看板：Facebook/Grabfood/Foodpanda 各 20 个号
-// bigBadges=true 时用大按钮（跟堂食桌台一样大，4 个一排），手机版用；false 用紧凑小按钮（桌面版分栏用）
+// 外卖工作台：四个平台按钮（自动排号，点击直接到新建订单）
 @Composable
-private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit, refreshKey: Int = 0, bigBadges: Boolean = false) {
+private fun TakeawayBoard(onNewOrder: (DiningMode) -> Unit, refreshKey: Int = 0) {
     val scope = rememberCoroutineScope()
     var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -752,20 +712,13 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // 顶部标题 + 新建订单
+        // 顶部标题
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(t("外卖工作台", "Delivery"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
-            Button(
-                onClick = onNewOrder,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
-            ) {
-                Text(t("＋ 新建订单", "＋ New Order"), color = DiningColors.Surface, fontWeight = FontWeight.Bold)
-            }
         }
 
         // 统计卡片：占用中 + 三平台数量
@@ -785,139 +738,25 @@ private fun TakeawayBoard(onNewOrder: () -> Unit, onTableClick: (TableList) -> U
             }
         }
 
-        if (loading) {
-            Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = DiningColors.Primary)
-            }
-        } else {
-            // 普通外卖号（"外卖XX"，不含三平台）
-            val regularTakeaway = tables.filter { it.table_no.startsWith("外卖") }
-                .sortedBy { it.table_no.removePrefix("外卖").toIntOrNull() ?: Int.MAX_VALUE }
-            Text(t("外卖", "Takeaway") + "（${regularTakeaway.size}）", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-            if (regularTakeaway.isEmpty()) {
-                Text(t("暂无外卖号", "No takeaway"), fontSize = 12.sp, color = DiningColors.TextMuted)
-            } else if (bigBadges) {
-                val rows = regularTakeaway.chunked(4)
-                rows.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        row.forEach { table ->
-                            Box(modifier = Modifier.weight(1f)) {
-                                TakeawayBigBadge(table, "外卖", onClick = { onTableClick(table) })
-                            }
-                        }
-                        repeat(4 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-                    }
-                }
-            } else {
-                val rows = regularTakeaway.chunked(10)
-                rows.forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        row.forEach { table ->
-                            SmallTableBadge(table, "外卖", onClick = { onTableClick(table) }, modifier = Modifier.weight(1f))
-                        }
-                        repeat(10 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-                    }
-                }
-            }
-
-            platforms.forEach { platform ->
-                val platformTables = tables.filter { it.table_no.startsWith(platform) }
-                    .sortedBy { it.table_no.removePrefix(platform).toIntOrNull() ?: Int.MAX_VALUE }
-                Text(platform, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
-                if (platformTables.isEmpty()) {
-                    Text(t("暂无外卖号", "No delivery no."), fontSize = 12.sp, color = DiningColors.TextMuted)
-                } else if (bigBadges) {
-                    val rows = platformTables.chunked(4)
-                    rows.forEach { row ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            row.forEach { table ->
-                                Box(modifier = Modifier.weight(1f)) {
-                                    TakeawayBigBadge(table, platform, onClick = { onTableClick(table) })
-                                }
-                            }
-                            repeat(4 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-                        }
-                    }
-                } else {
-                    val rows = platformTables.chunked(10)
-                    rows.forEach { row ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            row.forEach { table ->
-                                SmallTableBadge(table, platform, onClick = { onTableClick(table) }, modifier = Modifier.weight(1f))
-                            }
-                            repeat(10 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-                        }
-                    }
-                }
-            }
-        }
+        // 四个平台快捷下单按钮（自动排号）
+        Text(t("快捷下单", "Quick Order"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
+        TakeawayModeButton(t("外卖", "Takeaway"), DiningMode.Takeaway, onNewOrder)
+        TakeawayModeButton("Facebook", DiningMode.Facebook, onNewOrder)
+        TakeawayModeButton("Grabfood", DiningMode.Grabfood, onNewOrder)
+        TakeawayModeButton("Foodpanda", DiningMode.Foodpanda, onNewOrder)
     }
 }
 
-// 外卖号小按钮：显示号（去掉平台前缀）
+// 外卖平台快捷下单按钮（自动排号，点击直接到新建订单）
 @Composable
-private fun SmallTableBadge(table: TableList, platform: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val bg = when (table.table_status) {
-        "occupied" -> DiningColors.Primary
-        "cleaning" -> DiningColors.Warning
-        else -> DiningColors.Surface
-    }
-    val fg = when (table.table_status) {
-        "free" -> DiningColors.TextPrimary
-        else -> DiningColors.Surface
-    }
-    val label = table.table_no.removePrefix(platform)
-    Box(
-        modifier = modifier
-            .height(36.dp)
-            .background(bg, RoundedCornerShape(8.dp))
-            .clickable { onClick() }
-            .padding(4.dp),
-        contentAlignment = Alignment.Center
+private fun TakeawayModeButton(label: String, mode: DiningMode, onNewOrder: (DiningMode) -> Unit) {
+    Button(
+        onClick = { onNewOrder(mode) },
+        modifier = Modifier.fillMaxWidth().height(52.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = DiningColors.Primary)
     ) {
-        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg, maxLines = 1)
-    }
-}
-
-// 外卖号大按钮：跟堂食桌台按钮一样大，显示号（去前缀）+ 状态
-@Composable
-private fun TakeawayBigBadge(table: TableList, platform: String, onClick: () -> Unit) {
-    val bg = when (table.table_status) {
-        "occupied" -> DiningColors.Primary
-        "cleaning" -> DiningColors.Warning
-        else -> DiningColors.Surface
-    }
-    val fg = when (table.table_status) {
-        "free" -> DiningColors.TextPrimary
-        else -> DiningColors.Surface
-    }
-    val status = when (table.table_status) {
-        "occupied" -> t("占用", "Occupied")
-        "cleaning" -> t("清理", "Cleaning")
-        else -> t("空闲", "Free")
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(bg, RoundedCornerShape(10.dp))
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(table.table_no.removePrefix(platform), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = fg)
-        Text(status, fontSize = 10.sp, color = fg.copy(alpha = 0.8f))
+        Text(label, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = DiningColors.Surface)
     }
 }
 
