@@ -696,14 +696,15 @@ private fun TakeawayBoard(onNewOrder: (DiningMode) -> Unit, refreshKey: Int = 0)
         }
     }
 
-    val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖")
+    val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖", "WhatsApp外卖")
 
-    // 三平台统计
+    // 四平台统计
     val platformTables = tables.filter { t -> platforms.any { t.table_no.startsWith(it) } }
     val occupiedPlatform = platformTables.count { it.table_status == "occupied" }
     val fbCount = tables.count { it.table_no.startsWith("Facebook外卖") }
     val gfCount = tables.count { it.table_no.startsWith("Grabfood外卖") }
     val fpCount = tables.count { it.table_no.startsWith("Foodpanda外卖") }
+    val waCount = tables.count { it.table_no.startsWith("WhatsApp外卖") }
 
     Column(
         modifier = Modifier
@@ -721,7 +722,7 @@ private fun TakeawayBoard(onNewOrder: (DiningMode) -> Unit, refreshKey: Int = 0)
             Text(t("外卖工作台", "Delivery"), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary)
         }
 
-        // 统计卡片：占用中 + 三平台数量
+        // 统计卡片：占用中 + 四平台数量
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -735,15 +736,17 @@ private fun TakeawayBoard(onNewOrder: (DiningMode) -> Unit, refreshKey: Int = 0)
                 StatItem(Icons.Outlined.DeliveryDining, "$fbCount", "Facebook")
                 StatItem(Icons.Outlined.DeliveryDining, "$gfCount", "Grabfood")
                 StatItem(Icons.Outlined.DeliveryDining, "$fpCount", "Foodpanda")
+                StatItem(Icons.Outlined.DeliveryDining, "$waCount", "WhatsApp")
             }
         }
 
-        // 四个平台快捷下单按钮（自动排号）
+        // 五个平台快捷下单按钮（自动排号）
         Text(t("快捷下单", "Quick Order"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
         TakeawayModeButton(t("外卖", "Takeaway"), DiningMode.Takeaway, onNewOrder)
         TakeawayModeButton("Facebook", DiningMode.Facebook, onNewOrder)
         TakeawayModeButton("Grabfood", DiningMode.Grabfood, onNewOrder)
         TakeawayModeButton("Foodpanda", DiningMode.Foodpanda, onNewOrder)
+        TakeawayModeButton("WhatsApp", DiningMode.WhatsApp, onNewOrder)
     }
 }
 

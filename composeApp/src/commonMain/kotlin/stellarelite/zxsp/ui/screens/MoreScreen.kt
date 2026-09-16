@@ -183,23 +183,9 @@ private fun MenuEntry(icon: ImageVector, title: String, desc: String, onClick: (
     }
 }
 
-// 自动排号打印外卖二维码（无需选号：取下一个空闲外卖号，无空闲则新建外卖号）
+// 打印统一外卖二维码（二维码内容一致，后台自动排号）
 private suspend fun printNextTakeawayQr() {
-    val tables = runCatching { SupabaseClient.fetchTables() }.getOrDefault(emptyList())
-    // 普通外卖号（外卖X，不含三平台）
-    val takeaway = tables.filter { it.table_no.startsWith("外卖") }
-    val free = takeaway
-        .filter { it.table_status == "free" }
-        .sortedBy { it.table_no.removePrefix("外卖").toIntOrNull() ?: Int.MAX_VALUE }
-        .firstOrNull()
-    val target = free ?: run {
-        val maxNum = takeaway.mapNotNull { it.table_no.removePrefix("外卖").toIntOrNull() }.maxOrNull() ?: 0
-        SupabaseClient.insertTable(TableList(table_no = "外卖${maxNum + 1}", table_status = "free"))
-    }
-    if (target != null) {
-        val num = target.table_no.removePrefix("外卖")
-        printTableQrSticker("TAKEOUT-$num", "https://zhixiangshipu-web.vercel.app/?table=${target.id}")
-    }
+    printTableQrSticker("TAKEOUT", "https://zhixiangfoodenterprise.takeaway.stellarelite-xingyuzhenlv.com/")
 }
 
 // ============ 打印桌台下单二维码 ============
@@ -219,7 +205,7 @@ private fun PrintQrDialog(onDismiss: () -> Unit) {
 
     val selected = tables.firstOrNull { it.id == selectedId }
     val tableNo = selected?.let { "TABLE-" + it.table_no }
-    val qrUrl = selected?.let { "https://zhixiangshipu-web.vercel.app/?table=${it.id}" }
+    val qrUrl = selected?.let { "https://zhixiangfoodenterprise.dinein.stellarelite-xingyuzhenlv.com/?table=${it.id}" }
 
     AlertDialog(
         onDismissRequest = onDismiss,

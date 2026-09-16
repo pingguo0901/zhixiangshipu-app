@@ -304,9 +304,9 @@ object SupabaseClient {
     suspend fun insertExpense(e: ExpenseRecord): ExpenseRecord? = insert("expense_records", e)
     suspend fun insertTable(t: TableList): TableList? = insert("table_list", t)
 
-    // 幂等创建三个平台外卖号（Facebook/Grabfood/Foodpanda 各 20 个）
+    // 幂等创建四个平台外卖号（Facebook/Grabfood/Foodpanda/WhatsApp 各 20 个）
     suspend fun ensurePlatformTakeawayTables(): Boolean {
-        val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖")
+        val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖", "WhatsApp外卖")
         val existing = fetchTables().map { it.table_no }.toSet()
         var ok = true
         platforms.forEach { platform ->
