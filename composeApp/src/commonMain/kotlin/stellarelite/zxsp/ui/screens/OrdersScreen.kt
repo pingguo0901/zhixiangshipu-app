@@ -3,6 +3,7 @@ package stellarelite.zxsp.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.lazy.LazyColumn
@@ -88,7 +89,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
     var tableMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
-    var filter by remember { mutableStateOf("all") } // all / paid / unpaid
+    var filter by remember { mutableStateOf("all") } // all / paid / unpaid / dinein / takeaway / facebook / grabfood / foodpanda / whatsapp / topone / lunar
 
     fun load(silent: Boolean = false) {
         scope.launch {
@@ -113,7 +114,8 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
     val filtered = when (filter) {
         "paid" -> orders.filter { it.payment_status == "paid" }
         "unpaid" -> orders.filter { it.payment_status != "paid" }
-        else -> orders
+        "all" -> orders
+        else -> orders.filter { orderMode(tableMap[it.table_id]) == filter }
     }
     val grouped = filtered.groupBy { isoToKlDate(it.order_datetime ?: "") }
 
@@ -133,14 +135,27 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
             }
         }
 
-        // 筛选按钮：全部 / 已付款 / 未付款
+        // 筛选按钮：全部 / 已付款 / 未付款 / 堂食 / 外卖 / 各平台
+        val filterOptions = listOf(
+            "all" to t("全部", "All"),
+            "paid" to t("已付款", "Paid"),
+            "unpaid" to t("未付款", "Unpaid"),
+            "dinein" to t("堂食", "Dine-in"),
+            "takeaway" to t("外卖", "Takeaway"),
+            "facebook" to "Facebook",
+            "grabfood" to "Grabfood",
+            "foodpanda" to "Foodpanda",
+            "whatsapp" to "WhatsApp",
+            "topone" to "Topone",
+            "lunar" to "Lunar",
+        )
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            FilterChip(selected = filter == "all", onClick = { filter = "all" }, label = { Text(t("全部", "All")) })
-            FilterChip(selected = filter == "paid", onClick = { filter = "paid" }, label = { Text(t("已付款", "Paid")) })
-            FilterChip(selected = filter == "unpaid", onClick = { filter = "unpaid" }, label = { Text(t("未付款", "Unpaid")) })
+            filterOptions.forEach { (value, label) ->
+                FilterChip(selected = filter == value, onClick = { filter = value }, label = { Text(label) })
+            }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -185,6 +200,19 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
             }
         }
     }
+}
+
+// 订单模式分类（按桌台号前缀）：堂食/外卖/各平台/酒吧
+private fun orderMode(tableNo: String?): String = when {
+    tableNo == null -> "dinein"
+    tableNo.startsWith("Facebook外卖") -> "facebook"
+    tableNo.startsWith("WhatsApp外卖") -> "whatsapp"
+    tableNo.startsWith("Grabfood外卖") -> "grabfood"
+    tableNo.startsWith("Foodpanda外卖") -> "foodpanda"
+    tableNo.startsWith("Topone-") -> "topone"
+    tableNo.startsWith("Lunar-") -> "lunar"
+    tableNo.startsWith("外卖") -> "takeaway"
+    else -> "dinein"
 }
 
 // 桌台号显示：英文界面「外卖XX」转「TA-XX」
