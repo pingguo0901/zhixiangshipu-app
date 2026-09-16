@@ -37,7 +37,7 @@ object KitchenAutoPrinter {
             // 厨房出单统一英文版（已取消中文版）
             val kitchenText = buildKitchenOrderEnglish(
                 orderNo = order.order_no,
-                tableNo = if (tno.startsWith("外卖")) "Takeaway" else tno,
+                tableNo = kitchenTableLabel(tno),
                 time = time,
                 items = lines.map { line ->
                     val en = line.nameEn.ifBlank { line.name }

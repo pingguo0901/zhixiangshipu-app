@@ -1089,6 +1089,18 @@ internal fun splitItemNameEn(nameEn: String): Pair<String, String> {
     return nameEn.trim() to ""
 }
 
+// 厨房单桌台号显示：平台号去后缀、外卖统一 Takeaway、堂食保留桌台号
+internal fun kitchenTableLabel(tableNo: String): String = when {
+    tableNo.startsWith("Facebook外卖") -> "Facebook " + tableNo.removePrefix("Facebook外卖")
+    tableNo.startsWith("WhatsApp外卖") -> "WhatsApp " + tableNo.removePrefix("WhatsApp外卖")
+    tableNo.startsWith("Grabfood外卖") -> "Grabfood " + tableNo.removePrefix("Grabfood外卖")
+    tableNo.startsWith("Foodpanda外卖") -> "Foodpanda " + tableNo.removePrefix("Foodpanda外卖")
+    tableNo.startsWith("Topone-") -> "Topone " + tableNo.removePrefix("Topone-")
+    tableNo.startsWith("Lunar-") -> "Lunar " + tableNo.removePrefix("Lunar-")
+    tableNo.startsWith("外卖") -> "Takeaway " + tableNo.removePrefix("外卖")
+    else -> tableNo
+}
+
 // 生成厨房出单英文版文本（48 列）
 internal fun buildKitchenOrderEnglish(orderNo: String, tableNo: String, time: String, items: List<KitchenLine>, note: String?): String {
     val W = ReceiptFormatter.TOTAL_WIDTH

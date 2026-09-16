@@ -366,7 +366,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                                 val lines = parseOrderLines(r.order_items)
                                 val kitchenText = buildKitchenOrderEnglish(
                                     orderNo = r.order_no,
-                                    tableNo = if (tno == "外卖") "Takeaway" else tno,
+                                    tableNo = kitchenTableLabel(tno),
                                     time = time,
                                     items = lines.map { line ->
                                         val en = line.nameEn.ifBlank { line.name }
@@ -809,7 +809,7 @@ fun AddItemsScreen(order: CustomerOrder, tableNo: String?, onBack: () -> Unit, o
                                 }
                                 if (addedLinesEn.isNotEmpty()) {
                                     val time = formatDateTimeMy(currentIso())
-                                    val tblEn = if (tableNo == null || tableNo == "外卖") "Takeaway" else tableNo
+                                    val tblEn = kitchenTableLabel(tableNo ?: "外卖")
                                     addOnTextEn = buildKitchenAddOnOrderEnglish(orderNo = order.order_no, tableNo = tblEn, time = time, items = addedLinesEn)
                                 } else {
                                     onDone()

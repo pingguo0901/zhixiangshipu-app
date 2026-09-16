@@ -1,7 +1,7 @@
 {
-  "versionCode": 197,
-  "versionName": "1.2.81",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.81/zhixiangshipu-app.apk",
-  "changelog": "- 新建订单页不再显示 TopOne/Lunar 酒吧桌台按钮",
+  "versionCode": 198,
+  "versionName": "1.2.82",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.82/zhixiangshipu-app.apk",
+  "changelog": "- 各下单网页厨房单/订单号前缀对应（堂食DN/外卖TA/FB/WA/GF/FP/TP/LN）",
   "buildDate": "2026-09-17"
 }
