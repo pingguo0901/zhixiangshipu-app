@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // 炙巷食谱 - 固定开销自动记账脚本
 // 用法：
-//   node auto_fixed_expense.js daily     每天跑：每月1号记店租/员工薪资/老板薪资；炭火每3天进一笔货（进货成本）
+//   node auto_fixed_expense.js daily     每天跑：每月1号记店租/员工薪资/店长薪资；炭火每3天进一笔货（进货成本）
 //   node auto_fixed_expense.js backfill  8月补记：8/26-8/31 共6天，店租+员工薪资按天折算
 //   node auto_fixed_expense.js list      列出已自动记账的记录（验证用）
 
@@ -13,7 +13,7 @@ const path = require('path');
 const FIXED = {
   rent:        { name: '店租',     type: '租金',     amount: 1800 },
   staffSalary: { name: '员工薪资', type: '员工',     amount: 1800 },
-  bossSalary:  { name: '老板薪资', type: '老板薪资', amount: 3000 },
+  bossSalary:  { name: '店长薪资', type: '店长薪资', amount: 3000 },
 };
 // 炭火算进货成本，走 stock_in_log（进货入库），不再记业务开销 expense_records
 const CHARCOAL = {

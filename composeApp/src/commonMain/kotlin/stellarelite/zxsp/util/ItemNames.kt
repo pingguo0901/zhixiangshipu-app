@@ -7,7 +7,7 @@ object ItemNames {
     val EN_MAP: Map<String, String> = mapOf(
         // 费用项（业务开销）
         "员工" to "Staff Salary",
-        "老板薪资" to "Boss Salary",
+        "店长薪资" to "Store Manager Salary",
         "租金" to "Shop Rental",
         "卫生纸" to "Toilet Paper",
         "厨具 电器" to "Kitchenware & Appliances",

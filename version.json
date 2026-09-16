@@ -1,7 +1,7 @@
 {
-  "versionCode": 194,
-  "versionName": "1.2.78",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.78/zhixiangshipu-app.apk",
-  "changelog": "- 外带费：所有外卖（含 Topone/Lunar 酒吧）统一自动 +RM2",
+  "versionCode": 195,
+  "versionName": "1.2.79",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.79/zhixiangshipu-app.apk",
+  "changelog": "- 费用项「老板薪资」改为「店长薪资」",
   "buildDate": "2026-09-17"
 }
