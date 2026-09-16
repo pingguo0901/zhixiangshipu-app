@@ -1,7 +1,7 @@
 {
-  "versionCode": 196,
-  "versionName": "1.2.80",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.80/zhixiangshipu-app.apk",
-  "changelog": "- 新增 WhatsApp 外卖平台（按钮+WA前缀）\n- 各模式 QR 链接指向对应子域名\n- 打印外卖二维码统一 + 后台自动排号",
+  "versionCode": 197,
+  "versionName": "1.2.81",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.81/zhixiangshipu-app.apk",
+  "changelog": "- 新建订单页不再显示 TopOne/Lunar 酒吧桌台按钮",
   "buildDate": "2026-09-17"
 }

@@ -87,7 +87,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
         }
     }
 
-    val dineInTables = tables.filter { !it.table_no.contains("外卖") }
+    val dineInTables = tables.filter { !it.table_no.contains("外卖") && !it.table_no.startsWith("Topone-") && !it.table_no.startsWith("Lunar-") }
     val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }.sortedBy { it.table_no.removePrefix("外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val facebookTables = tables.filter { it.table_no.startsWith("Facebook外卖") }.sortedBy { it.table_no.removePrefix("Facebook外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val grabfoodTables = tables.filter { it.table_no.startsWith("Grabfood外卖") }.sortedBy { it.table_no.removePrefix("Grabfood外卖").toIntOrNull() ?: Int.MAX_VALUE }
