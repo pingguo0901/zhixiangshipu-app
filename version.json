@@ -1,7 +1,7 @@
 {
-  "versionCode": 200,
-  "versionName": "1.2.84",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.84/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情页：收据照片移到删除订单按钮下方显示",
+  "versionCode": 201,
+  "versionName": "1.2.85",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.85/zhixiangshipu-app.apk",
+  "changelog": "- 修复收据拍照上传：改用完整照片拍摄，修复部分机型拍照返回空导致收据未保存的问题",
   "buildDate": "2026-09-18"
 }

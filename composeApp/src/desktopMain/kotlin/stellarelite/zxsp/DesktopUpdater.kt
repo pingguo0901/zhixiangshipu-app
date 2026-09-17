@@ -16,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 // 桌面版更新器：检测 GitHub Releases 里 tag 以 -desktop 结尾的最新版本，
 // 支持程序内下载 zip → 解压 → 写替换脚本 → 退出由脚本替换并重启（无需跳浏览器下载页）
 object DesktopUpdater {
-    const val CURRENT_VERSION = "1.2.84"
+    const val CURRENT_VERSION = "1.2.85"
     private const val RELEASES_URL = "https://api.github.com/repos/pingguo0901/zhixiangshipu-app/releases"
 
     suspend fun checkForUpdate(): VersionInfo? = withContext(Dispatchers.IO) {
