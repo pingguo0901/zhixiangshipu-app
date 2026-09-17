@@ -1,7 +1,7 @@
 {
-  "versionCode": 199,
-  "versionName": "1.2.83",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.83/zhixiangshipu-app.apk",
-  "changelog": "- 订单管理筛选新增：堂食/外卖/Facebook/Grabfood/Foodpanda/WhatsApp/Topone/Lunar",
-  "buildDate": "2026-09-17"
+  "versionCode": 200,
+  "versionName": "1.2.84",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.84/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情页：收据照片移到删除订单按钮下方显示",
+  "buildDate": "2026-09-18"
 }

@@ -377,18 +377,6 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 非现金付款：显示已上传的收据照片（点击放大）
-        if (receiptPhoto != null) {
-            Text(t("已上传收据照片", "Uploaded Receipt Photo"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
-            Spacer(modifier = Modifier.height(8.dp))
-            Image(
-                bitmap = receiptPhoto!!,
-                contentDescription = t("收据照片", "Receipt Photo"),
-                modifier = Modifier.fillMaxWidth().height(180.dp).clickable { showFullImage = true }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
         // 打印厨房单
         OutlinedButton(
             onClick = { showKitchen = true },
@@ -442,6 +430,18 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(t("删除订单", "Delete Order"), color = DiningColors.Error, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
+        }
+
+        // 非现金付款：显示已上传的收据照片（点击放大）
+        if (receiptPhoto != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(t("已上传收据照片", "Uploaded Receipt Photo"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextSecondary)
+            Spacer(modifier = Modifier.height(8.dp))
+            Image(
+                bitmap = receiptPhoto!!,
+                contentDescription = t("收据照片", "Receipt Photo"),
+                modifier = Modifier.fillMaxWidth().height(180.dp).clickable { showFullImage = true }
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
