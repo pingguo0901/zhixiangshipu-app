@@ -1,7 +1,7 @@
 {
-  "versionCode": 208,
-  "versionName": "1.2.92",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.92/zhixiangshipu-app.apk",
-  "changelog": "- Lunar 第5/6行左散台拉长补掉 STAGE 空隙",
+  "versionCode": 209,
+  "versionName": "1.2.93",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.93/zhixiangshipu-app.apk",
+  "changelog": "- 历史订单列表类型也显示对应模式",
   "buildDate": "2026-09-19"
 }

@@ -244,14 +244,15 @@ private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Uni
         "partial" -> DiningColors.Warning
         else -> DiningColors.Error
     }
-    // 堂食/外卖判断：桌台号以「外卖」开头为外卖，否则堂食
-    val isTakeaway = tableNo?.startsWith("外卖") == true
+    // 订单类型（堂食/外卖/Facebook/WhatsApp/Grabfood/Foodpanda/Topone/Lunar）
+    val typeLabel = if (tableNo != null) orderTypeLabel(tableNo) else null
     val orderType = when {
-        isTakeaway -> t("外卖订单", "Takeaway Order") + " · " + displayTableNo(tableNo!!)
-        order.table_id != null -> t("堂食", "Dine-in") + " · " + t("桌", "Table") + " ${tableNo ?: order.table_id}"
+        typeLabel != null -> "$typeLabel · ${displayTableNo(tableNo!!)}"
+        order.table_id != null -> "${t("堂食", "Dine-in")} · ${t("桌", "Table")} ${order.table_id}"
         else -> t("外卖订单", "Takeaway Order")
     }
-    val orderTypeColor = if (isTakeaway || order.table_id == null) DiningColors.TextSecondary else DiningColors.Primary
+    val isDineIn = typeLabel == (if (LanguageManager.isEnglish) "Dine-in" else "堂食")
+    val orderTypeColor = if (isDineIn && order.table_id != null) DiningColors.Primary else DiningColors.TextSecondary
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
