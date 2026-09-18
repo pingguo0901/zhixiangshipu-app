@@ -1,6 +1,7 @@
 package stellarelite.zxsp.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,40 +78,228 @@ fun ToponeWorkbenchScreen(onBack: () -> Unit) {
     }
 }
 
-// Lunar 工作台：桌台布局待董事长提供，先留入口
+// ============ Lunar 工作台（酒吧选座平面图，逻辑同 Topone） ============
+private val LunarGold = Color(0xFFD4AF37)
+private val LunarBlack = Color(0xFF121212)
+private val LunarCream = Color(0xFFF5F0DC)
+private val LunarCleaning = Color(0xFF7A6214)
+
 @Composable
 fun LunarWorkbenchScreen(onBack: () -> Unit) {
+    var showNewOrder by remember { mutableStateOf(false) }
+    var newOrderTableId by remember { mutableStateOf<Long?>(null) }
+    var orderDialogTable by remember { mutableStateOf<TableList?>(null) }
+    var addItemsOrder by remember { mutableStateOf<CustomerOrder?>(null) }
+    var addItemsTableNo by remember { mutableStateOf<String?>(null) }
+
+    if (showNewOrder) {
+        NewOrderScreen(onBack = { showNewOrder = false }, initialTableId = newOrderTableId)
+        return
+    }
+    if (addItemsOrder != null) {
+        AddItemsScreen(
+            order = addItemsOrder!!,
+            tableNo = addItemsTableNo,
+            onBack = { addItemsOrder = null },
+            onDone = { addItemsOrder = null }
+        )
+        return
+    }
+
+    LunarBoard(
+        onBack = onBack,
+        onNewOrder = { newOrderTableId = null; showNewOrder = true },
+        onTableClick = { table ->
+            if (table.table_status == "occupied") {
+                orderDialogTable = table
+            } else {
+                newOrderTableId = table.id
+                showNewOrder = true
+            }
+        }
+    )
+
+    orderDialogTable?.let { table ->
+        TableOrderDialog(
+            table = table,
+            onDismiss = { orderDialogTable = null },
+            onAddItems = { order ->
+                orderDialogTable = null
+                addItemsOrder = order
+                addItemsTableNo = table.table_no
+            }
+        )
+    }
+}
+
+@Composable
+private fun LunarBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick: (TableList) -> Unit) {
+    val scope = rememberCoroutineScope()
+    var tables by remember { mutableStateOf<List<TableList>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+
+    fun load(silent: Boolean = false) {
+        scope.launch {
+            if (!silent) loading = true
+            runCatching { SupabaseClient.ensureLunarTables() }
+            runCatching { SupabaseClient.fetchTables() }
+                .onSuccess { tables = it.filter { t -> t.table_no.startsWith("Lunar-") } }
+            if (!silent) loading = false
+        }
+    }
+    LaunchedEffect(Unit) {
+        load()
+        while (true) {
+            delay(3000)
+            load(silent = true)
+        }
+    }
+
+    val byName = remember(tables) { tables.associateBy { it.table_no.removePrefix("Lunar-") } }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiningColors.Background)
+            .background(LunarBlack)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Text(t("‹ 返回", "‹ Back"), color = DiningColors.Primary)
-            }
-            Text(
-                "Lunar 工作台",
-                modifier = Modifier.align(Alignment.Center),
-                fontSize = 20.sp, fontWeight = FontWeight.Bold, color = DiningColors.TextPrimary
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 60.dp),
-            contentAlignment = Alignment.Center
+        // 顶部：返回 + 新建订单（无标题/logo）
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                t("桌台布局待提供", "Floor plan coming soon"),
-                color = DiningColors.TextMuted,
-                fontSize = 15.sp
-            )
+            TextButton(onClick = onBack) { Text(t("‹ 返回", "‹ Back"), color = LunarCream) }
+            Button(
+                onClick = onNewOrder,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = LunarGold)
+            ) {
+                Text(t("＋ 新建订单", "＋ New Order"), color = LunarBlack, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        if (loading) {
+            Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = LunarGold)
+            }
+        } else {
+            // 主舞台
+            StageBox("STAGE", Modifier.fillMaxWidth().height(46.dp))
+
+            // 中部：左散台 | 小舞台 | 右散台 | 包厢
+            Row(verticalAlignment = Alignment.Top) {
+                // 左侧散台
+                Column(modifier = Modifier.weight(1.30f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    LunarRow(listOf("01", "02", "03", "05", "06"), byName, onTableClick)
+                    LunarRow(listOf("12", "13", "15", "16", "17"), byName, onTableClick)
+                    LunarRow(listOf("23", "25", "26", "27", "28"), byName, onTableClick)
+                    LunarRow(listOf("35", "36", "37", "38", "39"), byName, onTableClick)
+                    LunarRow(listOf("56", "57", "58", "59", "60", "61", "62", "63"), byName, onTableClick)
+                    LunarRow(listOf("71", "72", "73", "75", "76", "77", "78", "79", "80", "81", "82"), byName, onTableClick)
+                }
+
+                // 小舞台（竖排文字）
+                StageBox("STAGE", Modifier.width(18.dp).height(220.dp), verticalText = true)
+
+                // 右侧散台
+                Column(modifier = Modifier.weight(1.30f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    LunarRow(listOf("07", "08", "09", "10", "11"), byName, onTableClick)
+                    LunarRow(listOf("18", "19", "20", "21", "22"), byName, onTableClick)
+                    LunarRow(listOf("29", "30", "31", "32", "33"), byName, onTableClick)
+                    LunarRow(listOf("50", "51", "52", "53", "55"), byName, onTableClick)
+                    LunarRow(listOf("65", "66", "67", "68", "69", "70"), byName, onTableClick)
+                    LunarRow(listOf("83", "85", "86"), byName, onTableClick)
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                // 右侧包厢（竖长方形）
+                Column(modifier = Modifier.weight(0.75f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        LunarRoom("111", byName, onTableClick, Modifier.weight(1f))
+                        LunarRoom("222", byName, onTableClick, Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        LunarRoom("888", byName, onTableClick, Modifier.weight(1f))
+                        LunarRoom("333", byName, onTableClick, Modifier.weight(1f))
+                    }
+                    LunarRoom("BAR", byName, onTableClick, Modifier.fillMaxWidth(), tall = true)
+                }
+            }
+
+            // 底部 VIP / VVIP
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                LunarRow(listOf("VIP S6", "VIP S5", "VIP S3", "VIP S2", "VIP S1"), byName, onTableClick)
+                LunarRow(listOf("VIP S7", "VIP S8", "VIP S9", "VIP S10", "VIP S11"), byName, onTableClick)
+                LunarRow(listOf("VIP S17", "VIP S16", "VIP S15", "VIP S13", "VIP S12"), byName, onTableClick)
+                LunarRow(listOf("VVIP S18", "VVIP S19", "VVIP S20", "VVIP S21"), byName, onTableClick)
+            }
+
+            // 左下角文字
+            Text("APOLLO *2ND FLOOR", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = LunarCream, letterSpacing = 1.sp)
         }
     }
+}
+
+// 舞台框（主舞台横向 / 小舞台竖向）
+@Composable
+private fun StageBox(label: String, modifier: Modifier = Modifier, verticalText: Boolean = false) {
+    Box(
+        modifier = modifier
+            .background(LunarBlack, RoundedCornerShape(8.dp))
+            .border(1.dp, LunarGold, RoundedCornerShape(8.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            if (verticalText) label.map { "$it" }.joinToString("\n") else label,
+            fontSize = if (verticalText) 9.sp else 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = LunarCream,
+            letterSpacing = if (verticalText) 0.sp else 4.sp,
+            textAlign = TextAlign.Center,
+            lineHeight = if (verticalText) 11.sp else 15.sp
+        )
+    }
+}
+
+// 桌台按钮（金色细边框 + 深黑底 + 米白字）
+@Composable
+private fun GoldTable(label: String, table: TableList?, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, vertical: Boolean = false, tall: Boolean = false) {
+    val occupied = table?.table_status == "occupied"
+    val cleaning = table?.table_status == "cleaning"
+    val bg = when {
+        occupied -> LunarGold
+        cleaning -> LunarCleaning
+        else -> LunarBlack
+    }
+    val fg = if (occupied) LunarBlack else LunarCream
+    Box(
+        modifier = modifier
+            .height(if (vertical) (if (tall) 64.dp else 48.dp) else 34.dp)
+            .background(bg, RoundedCornerShape(6.dp))
+            .border(1.dp, LunarGold, RoundedCornerShape(6.dp))
+            .clickable(enabled = table != null) { table?.let(onClick) },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, fontSize = 8.sp, fontWeight = FontWeight.Bold, color = fg, maxLines = 1, textAlign = TextAlign.Center)
+    }
+}
+
+// 一行散台 / VIP 桌
+@Composable
+private fun LunarRow(names: List<String>, byName: Map<String, TableList>, onClick: (TableList) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        names.forEach { n -> GoldTable(n, byName[n], onClick, Modifier.weight(1f)) }
+    }
+}
+
+// 包厢（竖长方形）
+@Composable
+private fun LunarRoom(label: String, byName: Map<String, TableList>, onClick: (TableList) -> Unit, modifier: Modifier = Modifier, tall: Boolean = false) {
+    GoldTable(label, byName[label], onClick, modifier, vertical = true, tall = tall)
 }
 
 @Composable

@@ -1,7 +1,7 @@
 {
-  "versionCode": 202,
-  "versionName": "1.2.86",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.86/zhixiangshipu-app.apk",
-  "changelog": "- 修复账号无感自动退出：token 刷新失败也保留会话，不再自动退出登录",
-  "buildDate": "2026-09-18"
+  "versionCode": 203,
+  "versionName": "1.2.87",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.87/zhixiangshipu-app.apk",
+  "changelog": "- Lunar 酒吧选座平面图上线（散台+包厢+VIP/VVIP，金色边框深黑底）",
+  "buildDate": "2026-09-19"
 }

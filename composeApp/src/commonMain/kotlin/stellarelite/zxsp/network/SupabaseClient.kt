@@ -343,6 +343,42 @@ object SupabaseClient {
         }
         return ok
     }
+    // 幂等创建 Lunar 酒吧桌台（散台 + 包厢 + VIP/VVIP 共 92 桌）
+    suspend fun ensureLunarTables(): Boolean {
+        val names = listOf(
+            // 左侧散台
+            "01", "02", "03", "05", "06",
+            "12", "13", "15", "16", "17",
+            "23", "25", "26", "27", "28",
+            "35", "36", "37", "38", "39",
+            "56", "57", "58", "59", "60", "61", "62", "63",
+            "71", "72", "73", "75", "76", "77", "78", "79", "80", "81", "82",
+            // 右侧散台
+            "07", "08", "09", "10", "11",
+            "18", "19", "20", "21", "22",
+            "29", "30", "31", "32", "33",
+            "50", "51", "52", "53", "55",
+            "65", "66", "67", "68", "69", "70",
+            "83", "85", "86",
+            // 包厢
+            "111", "222", "888", "333", "BAR",
+            // VIP
+            "VIP S6", "VIP S5", "VIP S3", "VIP S2", "VIP S1",
+            "VIP S7", "VIP S8", "VIP S9", "VIP S10", "VIP S11",
+            "VIP S17", "VIP S16", "VIP S15", "VIP S13", "VIP S12",
+            // VVIP
+            "VVIP S18", "VVIP S19", "VVIP S20", "VVIP S21"
+        )
+        val existing = fetchTables().map { it.table_no }.toSet()
+        var ok = true
+        names.forEach { n ->
+            val name = "Lunar-$n"
+            if (name !in existing) {
+                if (insertTable(TableList(table_no = name, table_status = "free")) == null) ok = false
+            }
+        }
+        return ok
+    }
 
     suspend fun insertSupplier(s: Supplier): Supplier? = insert("supplier", s)
     suspend fun insertWarehouseItem(w: WarehouseItem): WarehouseItem? = insert("warehouse_items", w)
