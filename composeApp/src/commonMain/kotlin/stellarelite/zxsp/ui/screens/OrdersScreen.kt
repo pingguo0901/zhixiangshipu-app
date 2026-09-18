@@ -611,7 +611,19 @@ private fun OrderEditDialog(
         loading = false
     }
 
-    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) }
+    // 外卖费/配送费等特殊行项目（item_id=0）的费用合计，编辑时需保留
+    val specialFeeTotal = remember(order.order_items) {
+        order.order_items.jsonArray.sumOf { el ->
+            val obj = el.jsonObject
+            val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
+            if (itemId == 0L) {
+                val price = obj["unit_price_myr"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
+                val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
+                price * qty
+            } else 0.0
+        }
+    }
+    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) } + specialFeeTotal
     val discountVal = discount.toDoubleOrNull() ?: 0.0
     val finalTotal = (totalAmount - discountVal).coerceAtLeast(0.0)
     val receivedVal = amountReceived.toDoubleOrNull() ?: 0.0
@@ -762,6 +774,12 @@ private fun OrderEditDialog(
                                     put("unit", JsonPrimitive(item.unit))
                                 })
                             }
+                        }
+                        // 保留外卖费/配送费等特殊行项目（item_id=0，非菜品）
+                        order.order_items.jsonArray.forEach { el ->
+                            val obj = el.jsonObject
+                            val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
+                            if (itemId == 0L) add(obj)
                         }
                     }
                     val ok2 = SupabaseClient.updateOrderItems(order.id, itemsJson, totalAmount)

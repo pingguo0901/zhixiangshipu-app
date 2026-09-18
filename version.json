@@ -1,7 +1,7 @@
 {
-  "versionCode": 203,
-  "versionName": "1.2.87",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.87/zhixiangshipu-app.apk",
-  "changelog": "- Lunar 酒吧选座平面图上线（散台+包厢+VIP/VVIP，金色边框深黑底）",
+  "versionCode": 204,
+  "versionName": "1.2.88",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.88/zhixiangshipu-app.apk",
+  "changelog": "- 修复编辑订单时外卖费/配送费被取消的问题",
   "buildDate": "2026-09-19"
 }
