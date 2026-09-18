@@ -594,7 +594,11 @@ private fun OrderEditDialog(
     LaunchedEffect(Unit) {
         runCatching {
             tables = SupabaseClient.fetchTables()
-            tables.firstOrNull { it.id == order.table_id }?.let { isTakeaway = it.table_no.startsWith("外卖") }
+            tables.firstOrNull { it.id == order.table_id }?.let { t ->
+                isTakeaway = t.table_no.startsWith("外卖") || t.table_no.startsWith("Facebook") ||
+                    t.table_no.startsWith("Grabfood") || t.table_no.startsWith("Foodpanda") ||
+                    t.table_no.startsWith("WhatsApp") || t.table_no.startsWith("Topone-") || t.table_no.startsWith("Lunar-")
+            }
             menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active }
             order.order_items.jsonArray.forEach { el ->
                 val obj = el.jsonObject
@@ -611,19 +615,19 @@ private fun OrderEditDialog(
         loading = false
     }
 
-    // 外卖费/配送费等特殊行项目（item_id=0）的费用合计，编辑时需保留
-    val specialFeeTotal = remember(order.order_items) {
+    // 原订单里的配送费合计（网页 Facebook/WhatsApp 才有）
+    val deliveryFeeTotal = remember(order.order_items) {
         order.order_items.jsonArray.sumOf { el ->
             val obj = el.jsonObject
-            val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
-            if (itemId == 0L) {
+            if (obj["item_name"]?.jsonPrimitive?.content == "配送费") {
                 val price = obj["unit_price_myr"]?.jsonPrimitive?.content?.toDoubleOrNull() ?: 0.0
                 val qty = obj["quantity"]?.jsonPrimitive?.content?.toIntOrNull() ?: 0
                 price * qty
             } else 0.0
         }
     }
-    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) } + specialFeeTotal
+    val takeawayFeeTotal = if (isTakeaway) 2.0 else 0.0
+    val totalAmount = menuItems.sumOf { it.sell_price_myr * (quantities[it.id] ?: 0) } + deliveryFeeTotal + takeawayFeeTotal
     val discountVal = discount.toDoubleOrNull() ?: 0.0
     val finalTotal = (totalAmount - discountVal).coerceAtLeast(0.0)
     val receivedVal = amountReceived.toDoubleOrNull() ?: 0.0
@@ -775,11 +779,21 @@ private fun OrderEditDialog(
                                 })
                             }
                         }
-                        // 保留外卖费/配送费等特殊行项目（item_id=0，非菜品）
+                        // 配送费（保留原订单里的配送费，网页外卖才有）
                         order.order_items.jsonArray.forEach { el ->
                             val obj = el.jsonObject
-                            val itemId = obj["item_id"]?.jsonPrimitive?.content?.toLongOrNull()
-                            if (itemId == 0L) add(obj)
+                            if (obj["item_name"]?.jsonPrimitive?.content == "配送费") add(obj)
+                        }
+                        // 外卖费 RM2（外卖类订单自动加）
+                        if (isTakeaway) {
+                            add(buildJsonObject {
+                                put("item_id", JsonPrimitive(0))
+                                put("item_name", JsonPrimitive("外带"))
+                                put("name_en", JsonPrimitive("Takeaway Fee"))
+                                put("quantity", JsonPrimitive(1))
+                                put("unit_price_myr", JsonPrimitive(2.0))
+                                put("unit", JsonPrimitive("份"))
+                            })
                         }
                     }
                     val ok2 = SupabaseClient.updateOrderItems(order.id, itemsJson, totalAmount)

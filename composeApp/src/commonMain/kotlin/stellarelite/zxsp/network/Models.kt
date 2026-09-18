@@ -98,6 +98,14 @@ data class PaymentRecord(
     val created_at: String? = null
 )
 
+// ============ print_jobs ============
+data class PrintJob(
+    val id: Long = 0,
+    val content: String = "",
+    val status: String = "pending",
+    val created_at: String? = null
+)
+
 // ============ receipt_master ============
 @Serializable
 data class ReceiptMaster(

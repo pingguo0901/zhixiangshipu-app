@@ -6,6 +6,8 @@ import android.os.Build
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 import java.util.UUID
+import kotlinx.coroutines.runBlocking
+import stellarelite.zxsp.network.SupabaseClient
 
 private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
@@ -13,14 +15,8 @@ private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34
 actual fun printReceiptText(text: String) {
     Thread {
         try {
-            val adapter = BluetoothAdapter.getDefaultAdapter()
-            if (adapter != null) {
-                val devices = bondedDevices(adapter)
-                val printer = pickPrinter(devices)
-                if (printer != null) {
-                    printToDevice(printer, text)
-                }
-            }
+            // 远程打印：把打印任务发给桌面端（USB 打印机），桌面端轮询后打印
+            runBlocking { SupabaseClient.insertPrintJob(text) }
         } catch (_: Exception) { }
     }.start()
 }

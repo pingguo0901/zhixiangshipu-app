@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import stellarelite.zxsp.data.SessionManager
 import stellarelite.zxsp.network.SupabaseClient
+import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.ui.components.BackHandlerOwner
 import stellarelite.zxsp.ui.components.BottomNavBar
 import stellarelite.zxsp.ui.components.DesktopTopBar
@@ -115,12 +116,29 @@ fun App(
         }
     }
 
-    // 自动监听新订单打印厨房单（网页下单 → 店内手机自动出单）
-    LaunchedEffect(Unit) {
-        KitchenAutoPrinter.initBaseline()
-        while (true) {
-            try { KitchenAutoPrinter.pollOnce() } catch (_: Exception) { }
-            delay(3000)
+    // 自动监听新订单打印厨房单（网页下单 → 店内手机自动出单；仅手机端运行，桌面端作为打印机接收远程任务）
+    if (!useDesktopLayout) {
+        LaunchedEffect(Unit) {
+            KitchenAutoPrinter.initBaseline()
+            while (true) {
+                try { KitchenAutoPrinter.pollOnce() } catch (_: Exception) { }
+                delay(3000)
+            }
+        }
+    }
+
+    // 桌面端：轮询手机端发来的远程打印任务，打印到 USB 打印机
+    if (useDesktopLayout) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                try {
+                    SupabaseClient.fetchPendingPrintJobs().forEach { job ->
+                        printReceiptText(job.content)
+                        SupabaseClient.markPrintJobDone(job.id)
+                    }
+                } catch (_: Exception) { }
+                delay(2000)
+            }
         }
     }
 

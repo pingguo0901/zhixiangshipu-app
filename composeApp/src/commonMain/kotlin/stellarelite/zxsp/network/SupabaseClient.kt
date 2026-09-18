@@ -304,6 +304,42 @@ object SupabaseClient {
     suspend fun insertExpense(e: ExpenseRecord): ExpenseRecord? = insert("expense_records", e)
     suspend fun insertTable(t: TableList): TableList? = insert("table_list", t)
 
+    // ============ 远程打印（手机 → 桌面端 → 打印机）============
+    suspend fun insertPrintJob(content: String): Boolean {
+        val resp: HttpResponse = client.post("$BASE/rest/v1/print_jobs") {
+            applyAuth()
+            header("Prefer", "return=minimal")
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("content", JsonPrimitive(content)) })
+        }
+        return resp.status.isSuccess()
+    }
+
+    suspend fun fetchPendingPrintJobs(): List<PrintJob> {
+        val resp: HttpResponse = client.get("$BASE/rest/v1/print_jobs") {
+            applyAuth()
+            url {
+                parameters.append("select", "*")
+                parameters.append("status", "eq.pending")
+                parameters.append("order", "id.asc")
+                parameters.append("limit", "50")
+            }
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<List<PrintJob>>() }.getOrDefault(emptyList())
+        } else emptyList()
+    }
+
+    suspend fun markPrintJobDone(id: Long): Boolean {
+        val resp: HttpResponse = client.patch("$BASE/rest/v1/print_jobs") {
+            applyAuth()
+            url { parameters.append("id", "eq.$id") }
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("status", JsonPrimitive("done")) })
+        }
+        return resp.status.isSuccess()
+    }
+
     // 幂等创建四个平台外卖号（Facebook/Grabfood/Foodpanda/WhatsApp 各 20 个）
     suspend fun ensurePlatformTakeawayTables(): Boolean {
         val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖", "WhatsApp外卖")
