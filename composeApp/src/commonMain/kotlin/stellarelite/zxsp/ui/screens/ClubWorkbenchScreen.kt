@@ -210,16 +210,17 @@ private fun LunarBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick:
                             LunarRow(listOf("50", "51", "52", "53", "55"), byName, onTableClick)
                         }
                     }
-                    // 后2行：左散台拉长补掉 STAGE 空隙 + 右散台
-                    Row(verticalAlignment = Alignment.Top) {
-                        Column(modifier = Modifier.weight(1.10f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            LunarRow(listOf("56", "57", "58", "59", "60", "61", "62", "63"), byName, onTableClick)
-                            LunarRow(listOf("71", "72", "73", "75", "76", "77", "78", "79", "80", "81", "82"), byName, onTableClick)
+                    // 后2行：第5行左右分列，第6行合并为一行平均
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Row(verticalAlignment = Alignment.Top) {
+                            Column(modifier = Modifier.weight(1.10f)) {
+                                LunarRow(listOf("56", "57", "58", "59", "60", "61", "62", "63"), byName, onTableClick)
+                            }
+                            Column(modifier = Modifier.weight(0.90f)) {
+                                LunarRow(listOf("65", "66", "67", "68", "69", "70"), byName, onTableClick)
+                            }
                         }
-                        Column(modifier = Modifier.weight(0.90f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            LunarRow(listOf("65", "66", "67", "68", "69", "70"), byName, onTableClick)
-                            LunarRow(listOf("83", "85", "86"), byName, onTableClick)
-                        }
+                        LunarRow(listOf("71", "72", "73", "75", "76", "77", "78", "79", "80", "81", "82", "83", "85", "86"), byName, onTableClick)
                     }
                 }
 

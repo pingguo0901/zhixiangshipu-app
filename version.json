@@ -1,7 +1,7 @@
 {
-  "versionCode": 209,
-  "versionName": "1.2.93",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.93/zhixiangshipu-app.apk",
-  "changelog": "- 历史订单列表类型也显示对应模式",
+  "versionCode": 210,
+  "versionName": "1.2.94",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.94/zhixiangshipu-app.apk",
+  "changelog": "- Lunar 第6行桌台格子大小平均",
   "buildDate": "2026-09-19"
 }
