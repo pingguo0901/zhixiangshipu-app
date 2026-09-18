@@ -71,10 +71,8 @@ fun App(
                 val ns = rt?.let { SupabaseClient.refreshSession(it).getOrNull() }
                 if (ns != null) {
                     SessionManager.updateTokens(ns.access_token, ns.refresh_token)
-                } else if (!useDesktopLayout) {
-                    // 桌面端保持登录，不自动登出（保证后台自动出单永远在线）
-                    SessionManager.clear()
                 }
+                // 刷新失败也保留会话，不自动退出（运行期每 60 秒自动重试刷新，避免无感掉线/退出）
             }
         }
 
