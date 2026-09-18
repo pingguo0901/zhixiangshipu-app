@@ -1,7 +1,7 @@
 {
-  "versionCode": 207,
-  "versionName": "1.2.91",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.91/zhixiangshipu-app.apk",
-  "changelog": "- 订单详情类型显示对应模式（堂食/外卖/Facebook/WhatsApp/Grabfood/Foodpanda/Topone/Lunar）",
+  "versionCode": 208,
+  "versionName": "1.2.92",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.92/zhixiangshipu-app.apk",
+  "changelog": "- Lunar 第5/6行左散台拉长补掉 STAGE 空隙",
   "buildDate": "2026-09-19"
 }

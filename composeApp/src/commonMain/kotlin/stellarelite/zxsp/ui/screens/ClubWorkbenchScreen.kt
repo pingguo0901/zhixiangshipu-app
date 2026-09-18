@@ -191,27 +191,36 @@ private fun LunarBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick:
 
             // 中部：左散台 | 小舞台 | 右散台 | 包厢
             Row(verticalAlignment = Alignment.Top) {
-                // 左侧散台
-                Column(modifier = Modifier.weight(1.30f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    LunarRow(listOf("01", "02", "03", "05", "06"), byName, onTableClick)
-                    LunarRow(listOf("12", "13", "15", "16", "17"), byName, onTableClick)
-                    LunarRow(listOf("23", "25", "26", "27", "28"), byName, onTableClick)
-                    LunarRow(listOf("35", "36", "37", "38", "39"), byName, onTableClick)
-                    LunarRow(listOf("56", "57", "58", "59", "60", "61", "62", "63"), byName, onTableClick)
-                    LunarRow(listOf("71", "72", "73", "75", "76", "77", "78", "79", "80", "81", "82"), byName, onTableClick)
-                }
-
-                // 小舞台（竖排文字，仅到第 4 行）
-                StageBox("STAGE", Modifier.width(18.dp).height(145.dp), verticalText = true)
-
-                // 右侧散台
-                Column(modifier = Modifier.weight(1.30f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    LunarRow(listOf("07", "08", "09", "10", "11"), byName, onTableClick)
-                    LunarRow(listOf("18", "19", "20", "21", "22"), byName, onTableClick)
-                    LunarRow(listOf("29", "30", "31", "32", "33"), byName, onTableClick)
-                    LunarRow(listOf("50", "51", "52", "53", "55"), byName, onTableClick)
-                    LunarRow(listOf("65", "66", "67", "68", "69", "70"), byName, onTableClick)
-                    LunarRow(listOf("83", "85", "86"), byName, onTableClick)
+                // 散台区（左+右，中间夹 STAGE）
+                Column(modifier = Modifier.weight(1.60f)) {
+                    // 前4行：左散台 + 小舞台 + 右散台
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            LunarRow(listOf("01", "02", "03", "05", "06"), byName, onTableClick)
+                            LunarRow(listOf("12", "13", "15", "16", "17"), byName, onTableClick)
+                            LunarRow(listOf("23", "25", "26", "27", "28"), byName, onTableClick)
+                            LunarRow(listOf("35", "36", "37", "38", "39"), byName, onTableClick)
+                        }
+                        // 小舞台（竖排文字，仅到第 4 行）
+                        StageBox("STAGE", Modifier.width(18.dp).height(145.dp), verticalText = true)
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            LunarRow(listOf("07", "08", "09", "10", "11"), byName, onTableClick)
+                            LunarRow(listOf("18", "19", "20", "21", "22"), byName, onTableClick)
+                            LunarRow(listOf("29", "30", "31", "32", "33"), byName, onTableClick)
+                            LunarRow(listOf("50", "51", "52", "53", "55"), byName, onTableClick)
+                        }
+                    }
+                    // 后2行：左散台拉长补掉 STAGE 空隙 + 右散台
+                    Row(verticalAlignment = Alignment.Top) {
+                        Column(modifier = Modifier.weight(1.10f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            LunarRow(listOf("56", "57", "58", "59", "60", "61", "62", "63"), byName, onTableClick)
+                            LunarRow(listOf("71", "72", "73", "75", "76", "77", "78", "79", "80", "81", "82"), byName, onTableClick)
+                        }
+                        Column(modifier = Modifier.weight(0.90f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            LunarRow(listOf("65", "66", "67", "68", "69", "70"), byName, onTableClick)
+                            LunarRow(listOf("83", "85", "86"), byName, onTableClick)
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(6.dp))
