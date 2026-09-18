@@ -201,8 +201,8 @@ private fun LunarBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick:
                     LunarRow(listOf("71", "72", "73", "75", "76", "77", "78", "79", "80", "81", "82"), byName, onTableClick)
                 }
 
-                // 小舞台（竖排文字）
-                StageBox("STAGE", Modifier.width(18.dp).height(220.dp), verticalText = true)
+                // 小舞台（竖排文字，仅到第 4 行）
+                StageBox("STAGE", Modifier.width(18.dp).height(145.dp), verticalText = true)
 
                 // 右侧散台
                 Column(modifier = Modifier.weight(1.30f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -226,7 +226,15 @@ private fun LunarBoard(onBack: () -> Unit, onNewOrder: () -> Unit, onTableClick:
                         LunarRoom("888", byName, onTableClick, Modifier.weight(1f))
                         LunarRoom("333", byName, onTableClick, Modifier.weight(1f))
                     }
-                    LunarRoom("BAR", byName, onTableClick, Modifier.fillMaxWidth(), tall = true)
+                    // BAR 不是桌台，不可下单（仅视觉展示）
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(64.dp)
+                            .background(LunarBlack, RoundedCornerShape(6.dp))
+                            .border(1.dp, LunarGold, RoundedCornerShape(6.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("BAR", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = LunarCream, maxLines = 1, textAlign = TextAlign.Center)
+                    }
                 }
             }
 

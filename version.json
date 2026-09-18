@@ -1,7 +1,7 @@
 {
-  "versionCode": 205,
-  "versionName": "1.2.89",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.89/zhixiangshipu-app.apk",
-  "changelog": "- 外卖费 RM2 覆盖所有外卖模式（新建+编辑）\n- 手机打印改为远程打印到桌面端（USB 打印机）",
+  "versionCode": 206,
+  "versionName": "1.2.90",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.90/zhixiangshipu-app.apk",
+  "changelog": "- Lunar 布局调整：竖排 STAGE 只到第4行；BAR 改为不可下单（非桌台）",
   "buildDate": "2026-09-19"
 }
