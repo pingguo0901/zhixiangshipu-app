@@ -219,6 +219,19 @@ private fun orderMode(tableNo: String?): String = when {
 private fun displayTableNo(tableNo: String): String =
     if (LanguageManager.isEnglish && tableNo.startsWith("外卖")) "TA-" + tableNo.removePrefix("外卖") else tableNo
 
+// 订单类型显示（堂食/外卖/Facebook/WhatsApp/Grabfood/Foodpanda/Topone/Lunar）
+private fun orderTypeLabel(tableNo: String?): String = when {
+    tableNo == null -> if (LanguageManager.isEnglish) "Dine-in" else "堂食"
+    tableNo.startsWith("Facebook外卖") -> "Facebook"
+    tableNo.startsWith("WhatsApp外卖") -> "WhatsApp"
+    tableNo.startsWith("Grabfood外卖") -> "Grabfood"
+    tableNo.startsWith("Foodpanda外卖") -> "Foodpanda"
+    tableNo.startsWith("Topone-") -> "Topone"
+    tableNo.startsWith("Lunar-") -> "Lunar"
+    tableNo.startsWith("外卖") -> if (LanguageManager.isEnglish) "Takeaway" else "外卖"
+    else -> if (LanguageManager.isEnglish) "Dine-in" else "堂食"
+}
+
 @Composable
 private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Unit) {
     val statusLabel = when (order.payment_status) {
@@ -339,7 +352,7 @@ private fun OrderDetailScreen(order: CustomerOrder, onBack: () -> Unit) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 DetailRow(t("订单号", "Order No."), currentOrder.order_no)
                 DetailRow(t("收据号", "Receipt No."), currentOrder.receipt_no.ifBlank { "—" })
-                DetailRow(t("类型", "Type"), if (isTakeaway) t("外卖", "Takeaway") else t("堂食", "Dine-in"))
+                DetailRow(t("类型", "Type"), orderTypeLabel(tableNo))
                 DetailRow(t("备注", "Note"), currentOrder.notes?.takeIf { it.isNotBlank() } ?: "—")
                 DetailRow(t("桌台", "Table"), if (isTakeaway) (tableNo?.let { displayTableNo(it) } ?: t("外卖", "Takeaway")) else (tableNo ?: "${t("桌", "Table")} #${currentOrder.table_id}"))
                 DetailRow(t("状态", "Status"), when (currentOrder.payment_status) {

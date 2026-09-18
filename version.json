@@ -1,7 +1,7 @@
 {
-  "versionCode": 206,
-  "versionName": "1.2.90",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.90/zhixiangshipu-app.apk",
-  "changelog": "- Lunar 布局调整：竖排 STAGE 只到第4行；BAR 改为不可下单（非桌台）",
+  "versionCode": 207,
+  "versionName": "1.2.91",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.91/zhixiangshipu-app.apk",
+  "changelog": "- 订单详情类型显示对应模式（堂食/外卖/Facebook/WhatsApp/Grabfood/Foodpanda/Topone/Lunar）",
   "buildDate": "2026-09-19"
 }
