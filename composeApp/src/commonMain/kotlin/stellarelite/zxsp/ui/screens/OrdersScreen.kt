@@ -142,10 +142,8 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
             "unpaid" to t("未付款", "Unpaid"),
             "dinein" to t("堂食", "Dine-in"),
             "takeaway" to t("外卖", "Takeaway"),
-            "facebook" to "Facebook",
             "grabfood" to "Grabfood",
             "foodpanda" to "Foodpanda",
-            "whatsapp" to "WhatsApp",
             "online" to "Online",
             "topone" to "Topone",
             "lunar" to "Lunar",
@@ -206,8 +204,6 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
 // 订单模式分类（按桌台号前缀）：堂食/外卖/各平台/酒吧
 private fun orderMode(tableNo: String?): String = when {
     tableNo == null -> "dinein"
-    tableNo.startsWith("Facebook外卖") -> "facebook"
-    tableNo.startsWith("WhatsApp外卖") -> "whatsapp"
     tableNo.startsWith("Online外卖") -> "online"
     tableNo.startsWith("Grabfood外卖") -> "grabfood"
     tableNo.startsWith("Foodpanda外卖") -> "foodpanda"
@@ -221,11 +217,9 @@ private fun orderMode(tableNo: String?): String = when {
 private fun displayTableNo(tableNo: String): String =
     if (LanguageManager.isEnglish && tableNo.startsWith("外卖")) "TA-" + tableNo.removePrefix("外卖") else tableNo
 
-// 订单类型显示（堂食/外卖/Facebook/WhatsApp/Grabfood/Foodpanda/Topone/Lunar）
+// 订单类型显示（堂食/外卖/Grabfood/Foodpanda/Online/Topone/Lunar）
 private fun orderTypeLabel(tableNo: String?): String = when {
     tableNo == null -> if (LanguageManager.isEnglish) "Dine-in" else "堂食"
-    tableNo.startsWith("Facebook外卖") -> "Facebook"
-    tableNo.startsWith("WhatsApp外卖") -> "WhatsApp"
     tableNo.startsWith("Online外卖") -> "Online"
     tableNo.startsWith("Grabfood外卖") -> "Grabfood"
     tableNo.startsWith("Foodpanda外卖") -> "Foodpanda"
@@ -247,7 +241,7 @@ private fun OrderCard(order: CustomerOrder, tableNo: String?, onClick: () -> Uni
         "partial" -> DiningColors.Warning
         else -> DiningColors.Error
     }
-    // 订单类型（堂食/外卖/Facebook/WhatsApp/Grabfood/Foodpanda/Topone/Lunar）
+    // 订单类型（堂食/外卖/Grabfood/Foodpanda/Online/Topone/Lunar）
     val typeLabel = if (tableNo != null) orderTypeLabel(tableNo) else null
     val orderType = when {
         typeLabel != null -> "$typeLabel · ${displayTableNo(tableNo!!)}"
@@ -612,9 +606,9 @@ private fun OrderEditDialog(
         runCatching {
             tables = SupabaseClient.fetchTables()
             tables.firstOrNull { it.id == order.table_id }?.let { t ->
-                isTakeaway = t.table_no.startsWith("外卖") || t.table_no.startsWith("Facebook") ||
+                isTakeaway = t.table_no.startsWith("外卖") || t.table_no.startsWith("Online") ||
                     t.table_no.startsWith("Grabfood") || t.table_no.startsWith("Foodpanda") ||
-                    t.table_no.startsWith("WhatsApp") || t.table_no.startsWith("Topone-") || t.table_no.startsWith("Lunar-")
+                    t.table_no.startsWith("Topone-") || t.table_no.startsWith("Lunar-")
             }
             menuItems = SupabaseClient.fetchMenuItems().filter { it.is_active }
             order.order_items.jsonArray.forEach { el ->
@@ -632,7 +626,7 @@ private fun OrderEditDialog(
         loading = false
     }
 
-    // 原订单里的配送费合计（网页 Facebook/WhatsApp 才有）
+    // 原订单里的配送费合计（网页 Online 才有）
     val deliveryFeeTotal = remember(order.order_items) {
         order.order_items.jsonArray.sumOf { el ->
             val obj = el.jsonObject
@@ -1168,8 +1162,6 @@ internal fun splitItemNameEn(nameEn: String): Pair<String, String> {
 
 // 厨房单桌台号显示：平台号去后缀、外卖统一 Takeaway、堂食保留桌台号
 internal fun kitchenTableLabel(tableNo: String): String = when {
-    tableNo.startsWith("Facebook外卖") -> "Facebook " + tableNo.removePrefix("Facebook外卖")
-    tableNo.startsWith("WhatsApp外卖") -> "WhatsApp " + tableNo.removePrefix("WhatsApp外卖")
     tableNo.startsWith("Online外卖") -> "Online " + tableNo.removePrefix("Online外卖")
     tableNo.startsWith("Grabfood外卖") -> "Grabfood " + tableNo.removePrefix("Grabfood外卖")
     tableNo.startsWith("Foodpanda外卖") -> "Foodpanda " + tableNo.removePrefix("Foodpanda外卖")

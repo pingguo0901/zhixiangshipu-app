@@ -32,14 +32,12 @@ import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.ui.components.BackHandler
 import stellarelite.zxsp.ui.theme.DiningColors
 
-// 用餐方式：堂食 / 到店外卖 / 四平台外卖（Facebook/Grabfood/Foodpanda/WhatsApp）
+// 用餐方式：堂食 / 到店外卖 / 三平台外卖（Grabfood/Foodpanda/Online）
 enum class DiningMode(val platformPrefix: String? = null) {
     DineIn,
     Takeaway,
-    Facebook("Facebook外卖"),
     Grabfood("Grabfood外卖"),
     Foodpanda("Foodpanda外卖"),
-    WhatsApp("WhatsApp外卖"),
     Online("Online外卖")
 }
 
@@ -77,8 +75,6 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
             if (t != null) {
                 tableId = t.id
                 diningMode = when {
-                    t.table_no.startsWith("Facebook外卖") -> DiningMode.Facebook
-                    t.table_no.startsWith("WhatsApp外卖") -> DiningMode.WhatsApp
                     t.table_no.startsWith("Online外卖") -> DiningMode.Online
                     t.table_no.startsWith("Grabfood外卖") -> DiningMode.Grabfood
                     t.table_no.startsWith("Foodpanda外卖") -> DiningMode.Foodpanda
@@ -91,10 +87,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
 
     val dineInTables = tables.filter { !it.table_no.contains("外卖") && !it.table_no.startsWith("Topone-") && !it.table_no.startsWith("Lunar-") }
     val takeawayTables = tables.filter { it.table_no.startsWith("外卖") }.sortedBy { it.table_no.removePrefix("外卖").toIntOrNull() ?: Int.MAX_VALUE }
-    val facebookTables = tables.filter { it.table_no.startsWith("Facebook外卖") }.sortedBy { it.table_no.removePrefix("Facebook外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val grabfoodTables = tables.filter { it.table_no.startsWith("Grabfood外卖") }.sortedBy { it.table_no.removePrefix("Grabfood外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val foodpandaTables = tables.filter { it.table_no.startsWith("Foodpanda外卖") }.sortedBy { it.table_no.removePrefix("Foodpanda外卖").toIntOrNull() ?: Int.MAX_VALUE }
-    val whatsappTables = tables.filter { it.table_no.startsWith("WhatsApp外卖") }.sortedBy { it.table_no.removePrefix("WhatsApp外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val onlineTables = tables.filter { it.table_no.startsWith("Online外卖") }.sortedBy { it.table_no.removePrefix("Online外卖").toIntOrNull() ?: Int.MAX_VALUE }
 
     // 外带费：所有外卖（到店外卖 + 三平台外卖 + Topone/Lunar 酒吧）均收 +RM2
@@ -104,10 +98,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
     val currentModeTables = when (diningMode) {
         DiningMode.DineIn -> dineInTables
         DiningMode.Takeaway -> takeawayTables
-        DiningMode.Facebook -> facebookTables
         DiningMode.Grabfood -> grabfoodTables
         DiningMode.Foodpanda -> foodpandaTables
-        DiningMode.WhatsApp -> whatsappTables
         DiningMode.Online -> onlineTables
     }
 
@@ -118,10 +110,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
             tableId = when (initialMode) {
                 DiningMode.DineIn -> dineInTables.firstOrNull()?.id
                 DiningMode.Takeaway -> takeawayTables.firstOrNull()?.id
-                DiningMode.Facebook -> facebookTables.firstOrNull()?.id
                 DiningMode.Grabfood -> grabfoodTables.firstOrNull()?.id
                 DiningMode.Foodpanda -> foodpandaTables.firstOrNull()?.id
-                DiningMode.WhatsApp -> whatsappTables.firstOrNull()?.id
                 DiningMode.Online -> onlineTables.firstOrNull()?.id
             }
         }
@@ -158,7 +148,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // 用餐方式：堂食 / 外卖 / Facebook / Grabfood / Foodpanda / WhatsApp
+                // 用餐方式：堂食 / 外卖 / Grabfood / Foodpanda / Online
                 item {
                     Text(t("用餐方式", "Dining Mode"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
@@ -178,11 +168,6 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                             label = { Text(t("外卖", "Takeaway")) }
                         )
                         FilterChip(
-                            selected = diningMode == DiningMode.Facebook,
-                            onClick = { diningMode = DiningMode.Facebook; tableId = facebookTables.firstOrNull()?.id },
-                            label = { Text("Facebook") }
-                        )
-                        FilterChip(
                             selected = diningMode == DiningMode.Grabfood,
                             onClick = { diningMode = DiningMode.Grabfood; tableId = grabfoodTables.firstOrNull()?.id },
                             label = { Text("Grabfood") }
@@ -191,11 +176,6 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                             selected = diningMode == DiningMode.Foodpanda,
                             onClick = { diningMode = DiningMode.Foodpanda; tableId = foodpandaTables.firstOrNull()?.id },
                             label = { Text("Foodpanda") }
-                        )
-                        FilterChip(
-                            selected = diningMode == DiningMode.WhatsApp,
-                            onClick = { diningMode = DiningMode.WhatsApp; tableId = whatsappTables.firstOrNull()?.id },
-                            label = { Text("WhatsApp") }
                         )
                         FilterChip(
                             selected = diningMode == DiningMode.Online,
@@ -211,10 +191,8 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                     val title = when (diningMode) {
                         DiningMode.DineIn -> t("选择桌台", "Select Table")
                         DiningMode.Takeaway -> t("外卖号（自动排号）", "Takeaway No. (auto-assigned)")
-                        DiningMode.Facebook -> t("Facebook 号（自动排号）", "Facebook No. (auto-assigned)")
                         DiningMode.Grabfood -> t("Grabfood 号（自动排号）", "Grabfood No. (auto-assigned)")
                         DiningMode.Foodpanda -> t("Foodpanda 号（自动排号）", "Foodpanda No. (auto-assigned)")
-                        DiningMode.WhatsApp -> t("WhatsApp 号（自动排号）", "WhatsApp No. (auto-assigned)")
                         DiningMode.Online -> t("Online 号（自动排号）", "Online No. (auto-assigned)")
                     }
                     val emptyHint = when (diningMode) {
@@ -224,7 +202,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                     Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DiningColors.TextPrimary)
                     Spacer(modifier = Modifier.height(8.dp))
                     if (autoMode) {
-                        // 外卖 / Facebook / Grabfood / Foodpanda / WhatsApp：自动排号，无需选号
+                        // 外卖 / Grabfood / Foodpanda / Online：自动排号，无需选号
                         val assigned = currentModeTables.firstOrNull { it.id == tableId }
                         if (assigned == null) {
                             Text(emptyHint, fontSize = 13.sp, color = DiningColors.TextMuted)
@@ -465,12 +443,10 @@ private fun unitLabel(unit: String): String =
 private fun displayTableNo(tableNo: String): String =
     if (LanguageManager.isEnglish && tableNo.startsWith("外卖")) "TA-" + tableNo.removePrefix("外卖") else tableNo
 
-// 用餐方式号码显示：平台号只显示数字（去掉 Facebook/Grabfood/Foodpanda/WhatsApp 前缀）
+// 用餐方式号码显示：平台号只显示数字（去掉 Grabfood/Foodpanda/Online 前缀）
 private fun diningNoLabel(table: TableList, mode: DiningMode): String = when (mode) {
-    DiningMode.Facebook -> table.table_no.removePrefix("Facebook外卖")
     DiningMode.Grabfood -> table.table_no.removePrefix("Grabfood外卖")
     DiningMode.Foodpanda -> table.table_no.removePrefix("Foodpanda外卖")
-    DiningMode.WhatsApp -> table.table_no.removePrefix("WhatsApp外卖")
     DiningMode.Online -> table.table_no.removePrefix("Online外卖")
     else -> displayTableNo(table.table_no)
 }

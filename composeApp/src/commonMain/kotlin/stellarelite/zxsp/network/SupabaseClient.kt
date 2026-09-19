@@ -340,9 +340,9 @@ object SupabaseClient {
         return resp.status.isSuccess()
     }
 
-    // 幂等创建五个平台外卖号（Facebook/Grabfood/Foodpanda/WhatsApp/Online 各 20 个）
+    // 幂等创建三个平台外卖号（Grabfood/Foodpanda/Online 各 20 个）
     suspend fun ensurePlatformTakeawayTables(): Boolean {
-        val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖", "WhatsApp外卖", "Online外卖")
+        val platforms = listOf("Grabfood外卖", "Foodpanda外卖", "Online外卖")
         val existing = fetchTables().map { it.table_no }.toSet()
         var ok = true
         platforms.forEach { platform ->
