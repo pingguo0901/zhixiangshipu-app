@@ -1,7 +1,7 @@
 {
-  "versionCode": 212,
-  "versionName": "1.2.96",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.96/zhixiangshipu-app.apk",
-  "changelog": "- 员工端取消 Facebook/WhatsApp 外卖入口（保留 Grabfood/Foodpanda/Online）",
+  "versionCode": 213,
+  "versionName": "1.2.97",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.97/zhixiangshipu-app.apk",
+  "changelog": "- 线上支付单改为 Stripe 支付成功后才出单厨房",
   "buildDate": "2026-09-20"
 }

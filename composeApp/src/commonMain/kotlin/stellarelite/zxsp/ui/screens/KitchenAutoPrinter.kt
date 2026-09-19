@@ -25,13 +25,18 @@ object KitchenAutoPrinter {
         if (orderId > lastPrintedId) lastPrintedId = orderId
     }
 
-    // 轮询一轮：打印所有新订单
+    // 轮询一轮：打印所有新订单（线上支付单 Online外卖 由 Stripe Webhook 支付成功后出单，这里跳过）
     suspend fun pollOnce() {
         val newOrders = SupabaseClient.fetchOrdersAfterId(lastPrintedId)
         if (newOrders.isEmpty()) return
         val tables = SupabaseClient.fetchTables()
         for (order in newOrders) {
             val tno = tables.firstOrNull { it.id == order.table_id }?.table_no ?: "外卖"
+            // 线上支付单（Online外卖）：支付成功后才由 Webhook 写 print_jobs 出单，这里不重复打印
+            if (tno.startsWith("Online外卖")) {
+                lastPrintedId = order.id
+                continue
+            }
             val time = formatDateTimeMy(order.order_datetime ?: "")
             val lines = parseOrderLines(order.order_items)
             // 厨房出单统一英文版（已取消中文版）
