@@ -696,15 +696,16 @@ private fun TakeawayBoard(onNewOrder: (DiningMode) -> Unit, refreshKey: Int = 0)
         }
     }
 
-    val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖", "WhatsApp外卖")
+    val platforms = listOf("Facebook外卖", "Grabfood外卖", "Foodpanda外卖", "WhatsApp外卖", "Online外卖")
 
-    // 四平台统计
+    // 五平台统计
     val platformTables = tables.filter { t -> platforms.any { t.table_no.startsWith(it) } }
     val occupiedPlatform = platformTables.count { it.table_status == "occupied" }
     val fbCount = tables.count { it.table_no.startsWith("Facebook外卖") }
     val gfCount = tables.count { it.table_no.startsWith("Grabfood外卖") }
     val fpCount = tables.count { it.table_no.startsWith("Foodpanda外卖") }
     val waCount = tables.count { it.table_no.startsWith("WhatsApp外卖") }
+    val onCount = tables.count { it.table_no.startsWith("Online外卖") }
 
     Column(
         modifier = Modifier
@@ -737,6 +738,7 @@ private fun TakeawayBoard(onNewOrder: (DiningMode) -> Unit, refreshKey: Int = 0)
                 StatItem(Icons.Outlined.DeliveryDining, "$gfCount", "Grabfood")
                 StatItem(Icons.Outlined.DeliveryDining, "$fpCount", "Foodpanda")
                 StatItem(Icons.Outlined.DeliveryDining, "$waCount", "WhatsApp")
+                StatItem(Icons.Outlined.DeliveryDining, "$onCount", "Online")
             }
         }
 
@@ -747,6 +749,7 @@ private fun TakeawayBoard(onNewOrder: (DiningMode) -> Unit, refreshKey: Int = 0)
         TakeawayModeButton("Grabfood", DiningMode.Grabfood, onNewOrder)
         TakeawayModeButton("Foodpanda", DiningMode.Foodpanda, onNewOrder)
         TakeawayModeButton("WhatsApp", DiningMode.WhatsApp, onNewOrder)
+        TakeawayModeButton("Online", DiningMode.Online, onNewOrder)
     }
 }
 

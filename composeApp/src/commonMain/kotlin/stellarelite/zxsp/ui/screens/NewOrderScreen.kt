@@ -39,7 +39,8 @@ enum class DiningMode(val platformPrefix: String? = null) {
     Facebook("Facebook外卖"),
     Grabfood("Grabfood外卖"),
     Foodpanda("Foodpanda外卖"),
-    WhatsApp("WhatsApp外卖")
+    WhatsApp("WhatsApp外卖"),
+    Online("Online外卖")
 }
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
@@ -78,6 +79,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                 diningMode = when {
                     t.table_no.startsWith("Facebook外卖") -> DiningMode.Facebook
                     t.table_no.startsWith("WhatsApp外卖") -> DiningMode.WhatsApp
+                    t.table_no.startsWith("Online外卖") -> DiningMode.Online
                     t.table_no.startsWith("Grabfood外卖") -> DiningMode.Grabfood
                     t.table_no.startsWith("Foodpanda外卖") -> DiningMode.Foodpanda
                     t.table_no.contains("外卖") -> DiningMode.Takeaway
@@ -93,6 +95,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
     val grabfoodTables = tables.filter { it.table_no.startsWith("Grabfood外卖") }.sortedBy { it.table_no.removePrefix("Grabfood外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val foodpandaTables = tables.filter { it.table_no.startsWith("Foodpanda外卖") }.sortedBy { it.table_no.removePrefix("Foodpanda外卖").toIntOrNull() ?: Int.MAX_VALUE }
     val whatsappTables = tables.filter { it.table_no.startsWith("WhatsApp外卖") }.sortedBy { it.table_no.removePrefix("WhatsApp外卖").toIntOrNull() ?: Int.MAX_VALUE }
+    val onlineTables = tables.filter { it.table_no.startsWith("Online外卖") }.sortedBy { it.table_no.removePrefix("Online外卖").toIntOrNull() ?: Int.MAX_VALUE }
 
     // 外带费：所有外卖（到店外卖 + 三平台外卖 + Topone/Lunar 酒吧）均收 +RM2
     val selectedTableNo = tables.firstOrNull { it.id == tableId }?.table_no ?: ""
@@ -105,6 +108,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
         DiningMode.Grabfood -> grabfoodTables
         DiningMode.Foodpanda -> foodpandaTables
         DiningMode.WhatsApp -> whatsappTables
+        DiningMode.Online -> onlineTables
     }
 
     // 从外卖工作台按钮进入时，预选用餐方式并自动排号
@@ -118,6 +122,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                 DiningMode.Grabfood -> grabfoodTables.firstOrNull()?.id
                 DiningMode.Foodpanda -> foodpandaTables.firstOrNull()?.id
                 DiningMode.WhatsApp -> whatsappTables.firstOrNull()?.id
+                DiningMode.Online -> onlineTables.firstOrNull()?.id
             }
         }
     }
@@ -192,6 +197,11 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                             onClick = { diningMode = DiningMode.WhatsApp; tableId = whatsappTables.firstOrNull()?.id },
                             label = { Text("WhatsApp") }
                         )
+                        FilterChip(
+                            selected = diningMode == DiningMode.Online,
+                            onClick = { diningMode = DiningMode.Online; tableId = onlineTables.firstOrNull()?.id },
+                            label = { Text("Online") }
+                        )
                     }
                 }
 
@@ -205,6 +215,7 @@ fun NewOrderScreen(onBack: () -> Unit, initialTableId: Long? = null, initialMode
                         DiningMode.Grabfood -> t("Grabfood 号（自动排号）", "Grabfood No. (auto-assigned)")
                         DiningMode.Foodpanda -> t("Foodpanda 号（自动排号）", "Foodpanda No. (auto-assigned)")
                         DiningMode.WhatsApp -> t("WhatsApp 号（自动排号）", "WhatsApp No. (auto-assigned)")
+                        DiningMode.Online -> t("Online 号（自动排号）", "Online No. (auto-assigned)")
                     }
                     val emptyHint = when (diningMode) {
                         DiningMode.DineIn -> t("暂无空闲桌台", "No free tables")
@@ -460,6 +471,7 @@ private fun diningNoLabel(table: TableList, mode: DiningMode): String = when (mo
     DiningMode.Grabfood -> table.table_no.removePrefix("Grabfood外卖")
     DiningMode.Foodpanda -> table.table_no.removePrefix("Foodpanda外卖")
     DiningMode.WhatsApp -> table.table_no.removePrefix("WhatsApp外卖")
+    DiningMode.Online -> table.table_no.removePrefix("Online外卖")
     else -> displayTableNo(table.table_no)
 }
 

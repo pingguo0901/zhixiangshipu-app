@@ -146,6 +146,7 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
             "grabfood" to "Grabfood",
             "foodpanda" to "Foodpanda",
             "whatsapp" to "WhatsApp",
+            "online" to "Online",
             "topone" to "Topone",
             "lunar" to "Lunar",
         )
@@ -207,6 +208,7 @@ private fun orderMode(tableNo: String?): String = when {
     tableNo == null -> "dinein"
     tableNo.startsWith("Facebook外卖") -> "facebook"
     tableNo.startsWith("WhatsApp外卖") -> "whatsapp"
+    tableNo.startsWith("Online外卖") -> "online"
     tableNo.startsWith("Grabfood外卖") -> "grabfood"
     tableNo.startsWith("Foodpanda外卖") -> "foodpanda"
     tableNo.startsWith("Topone-") -> "topone"
@@ -224,6 +226,7 @@ private fun orderTypeLabel(tableNo: String?): String = when {
     tableNo == null -> if (LanguageManager.isEnglish) "Dine-in" else "堂食"
     tableNo.startsWith("Facebook外卖") -> "Facebook"
     tableNo.startsWith("WhatsApp外卖") -> "WhatsApp"
+    tableNo.startsWith("Online外卖") -> "Online"
     tableNo.startsWith("Grabfood外卖") -> "Grabfood"
     tableNo.startsWith("Foodpanda外卖") -> "Foodpanda"
     tableNo.startsWith("Topone-") -> "Topone"
@@ -1167,6 +1170,7 @@ internal fun splitItemNameEn(nameEn: String): Pair<String, String> {
 internal fun kitchenTableLabel(tableNo: String): String = when {
     tableNo.startsWith("Facebook外卖") -> "Facebook " + tableNo.removePrefix("Facebook外卖")
     tableNo.startsWith("WhatsApp外卖") -> "WhatsApp " + tableNo.removePrefix("WhatsApp外卖")
+    tableNo.startsWith("Online外卖") -> "Online " + tableNo.removePrefix("Online外卖")
     tableNo.startsWith("Grabfood外卖") -> "Grabfood " + tableNo.removePrefix("Grabfood外卖")
     tableNo.startsWith("Foodpanda外卖") -> "Foodpanda " + tableNo.removePrefix("Foodpanda外卖")
     tableNo.startsWith("Topone-") -> "Topone " + tableNo.removePrefix("Topone-")
