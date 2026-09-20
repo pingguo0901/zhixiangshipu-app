@@ -1,7 +1,7 @@
 {
-  "versionCode": 215,
-  "versionName": "1.2.99",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.99/zhixiangshipu-app.apk",
-  "changelog": "- 付款方式改为：现金 / TNG / 支付宝 / 拍卡（移除 DuitNow）",
-  "buildDate": "2026-09-20"
+  "versionCode": 216,
+  "versionName": "1.2.100",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.100/zhixiangshipu-app.apk",
+  "changelog": "- 顾客网页下单（Online外卖）未付款时不显示在订单管理页，支付成功后才出现，避免提前备餐浪费",
+  "buildDate": "2026-09-21"
 }

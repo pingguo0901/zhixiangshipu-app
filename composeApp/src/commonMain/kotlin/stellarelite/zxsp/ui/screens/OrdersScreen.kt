@@ -113,11 +113,15 @@ private fun OrderListView(onNew: () -> Unit, onDetail: (CustomerOrder) -> Unit, 
         }
     }
 
+    // 未付款的线上外卖单（Online外卖）不显示，等支付成功后才出现，避免员工提前备餐浪费
+    val visibleOrders = orders.filter { o ->
+        !(orderMode(tableMap[o.table_id]) == "online" && o.payment_status != "paid")
+    }
     val filtered = when (filter) {
-        "paid" -> orders.filter { it.payment_status == "paid" }
-        "unpaid" -> orders.filter { it.payment_status != "paid" }
-        "all" -> orders
-        else -> orders.filter { orderMode(tableMap[it.table_id]) == filter }
+        "paid" -> visibleOrders.filter { it.payment_status == "paid" }
+        "unpaid" -> visibleOrders.filter { it.payment_status != "paid" }
+        "all" -> visibleOrders
+        else -> visibleOrders.filter { orderMode(tableMap[it.table_id]) == filter }
     }
     val grouped = filtered.groupBy { isoToKlDate(it.order_datetime ?: "") }
 
