@@ -52,6 +52,8 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.stripe.terminal)
+            implementation(libs.stripe.terminal.taptopay)
         }
 
         iosMain.dependencies {
@@ -74,10 +76,10 @@ android {
 
     defaultConfig {
         applicationId = "stellarelite.zxsp"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
-        versionCode = 213
-        versionName = "1.2.97"
+        versionCode = 214
+        versionName = "1.2.98"
     }
 
     compileOptions {

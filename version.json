@@ -1,7 +1,7 @@
 {
-  "versionCode": 213,
-  "versionName": "1.2.97",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.97/zhixiangshipu-app.apk",
-  "changelog": "- 线上支付单改为 Stripe 支付成功后才出单厨房",
+  "versionCode": 214,
+  "versionName": "1.2.98",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.98/zhixiangshipu-app.apk",
+  "changelog": "- 新增拍卡收款（Tap to Pay，手机 NFC）",
   "buildDate": "2026-09-20"
 }

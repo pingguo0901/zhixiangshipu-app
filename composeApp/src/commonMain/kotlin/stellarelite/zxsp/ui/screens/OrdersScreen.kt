@@ -33,6 +33,7 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlin.math.roundToLong
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
@@ -52,6 +53,7 @@ import stellarelite.zxsp.network.ReceiptItem
 import stellarelite.zxsp.network.ReceiptMaster
 import stellarelite.zxsp.network.SupabaseClient
 import stellarelite.zxsp.network.TableList
+import stellarelite.zxsp.platform.TapToPayController
 import stellarelite.zxsp.platform.printReceiptText
 import stellarelite.zxsp.platform.rememberCamera
 import stellarelite.zxsp.platform.toImageBitmap
@@ -888,6 +890,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
     var receiptBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var showQr by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
+    var tapStatus by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
     val lines = parseOrderLines(order.order_items)
@@ -918,6 +921,9 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("cash" to t("现金", "Cash"), "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to t("支付宝", "Alipay")).forEach { (v, l) ->
                         FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
+                    }
+                    if (TapToPayController.isSupported) {
+                        FilterChip(selected = method == "card_present", onClick = { method = "card_present" }, label = { Text(t("拍卡", "Tap to Pay")) })
                     }
                 }
 
@@ -1000,6 +1006,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                     }
                 }
 
+                if (tapStatus != null) Text(tapStatus!!, color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
                 if (saving) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = DiningColors.Primary)
             }
@@ -1011,8 +1018,21 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                     scope.launch {
                         saving = true
                         error = null
+                        tapStatus = null
+                        var cardPaymentIntentId: String? = null
+                        if (method == "card_present") {
+                            val tapResult = TapToPayController.collectPayment((finalTotal * 100).roundToLong()) { status ->
+                                tapStatus = status
+                            }
+                            if (!tapResult.success) {
+                                saving = false
+                                error = t("收款失败", "Payment failed") + "：${tapResult.message}"
+                                return@launch
+                            }
+                            cardPaymentIntentId = tapResult.paymentIntentId
+                        }
                         var receiptUrl: String? = null
-                        if (method != "cash" && receiptBitmap != null) {
+                        if (method != "cash" && method != "card_present" && receiptBitmap != null) {
                             val bytes = receiptBitmap!!.toJpegBytes()
                             if (bytes != null) {
                                 val path = "receipt_${order.id}_${Clock.System.now().toEpochMilliseconds()}.jpg"
@@ -1059,7 +1079,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                             order_id = order.id,
                             pay_amount_myr = finalTotal,
                             pay_method = method,
-                            transaction_ref = "",
+                            transaction_ref = cardPaymentIntentId ?: "",
                             receipt_attachment_url = receiptUrl,
                             received_by_staff_id = SupabaseClient.currentStaffId(),
                             transaction_datetime = now
@@ -1373,6 +1393,7 @@ private fun mapPayMode(method: String): String = when (method) {
     "duitnow" -> "DUITNOW"
     "tng_ewallet" -> "TNG"
     "alipay" -> "ALIPAY"
+    "card_present" -> "CARD_PRESENT"
     else -> "CASH"
 }
 
