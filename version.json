@@ -1,7 +1,7 @@
 {
-  "versionCode": 214,
-  "versionName": "1.2.98",
-  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.98/zhixiangshipu-app.apk",
-  "changelog": "- 新增拍卡收款（Tap to Pay，手机 NFC）",
+  "versionCode": 215,
+  "versionName": "1.2.99",
+  "apkUrl": "https://github.com/pingguo0901/zhixiangshipu-app/releases/download/v1.2.99/zhixiangshipu-app.apk",
+  "changelog": "- 付款方式改为：现金 / TNG / 支付宝 / 拍卡（移除 DuitNow）",
   "buildDate": "2026-09-20"
 }

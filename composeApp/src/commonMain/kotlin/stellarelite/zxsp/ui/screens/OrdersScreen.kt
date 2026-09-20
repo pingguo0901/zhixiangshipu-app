@@ -717,7 +717,7 @@ private fun OrderEditDialog(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                     Text(t("付款方式", "Payment Method"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("CASH" to t("现金", "Cash"), "DUITNOW" to "DuitNow", "TNG" to "TNG", "ALIPAY" to t("支付宝", "Alipay")).forEach { (v, l) ->
+                        listOf("CASH" to t("现金", "Cash"), "TNG" to "TNG", "ALIPAY" to t("支付宝", "Alipay"), "CARD_PRESENT" to t("拍卡", "Tap to Pay")).forEach { (v, l) ->
                             FilterChip(selected = payMode == v, onClick = { payMode = v }, label = { Text(l) })
                         }
                     }
@@ -919,7 +919,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                 // 付款方式
                 Text(t("付款方式", "Payment Method"), fontSize = 12.sp, color = DiningColors.TextSecondary)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("cash" to t("现金", "Cash"), "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to t("支付宝", "Alipay")).forEach { (v, l) ->
+                    listOf("cash" to t("现金", "Cash"), "tng_ewallet" to "TNG", "alipay" to t("支付宝", "Alipay")).forEach { (v, l) ->
                         FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
                     }
                     if (TapToPayController.isSupported) {
@@ -993,7 +993,7 @@ fun PaymentDialog(order: CustomerOrder, onDismiss: () -> Unit, onPaid: (ReceiptD
                         fontWeight = FontWeight.Bold,
                         color = if (received >= finalTotal) DiningColors.Success else DiningColors.Error
                     )
-                } else {
+                } else if (method != "card_present") {
                     // 显示二维码按钮
                     OutlinedButton(onClick = { showQr = true }, modifier = Modifier.fillMaxWidth()) {
                         Text(t("显示二维码", "Show QR Code"), color = DiningColors.Primary)
@@ -1453,6 +1453,7 @@ fun CheckoutPanel(order: CustomerOrder, onBack: () -> Unit, onDone: () -> Unit) 
     var receiptBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var showQr by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
+    var tapStatus by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var receiptData by remember { mutableStateOf<ReceiptData?>(null) }
     var showReceipt by remember { mutableStateOf(false) }
@@ -1493,8 +1494,11 @@ fun CheckoutPanel(order: CustomerOrder, onBack: () -> Unit, onDone: () -> Unit) 
             // 付款方式
             Text(t("付款方式", "Payment Method"), fontSize = 12.sp, color = DiningColors.TextSecondary)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("cash" to t("现金", "Cash"), "duitnow" to "DuitNow", "tng_ewallet" to "TNG", "alipay" to t("支付宝", "Alipay")).forEach { (v, l) ->
+                listOf("cash" to t("现金", "Cash"), "tng_ewallet" to "TNG", "alipay" to t("支付宝", "Alipay")).forEach { (v, l) ->
                     FilterChip(selected = method == v, onClick = { method = v }, label = { Text(l) })
+                }
+                if (TapToPayController.isSupported) {
+                    FilterChip(selected = method == "card_present", onClick = { method = "card_present" }, label = { Text(t("拍卡", "Tap to Pay")) })
                 }
             }
 
@@ -1564,7 +1568,7 @@ fun CheckoutPanel(order: CustomerOrder, onBack: () -> Unit, onDone: () -> Unit) 
                     fontWeight = FontWeight.Bold,
                     color = if (received >= finalTotal) DiningColors.Success else DiningColors.Error
                 )
-            } else {
+            } else if (method != "card_present") {
                 // 显示二维码按钮
                 OutlinedButton(onClick = { showQr = true }, modifier = Modifier.fillMaxWidth()) {
                     Text(t("显示二维码", "Show QR Code"), color = DiningColors.Primary)
@@ -1577,6 +1581,7 @@ fun CheckoutPanel(order: CustomerOrder, onBack: () -> Unit, onDone: () -> Unit) 
                 }
             }
 
+            if (tapStatus != null) Text(tapStatus!!, color = DiningColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             if (error != null) Text("⚠️ $error", color = DiningColors.Error, fontSize = 13.sp)
             if (saving) CircularProgressIndicator(modifier = Modifier.size(22.dp), color = DiningColors.Primary)
         }
@@ -1587,8 +1592,21 @@ fun CheckoutPanel(order: CustomerOrder, onBack: () -> Unit, onDone: () -> Unit) 
                 scope.launch {
                     saving = true
                     error = null
+                    tapStatus = null
+                    var cardPaymentIntentId: String? = null
+                    if (method == "card_present") {
+                        val tapResult = TapToPayController.collectPayment((finalTotal * 100).roundToLong()) { status ->
+                            tapStatus = status
+                        }
+                        if (!tapResult.success) {
+                            saving = false
+                            error = t("收款失败", "Payment failed") + "：${tapResult.message}"
+                            return@launch
+                        }
+                        cardPaymentIntentId = tapResult.paymentIntentId
+                    }
                     var receiptUrl: String? = null
-                    if (method != "cash" && receiptBitmap != null) {
+                    if (method != "cash" && method != "card_present" && receiptBitmap != null) {
                         val bytes = receiptBitmap!!.toJpegBytes()
                         if (bytes != null) {
                             val path = "receipt_${order.id}_${Clock.System.now().toEpochMilliseconds()}.jpg"
@@ -1635,7 +1653,7 @@ fun CheckoutPanel(order: CustomerOrder, onBack: () -> Unit, onDone: () -> Unit) 
                         order_id = order.id,
                         pay_amount_myr = finalTotal,
                         pay_method = method,
-                        transaction_ref = "",
+                        transaction_ref = cardPaymentIntentId ?: "",
                         receipt_attachment_url = receiptUrl,
                         received_by_staff_id = SupabaseClient.currentStaffId(),
                         transaction_datetime = now
