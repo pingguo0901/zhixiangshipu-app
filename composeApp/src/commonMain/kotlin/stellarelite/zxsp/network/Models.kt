@@ -99,6 +99,7 @@ data class PaymentRecord(
 )
 
 // ============ print_jobs ============
+@Serializable
 data class PrintJob(
     val id: Long = 0,
     val content: String = "",
