@@ -340,6 +340,34 @@ object SupabaseClient {
         return resp.status.isSuccess()
     }
 
+    // ============ 应用共享状态（跨设备共享游标，多台手机共用一个）============
+    suspend fun fetchAppState(key: String): String? {
+        val resp: HttpResponse = client.get("$BASE/rest/v1/app_state") {
+            applyAuth()
+            url {
+                parameters.append("select", "value")
+                parameters.append("key", "eq.$key")
+            }
+        }
+        return if (resp.status.isSuccess()) {
+            runCatching { resp.body<List<AppStateRow>>().firstOrNull()?.value }.getOrNull()
+        } else null
+    }
+
+    suspend fun setAppState(key: String, value: String): Boolean {
+        val resp: HttpResponse = client.post("$BASE/rest/v1/app_state") {
+            applyAuth()
+            header("Prefer", "resolution=merge-duplicates")
+            url { parameters.append("on_conflict", "key") }
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject {
+                put("key", JsonPrimitive(key))
+                put("value", JsonPrimitive(value))
+            })
+        }
+        return resp.status.isSuccess()
+    }
+
     // 幂等创建三个平台外卖号（Grabfood/Foodpanda/Online 各 20 个）
     suspend fun ensurePlatformTakeawayTables(): Boolean {
         val platforms = listOf("Grabfood外卖", "Foodpanda外卖", "Online外卖")

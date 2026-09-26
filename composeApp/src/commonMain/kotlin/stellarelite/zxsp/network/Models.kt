@@ -270,3 +270,12 @@ data class DailySales(
     val total_expense_myr: Double = 0.0,
     val gross_profit_myr: Double = 0.0
 )
+
+// ============ app_state ============
+@Serializable
+data class AppStateRow(
+    val key: String = "",
+    val value: String = "",
+    val updated_at: String? = null
+)
+
